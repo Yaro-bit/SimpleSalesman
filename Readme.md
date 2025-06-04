@@ -1,7 +1,7 @@
 
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.2-blue)
+![version](https://img.shields.io/badge/version-0.0.3-blue)
 
 Backend-Prototyp für eine lokale Webanwendung zur Verwaltung und Dokumentation von Adressdaten, Notizen und Auftragsstatus für Door-to-Door-Vertriebsteams.
 
@@ -9,11 +9,11 @@ Backend-Prototyp für eine lokale Webanwendung zur Verwaltung und Dokumentation 
 
 ## Version
 
-Aktuell: 0.0.21  
+Aktuell: 0.0.3  
 Letztes Update: 03.06.2025
 
 
-Update 0.0.21  
+Update 0.0.3  
 -Bis Spring Boot 2.3 wurde in manchen Starter-Setups (insb. mit spring-boot-starter-web) automatisch ein RestTemplate-Bean mitgeliefert.
 Ab Spring Boot 2.4+ NICHT MEHR!
 Jetzt musst du explizit selbst einen RestTemplate-Bean definieren, sonst gibt’s diesen Fehler.
