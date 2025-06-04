@@ -32,7 +32,7 @@ Jetzt musst du explizit selbst einen RestTemplate-Bean definieren, sonst gibt’
 
 ---
 
-## Features (Backend, Stand 0.0.2)
+## Features (Backend, Stand 0.0.3)
 
 - Import von Excel-Dateien ins Datenbankschema (PostgreSQL)
 - Speicherung, Abfrage und Bearbeitung von Adressdaten, Projekten und Notizen
