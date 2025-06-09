@@ -34,7 +34,8 @@ class ExcelImportServiceIntegrationTest {
     @Test
     @DisplayName("Importiere echte Excel-Datei und prüfe Ergebnis")
     void importExcel_realExcelFile_success() throws Exception {
-        // Statt FileInputStream → Resource Stream!
+        
+    	// Statt FileInputStream → Resource Stream!
         try (InputStream is = getClass().getClassLoader().getResourceAsStream("test_import.xlsx")) {
             assertNotNull(is, "Die Testdatei test_import.xlsx wurde nicht gefunden!");
 

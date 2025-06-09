@@ -1,16 +1,17 @@
 
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.3-blue)
+
+![version](https://img.shields.io/badge/version-0.0.4-blue)
 
 Backend-Prototyp für eine lokale Webanwendung zur Verwaltung und Dokumentation von Adressdaten, Notizen und Auftragsstatus für Door-to-Door-Vertriebsteams.
 
 ---
-
 ## Version
 
-Aktuell: 0.0.3  
-Letztes Update: 03.06.2025
+
+Aktuell: 0.0.4  
+Letztes Update: 09.06.2025
 
 
 Update 0.0.3  
@@ -18,6 +19,9 @@ Update 0.0.3
 Ab Spring Boot 2.4+ NICHT MEHR!
 Jetzt musst du explizit selbst einen RestTemplate-Bean definieren, sonst gibt’s diesen Fehler.
 
+Update 0.0.4  
+Fehler „No qualifying bean of type 'RestTemplate'“ durch eigene Bean-Definition behoben.
+Anpassungen im REST API 
 ---
 
 ## Aktueller Entwicklungsstand
@@ -32,7 +36,8 @@ Jetzt musst du explizit selbst einen RestTemplate-Bean definieren, sonst gibt’
 
 ---
 
-## Features (Backend, Stand 0.0.3)
+## Features (Backend, Stand 0.0.4)
+=======
 
 - Import von Excel-Dateien ins Datenbankschema (PostgreSQL)
 - Speicherung, Abfrage und Bearbeitung von Adressdaten, Projekten und Notizen
