@@ -24,6 +24,20 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getAllProjects());
     }
 
+    // GET /api/v1/projects/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectDto> getProjectById(@PathVariable Long id) {
+        ProjectDto project = projectService.getProjectById(id);
+        return ResponseEntity.ok(project);
+    }
+
+    // GET /api/v1/projects/{id}/status
+    @GetMapping("/{id}/status")
+    public ResponseEntity<String> getProjectStatus(@PathVariable Long id) {
+        String status = projectService.getProjectStatusById(id);
+        return ResponseEntity.ok(status);
+    }
+
     @PatchMapping("/status")
     public ResponseEntity<Void> updateProjectStatus(@RequestBody StatusUpdateDto statusUpdateDto) {
         projectService.updateStatus(statusUpdateDto);

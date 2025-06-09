@@ -10,7 +10,10 @@ public class AddressDto {
 
     private List<ProjectDto> projects;
     private List<NoteDto> notes;
-	public Long getId() {
+	
+    
+    // Getter und Setter
+    public Long getId() {
 		return id;
 	}
 	public void setId(Long id) {
@@ -41,6 +44,5 @@ public class AddressDto {
 		this.notes = notes;
 	}
 
-    // Getter und Setter
     
 }

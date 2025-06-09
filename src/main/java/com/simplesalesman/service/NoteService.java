@@ -47,5 +47,18 @@ public class NoteService {
         noteRepository.save(note);
     }
 
-    // Optional: Notizen löschen/bearbeiten
+    public void updateNoteText(Long noteId, String newText) {
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("Notiz nicht gefunden"));
+        note.setText(newText);
+        noteRepository.save(note);
+    }
+    
+    public void deleteNoteById(Long noteId) {
+        if (!noteRepository.existsById(noteId)) {
+            throw new RuntimeException("Notiz nicht gefunden");
+        }
+        noteRepository.deleteById(noteId);
+    }
+
 }

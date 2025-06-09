@@ -47,20 +47,18 @@ public class AddressService {
     public AddressDto getAddressById(Long id) {
         return addressRepository.findById(id)
                 .map(addressMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("Adresse nicht gefunden"));
+                .orElse(null); // Optional: null statt Exception
     }
 
     public AddressDto createAddress(AddressDto dto) {
         Address address = addressMapper.toEntity(dto);
 
-        // Region zuweisen, falls vorhanden
         if (dto.getRegionName() != null) {
             Region region = regionRepository.findByName(dto.getRegionName())
                     .orElseThrow(() -> new RuntimeException("Region nicht gefunden: " + dto.getRegionName()));
             address.setRegion(region);
         }
 
-        // Projekte zuweisen, falls vorhanden
         if (dto.getProjects() != null && !dto.getProjects().isEmpty()) {
             List<Project> projects = dto.getProjects().stream()
                     .map(projectDto -> projectRepository.findById(projectDto.getId())
@@ -69,7 +67,6 @@ public class AddressService {
             address.setProjects(projects);
         }
 
-        // Notizen zuweisen, falls vorhanden
         if (dto.getNotes() != null && !dto.getNotes().isEmpty()) {
             List<Note> notes = dto.getNotes().stream()
                     .map(noteDto -> noteRepository.findById(noteDto.getId())
@@ -88,14 +85,12 @@ public class AddressService {
 
         existing.setAddressText(dto.getAddressText());
 
-        // Region ggf. ändern
         if (dto.getRegionName() != null) {
             Region region = regionRepository.findByName(dto.getRegionName())
                     .orElseThrow(() -> new RuntimeException("Region nicht gefunden: " + dto.getRegionName()));
             existing.setRegion(region);
         }
 
-        // Projekte ggf. ändern
         if (dto.getProjects() != null && !dto.getProjects().isEmpty()) {
             List<Project> projects = dto.getProjects().stream()
                     .map(projectDto -> projectRepository.findById(projectDto.getId())
@@ -104,7 +99,6 @@ public class AddressService {
             existing.setProjects(projects);
         }
 
-        // Notizen ggf. ändern
         if (dto.getNotes() != null && !dto.getNotes().isEmpty()) {
             List<Note> notes = dto.getNotes().stream()
                     .map(noteDto -> noteRepository.findById(noteDto.getId())
@@ -117,7 +111,11 @@ public class AddressService {
         return addressMapper.toDto(saved);
     }
 
-    public void deleteAddress(Long id) {
-        addressRepository.deleteById(id);
+    public boolean deleteAddress(Long id) {
+        if (addressRepository.existsById(id)) {
+            addressRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }

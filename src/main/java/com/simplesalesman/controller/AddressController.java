@@ -18,17 +18,37 @@ public class AddressController {
         this.addressService = addressService;
     }
 
+    // GET /api/v1/addresses
     @GetMapping
     public ResponseEntity<List<AddressDto>> getAllAddresses() {
         return ResponseEntity.ok(addressService.getAllAddresses());
     }
 
+    // GET /api/v1/addresses/{id}
     @GetMapping("/{id}")
     public ResponseEntity<AddressDto> getAddress(@PathVariable Long id) {
         AddressDto dto = addressService.getAddressById(id);
-        if (dto == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(dto);
+        return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
+    }
+
+    // POST /api/v1/addresses
+    @PostMapping
+    public ResponseEntity<AddressDto> createAddress(@RequestBody AddressDto addressDto) {
+        AddressDto saved = addressService.createAddress(addressDto);
+        return ResponseEntity.ok(saved);
+    }
+
+    // PUT /api/v1/addresses/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<AddressDto> updateAddress(@PathVariable Long id, @RequestBody AddressDto addressDto) {
+        AddressDto updated = addressService.updateAddress(id, addressDto);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    // DELETE /api/v1/addresses/{id}
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable Long id) {
+        boolean deleted = addressService.deleteAddress(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
