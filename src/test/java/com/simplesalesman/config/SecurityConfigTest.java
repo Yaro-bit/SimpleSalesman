@@ -24,8 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Quelle: Spring Security Reference Documentation, Kapitel „Testing with MockMvc“
  * https://docs.spring.io/spring-security/reference/servlet/test/mockmvc/index.html
  */
-@WebMvcTest(controllers = DummyControllerTest.class) // Lädt nur DummyController (Test-Endpunkte)
-@Import(SecurityConfig.class)                    // Security-Konfiguration aktivieren
+@WebMvcTest(controllers = DummyControllerTest.class)@Import(SecurityConfig.class)                    // Security-Konfiguration aktivieren
 class SecurityConfigTest {
 
     @Autowired
