@@ -4,111 +4,127 @@
 
 **Anwendungsname:** Simple Salesman  
 **Version:** 0.1  
-**Zweck:** Verwaltung von Adressen und Notizen im Door-to-Door-Vertrieb  
+**Zweck:** Verwaltung von Adressen, Notizen und Auftragsstatus für Door-to-Door-Vertrieb  
 **Verantwortlich:** Yaroslav Vol (Privatperson, Open Source)  
-**Technologiestack:** Spring Boot, PostgreSQL, Apache POI, Keycloak, HTML/JavaScript
+**Technologiestack:** Spring Boot, PostgreSQL, Apache POI, Keycloak, HTML/JavaScript  
 
+---
 
 ## Dokumentation der KI-Funktionen gemäß EU AI Act
 
-### Eingesetzte Komponenten
+### Tatsächlich implementierte Komponenten
 
-| Komponente          |Beschreibung                                                               | Lokale Verarbeitung | Modellversion  | Tokenverwendung |
-|---------------------|---------------------------------------------------------------------------|---------------------|----------------|-----------------|
-| KI-Texteditor       | Optionales Modul zur Generierung von Notizvorschlägen                     | Ja                  | GPT-2 (lokal)  | Ja (RAM)        |
-| Wetterdienst        | REST-basierte Anzeige aktueller Wetterdaten (kein KI-System)              | Nein (extern)       | –              | Nein            |
+**Wetterdienst**  
+- Beschreibung: REST-basierte Abfrage über wttr.in  
+- Lokale Verarbeitung: Nein (extern)  
+- Modellversion: –  
+- Tokenverwendung: Nein  
 
-### Zweck der KI-Nutzung
+> ⚠️ Hinweis: Der KI-Texteditor mit GPT-2 wurde in der Planung berücksichtigt, aber noch nicht implementiert. Es existieren keine GPT-Modelle im Code.
 
-- Unterstützung beim effizienten Verfassen von Notizen durch strukturierte Textvorschläge
-- Keine automatisierte Entscheidungsfindung oder Bewertung
-- Verarbeitung ausschließlich lokal – keine Kommunikation mit externen KI-Diensten
+---
 
-### Tokenbasierte Verarbeitung
+## Zweck der geplanten KI-Nutzung (zukünftig)
 
-| Quelle        | Inhalt                                    | Speicherdauer        | Zweck                              |
-|---------------|-------------------------------------------|----------------------|------------------------------------|
-| KI-Editor     | Tokenisierter Eingabetext für Vorschläge  | Temporär im RAM      | Generierung kontextbezogener Texte |
-| Keycloak JWT  | Rollen, Benutzer-ID, Berechtigungen       | Sitzungslaufzeit     | Authentifizierung, Logging         |
+- Textvorschläge beim Schreiben von Notizen  
+- Keine Bewertung oder Automatisierung von Entscheidungen  
+- Lokal gehostetes Modell (geplant: GPT-2)  
+- KI-Option abschaltbar (Opt-out im Frontend vorgesehen)  
+
+---
+
+## Tokenbasierte Verarbeitung (implementiert)
+
+**Keycloak JWT**  
+- Inhalt: Rollen, Benutzer-ID, Berechtigungen  
+- Speicherdauer: Sitzungslaufzeit  
+- Zweck: Authentifizierung und Zugriffskontrolle  
 
 ---
 
 ## Datenschutz & Sicherheit (DSGVO)
 
-| Anforderung         | Umsetzung                                                                  |
-|---------------------|----------------------------------------------------------------------------|
-| DS1: Logging        | Vollständige Protokollierung von Datenzugriffen und Änderungen             |
-| DS2: Verschlüsselung| AES-256-Verschlüsselung sämtlicher sensibler Nutzerdaten                   |
-| DS3: Zugriffsschutz | Zugriff auf personenbezogene Daten ausschließlich durch berechtigte Nutzer |
-| DS4: Löschfunktion  | Umsetzung des Rechts auf Vergessenwerden durch vollständige Datenlöschung  |
-| DS5: Einwilligung   | Anzeige einer Datenschutzerklärung mit aktiver Nutzerzustimmung            |
+**DS1 – Logging**  
+Aktiv durch Spring Boot Logging  
+
+**DS2 – Verschlüsselung**  
+Geplant, derzeit noch nicht aktiv im Code  
+
+**DS3 – Zugriffsschutz**  
+Umgesetzt über Keycloak  
+
+**DS4 – Löschfunktion**  
+Nur teilweise vorhanden, API-Grundstruktur implementiert  
+
+**DS5 – Einwilligung**  
+Frontend-Integration geplant, Datenschutzerklärung derzeit manuell  
 
 ---
 
-## Konformität mit dem EU AI Act
+## Konformität mit dem EU AI Act (IST-Zustand)
 
-| Anforderung | Beschreibung                                                         | Status   |
-|-------------|----------------------------------------------------------------------|----------|
-| KI1         | KI-generierte Inhalte sind klar als solche gekennzeichnet            | Erfüllt  |
-| KI2         | Die KI-Funktion kann deaktiviert werden (Opt-out-Option im UI)       | Erfüllt  |
-| KI3         | Keine Speicherung oder Weiterverarbeitung personenbezogener Daten    | Erfüllt  |
-| KI4         | Modellversion und Zweck sind dokumentiert (lokale GPT-2-Variante)    | Erfüllt  |
+**KI1**  
+Keine aktiven KI-Funktionen vorhanden → nicht erforderlich  
 
----
+**KI2**  
+Opt-out im Frontend vorgesehen → geplant  
 
-## Verwendete Bibliotheken & Lizenzen
+**KI3**  
+Keine KI-Datenverarbeitung → erfüllt  
 
-| Komponente        | Lizenz             | Einsatzzweck                                  |
-|-------------------|--------------------|-----------------------------------------------|
-| Apache POI        | Apache License 2.0 | Import und Export von Excel-Dateien           |
-| Spring Boot       | Apache License 2.0 | Web-Backend und REST-API                      |
-| Keycloak          | Apache License 2.0 | Authentifizierung und rollenbasierte Zugriffe |
-| MapStruct         | Apache License 2.0 | Automatisches Mapping zwischen DTOs und Ent.  |
+**KI4**  
+Modellbeschreibung vorbereitet, aber noch nicht umgesetzt → geplant  
 
 ---
 
-## Änderungen & Nachvollziehbarkeit
+## Genutzte Bibliotheken & Lizenzen
 
-Alle KI-bezogenen Änderungen werden im CHANGELOG.md dokumentiert, inklusive:
-
-- Änderungsdatum
-- Beschreibung und Zweck
-- Verwendete Modellversion (z. B. GPT-2 lokal)
-- Referenz zur Commit-ID (sofern öffentlich verfügbar)
+- Apache POI (Apache License 2.0): Excel-Import  
+- Spring Boot (Apache License 2.0): REST-Backend  
+- Keycloak (Apache License 2.0): Authentifizierung  
+- MapStruct (Apache License 2.0): DTO-Mapping  
 
 ---
 
-## Historie der Anforderungen & Entwicklungsziele
+## Änderungsprotokoll (Stand Version 0.1)
 
-Diese Sektion dokumentiert die fortlaufende Weiterentwicklung des Projekts anhand von User Stories, Feedback und technischen Anforderungen.
+- Wetter-API via wttr.in integriert (WeatherClient)  
+- Excel-Importservice über Apache POI umgesetzt  
+- Postman-Tests für API vorbereitet  
+- Keycloak-Integration für Authentifizierung (JWT)  
+- Notizen-API mit Dummy-Daten implementiert  
 
-### Projektkontext
+---
 
-- **Autor:** Yaroslav Vol (Privatperson, kein Unternehmen)
-- **Zielgruppe:** Zwei Außendienstmitarbeiter und ein Entwickler
-- **Rechtsrahmen:** DSGVO, EU AI Act
-- **Veröffentlichung:** Open Source (Apache License 2.0)
+## Entwicklungsstand
 
-### Hauptanforderungen
+### Bereits umgesetzt
 
-- Automatisierter Excel-Import (Apache POI)
-- PostgreSQL-Datenbank mit verschlüsselter Speicherung
-- Notizsystem mit Benutzer- und Zeitstempeln
-- Frameworkfreies Web-Frontend mit Dark Mode
-- REST-basierter Wetterdienst
-- KI-basierte Textvorschläge (lokal, optional)
-- Benutzerverwaltung mit Keycloak (lokal gehostet)
-- Klare API-Struktur nach Clean Architecture
-- Testabdeckung mittels JUnit (Unit & Integration)
-- Gamification-Elemente (Easter Eggs, Motivationstracking)
-- Vollständige DSGVO-Konformität
-- Dokumentation relevanter Stakeholder- und Feature-Anforderungen
-- KI-Dokumentation gemäß EU AI Act
-- SMART-Zielsetzung und technisches To-Do-Board
-- Ziel: Bereitstellung eines Minimum Viable Product bis 27.06.
+- REST-API (CRUD für Adressen und Notizen)  
+- Excel-Import via Controller  
+- Wetterdienst-Integration  
+- Keycloak-Login mit Token-Handling im Frontend  
+- Dummy-Frontend mit:
+  - Dark Mode  
+  - Datentabelle  
+  - Avatar-Upload  
+  - Wetteranzeige via Geolocation  
+- Responsives Frontend mit Icons und eigener Filtersuche  
 
-### Softwarecharakter
+### In Planung (aus Chatverlauf abgeleitet)
 
-- Kein Cloud-Zwang, kein SaaS-Modell
-- Lokale Nutzung mit Fokus auf Datenschutz und Kontrolle
-- Vollständig quelloffen, für kleine Teams optimiert
+- Lokaler GPT-2-Texteditor  
+- Datenverschlüsselung (PostgreSQL)  
+- Adminbereich mit Backup- und Protokollfunktionen  
+- Gamification-Elemente (z. B. Easter Eggs, Fortschrittsanzeige)  
+- CI/CD-Pipeline und GitHub-Deployment  
+- MVP-Abschluss bis 27.06.2025  
+
+---
+
+## Bewertung
+
+- **DSGVO-Grundschutz aktiv:** Logging, Rollen, Zugriffssicherheit  
+- **KI-Dokumentation vorhanden:** Einsatz nur geplant, nicht aktiv  
+- **MVP-Status:** Vollständig lokal betrieben, datenschutzfreundlich und erweiterbar  
+
