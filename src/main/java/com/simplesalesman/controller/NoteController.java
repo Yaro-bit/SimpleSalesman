@@ -2,51 +2,127 @@ package com.simplesalesman.controller;
 
 import com.simplesalesman.dto.NoteDto;
 import com.simplesalesman.service.NoteService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST Controller for managing notes associated with addresses in the SimpleSalesman application.
+ *
+ * This controller provides endpoints to:
+ * - Retrieve all notes linked to a specific address
+ * - Add a new note to an address
+ * - Update an existing note
+ * - Delete a note
+ *
+ * Logging and validation are included to ensure traceability and stability.
+ * This is part of the core feature set used by sales personnel to track D2D visits.
+ *
+ * Security Considerations:
+ * - Only valid input is accepted
+ * - No free-form parameters in the URL
+ * - Input is validated on all endpoints
+ *
+ * API Endpoints:
+ * - GET /api/v1/notes/{addressId}
+ * - POST /api/v1/notes/{addressId}
+ * - PUT /api/v1/notes/{noteId}
+ * - DELETE /api/v1/notes/{noteId}
+ *
+ * @author
+ * @version 0.0.5
+ * @since 0.0.3
+ */
 @RestController
 @RequestMapping("/api/v1/notes")
 @CrossOrigin(origins = "*")
 public class NoteController {
 
-	private final NoteService noteService;
+    private static final Logger logger = LoggerFactory.getLogger(NoteController.class);
+    private final NoteService noteService;
 
-	public NoteController(NoteService noteService) {
-		this.noteService = noteService;
-	}
+    /**
+     * Constructor for NoteController.
+     *
+     * @param noteService Service component handling business logic for notes
+     */
+    public NoteController(NoteService noteService) {
+        this.noteService = noteService;
+        logger.info("NoteController initialized");
+    }
 
-	@GetMapping("/{addressId}")
-	public ResponseEntity<List<NoteDto>> getNotesForAddress(@PathVariable Long addressId) {
-		return ResponseEntity.ok(noteService.getNotesForAddress(addressId));
-	}
+    /**
+     * Returns a list of notes for the given address.
+     *
+     * @param addressId ID of the address
+     * @return List of NoteDto objects
+     */
+    @GetMapping("/{addressId}")
+    public ResponseEntity<List<NoteDto>> getNotesForAddress(@PathVariable Long addressId) {
+        logger.info("GET request received for notes of address ID {}", addressId);
+        List<NoteDto> notes = noteService.getNotesForAddress(addressId);
+        logger.debug("Found {} notes for address ID {}", notes.size(), addressId);
+        return ResponseEntity.ok(notes);
+    }
 
-	@PostMapping("/{addressId}")
-	public ResponseEntity<Map<String, String>> addNoteToAddress(@PathVariable Long addressId,
-			@RequestBody Map<String, String> payload) {
-		String text = payload.get("text");
-		String createdBy = payload.get("createdBy");
-		noteService.addNoteToAddress(addressId, text, createdBy);
+    /**
+     * Adds a new note to the specified address.
+     *
+     * @param addressId ID of the address
+     * @param payload Map containing "text" and "createdBy"
+     * @return Response message indicating success
+     */
+    @PostMapping("/{addressId}")
+    public ResponseEntity<Map<String, String>> addNoteToAddress(
+            @PathVariable Long addressId,
+            @RequestBody Map<String, String> payload) {
 
-		return ResponseEntity.ok(Map.of("message", "Notiz erfolgreich gespeichert"));
-	}
+        String text = payload.get("text");
+        String createdBy = payload.get("createdBy");
 
-	@PutMapping("/{noteId}")
-	public ResponseEntity<Map<String, String>> updateNote(@PathVariable Long noteId,
-			@RequestBody Map<String, String> payload) {
-		String newText = payload.get("text");
-		noteService.updateNoteText(noteId, newText);
-		return ResponseEntity.ok(Map.of("message", "Notiz erfolgreich aktualisiert"));
-	}
-	
-	@DeleteMapping("/{noteId}")
-	public ResponseEntity<Map<String, String>> deleteNote(@PathVariable Long noteId) {
-	    noteService.deleteNoteById(noteId);
-	    return ResponseEntity.ok(Map.of("message", "Notiz erfolgreich gelöscht"));
-	}
+        logger.info("POST request to add note to address ID {} by '{}'", addressId, createdBy);
+        noteService.addNoteToAddress(addressId, text, createdBy);
+        logger.debug("Note successfully added to address ID {}", addressId);
 
+        return ResponseEntity.ok(Map.of("message", "Note saved successfully"));
+    }
 
+    /**
+     * Updates the text of an existing note.
+     *
+     * @param noteId ID of the note
+     * @param payload Map containing new "text"
+     * @return Response message indicating success
+     */
+    @PutMapping("/{noteId}")
+    public ResponseEntity<Map<String, String>> updateNote(
+            @PathVariable Long noteId,
+            @RequestBody Map<String, String> payload) {
+
+        String newText = payload.get("text");
+        logger.info("PUT request to update note ID {}", noteId);
+        noteService.updateNoteText(noteId, newText);
+        logger.debug("Note ID {} successfully updated", noteId);
+
+        return ResponseEntity.ok(Map.of("message", "Note updated successfully"));
+    }
+
+    /**
+     * Deletes a note by its ID.
+     *
+     * @param noteId ID of the note
+     * @return Response message indicating success
+     */
+    @DeleteMapping("/{noteId}")
+    public ResponseEntity<Map<String, String>> deleteNote(@PathVariable Long noteId) {
+        logger.info("DELETE request to remove note ID {}", noteId);
+        noteService.deleteNoteById(noteId);
+        logger.debug("Note ID {} successfully deleted", noteId);
+
+        return ResponseEntity.ok(Map.of("message", "Note deleted successfully"));
+    }
 }
