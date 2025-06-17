@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title th:text="'Adressen - SimpleSalesman'">Adressen</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">📍 Adressen</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <a th:href="@{/web/addresses/new}" class="btn btn-success">
+                        ➕ Neue Adresse
+                    </a>
+                    <a href="/swagger-ui.html" class="btn btn-outline-info" target="_blank">
+                        📚 API
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Suche nach Adresse oder Region..." 
+                           id="searchInput" onkeyup="filterAddresses()">
+                    <button class="btn btn-outline-secondary" type="button">🔍</button>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="text-muted">
+                    Gesamt: <strong th:text="${addresses?.size() ?: 0}">0</strong> Adressen
+                </span>
+            </div>
+        </div>
+
+        <!-- Addresses Table -->
+        <div class="card">
+            <div class="card-body">
+                <div th:if="${addresses == null or #lists.isEmpty(addresses)}" class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="fas fa-map-marker-alt fa-3x mb-3" style="color: #dee2e6;">📍</i>
+                        <h5>Keine Adressen vorhanden</h5>
+                        <p>Erstellen Sie Ihre erste Adresse, um loszulegen.</p>
+                        <a th:href="@{/web/addresses/new}" class="btn btn-primary">
+                            ➕ Erste Adresse erstellen
+                        </a>
+                    </div>
+                </div>
+
+                <div th:unless="${addresses == null or #lists.isEmpty(addresses)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="addressesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Adresse</th>
+                                    <th scope="col">Region</th>
+                                    <th scope="col">Projekte</th>
+                                    <th scope="col">Notizen</th>
+                                    <th scope="col" class="text-end">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="address : ${addresses}" class="address-row">
+                                    <th scope="row" th:text="${address.id}">1</th>
+                                    <td>
+                                        <strong th:text="${address.addressText}">Musterstraße 123</strong>
+                                    </td>
+                                    <td>
+                                        <span th:if="${address.regionName}" 
+                                              class="badge bg-secondary" 
+                                              th:text="${address.regionName}">Region</span>
+                                        <span th:unless="${address.regionName}" 
+                                              class="text-muted">Keine Region</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${address.projectCount > 0}" 
+                                              class="badge bg-primary" 
+                                              th:text="${address.projectCount}">0</span>
+                                        <span th:unless="${address.projectCount > 0}" 
+                                              class="text-muted">-</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${address.noteCount > 0}" 
+                                              class="badge bg-info" 
+                                              th:text="${address.noteCount}">0</span>
+                                        <span th:unless="${address.noteCount > 0}" 
+                                              class="text-muted">-</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm btn-group-actions" role="group">
+                                            <a th:href="@{/web/addresses/{id}(id=${address.id})}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Details anzeigen">
+                                                👁️
+                                            </a>
+                                            <a th:href="@{/web/addresses/{id}/edit(id=${address.id})}" 
+                                               class="btn btn-outline-warning" 
+                                               title="Bearbeiten">
+                                                ✏️
+                                            </a>
+                                            <!-- ✅ KORRIGIERT: Sichere Data-Attribute -->
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger" 
+                                                    title="Löschen"
+                                                    th:data-address-id="${address.id}"
+                                                    th:data-address-text="${address.addressText}"
+                                                    onclick="confirmDelete(this.getAttribute('data-address-id'), this.getAttribute('data-address-text'))">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Footer -->
+        <div th:unless="${addresses == null or #lists.isEmpty(addresses)}" class="row mt-4">
+            <div class="col-md-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <h5 th:text="${addresses.size()}">0</h5>
+                                <small class="text-muted">Gesamt Adressen</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 th:text="${#aggregates.sum(addresses.![projectCount])}">0</h5>
+                                <small class="text-muted">Gesamt Projekte</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 th:text="${#aggregates.sum(addresses.![noteCount])}">0</h5>
+                                <small class="text-muted">Gesamt Notizen</small>
+                            </div>
+                            <div class="col-md-3">
+                                <h5 th:text="${addresses.?[regionName != null].size()}">0</h5>
+                                <small class="text-muted">Mit Region</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">🗑️ Adresse löschen</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Sind Sie sicher, dass Sie die folgende Adresse löschen möchten?</p>
+                        <div class="alert alert-warning">
+                            <strong id="deleteAddressText">Adresse</strong>
+                        </div>
+                        <p class="text-muted small">
+                            ⚠️ Diese Aktion kann nicht rückgängig gemacht werden. 
+                            Alle zugehörigen Projekte und Notizen werden ebenfalls gelöscht.
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                        <!-- ✅ KORRIGIERT: Einfachere Form-Action -->
+                        <form method="post" id="deleteForm">
+                            <button type="submit" class="btn btn-danger">🗑️ Endgültig löschen</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <div layout:fragment="scripts">
+        <script>
+            function filterAddresses() {
+                const input = document.getElementById('searchInput');
+                const filter = input.value.toLowerCase();
+                const table = document.getElementById('addressesTable');
+                const rows = table.getElementsByClassName('address-row');
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const addressText = rows[i].cells[1].textContent.toLowerCase();
+                    const regionText = rows[i].cells[2].textContent.toLowerCase();
+                    
+                    if (addressText.includes(filter) || regionText.includes(filter)) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+            
+            // ✅ KORRIGIERT: Sichere JavaScript-Funktion
+            function confirmDelete(addressId, addressText) {
+                // Text sicher setzen (kein innerHTML)
+                document.getElementById('deleteAddressText').textContent = addressText;
+                
+                // Form-Action dynamisch setzen
+                const form = document.getElementById('deleteForm');
+                form.action = '/web/addresses/' + addressId + '/delete';
+                
+                // Modal anzeigen
+                const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
+            }
+        </script>
+    </div>
+</body>
+</html>

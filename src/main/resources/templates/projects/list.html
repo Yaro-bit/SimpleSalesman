@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title th:text="'Projekte - SimpleSalesman'">Projekte</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">🏗️ Projekte</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <!-- ✅ KORRIGIERT: Nur noch /web/import -->
+                    <a th:href="@{/web/import}" class="btn btn-info">
+                        📄 Excel Import
+                    </a>
+                    <a href="/swagger-ui.html" class="btn btn-outline-info" target="_blank">
+                        📚 API
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Suche nach Operator, Status oder Firma..." 
+                           id="searchInput" onkeyup="filterProjects()">
+                    <button class="btn btn-outline-secondary" type="button">🔍</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="statusFilter" onchange="filterProjects()">
+                    <option value="">Alle Status</option>
+                    <option value="OPEN">Offen</option>
+                    <option value="IN_PROGRESS">In Bearbeitung</option>
+                    <option value="COMPLETED">Abgeschlossen</option>
+                    <option value="ON_HOLD">Pausiert</option>
+                    <option value="CANCELLED">Abgebrochen</option>
+                </select>
+            </div>
+            <div class="col-md-3 text-end">
+                <span class="text-muted">
+                    Gesamt: <strong th:text="${projects?.size() ?: 0}">0</strong> Projekte
+                </span>
+            </div>
+        </div>
+
+        <!-- Projects Table -->
+        <div class="card">
+            <div class="card-body">
+                <div th:if="${projects == null or #lists.isEmpty(projects)}" class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="fas fa-project-diagram fa-3x mb-3" style="color: #dee2e6;">🏗️</i>
+                        <h5>Keine Projekte vorhanden</h5>
+                        <p>Importieren Sie Projekte über Excel oder erstellen Sie sie über die API.</p>
+                        <div class="mt-3">
+                            <!-- ✅ KORRIGIERT: Nur noch /web/import -->
+                            <a th:href="@{/web/import}" class="btn btn-primary me-2">
+                                📄 Excel Import
+                            </a>
+                            <a href="/swagger-ui.html" class="btn btn-outline-primary" target="_blank">
+                                📚 API Dokumentation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:unless="${projects == null or #lists.isEmpty(projects)}">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="projectsTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Operator</th>
+                                    <th scope="col">Baufirma</th>
+                                    <th scope="col">Anzahl Häuser</th>
+                                    <th scope="col">Preis</th>
+                                    <th scope="col">Verkaufszeit</th>
+                                    <th scope="col" class="text-end">Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="project : ${projects}" class="project-row">
+                                    <th scope="row" th:text="${project.id}">1</th>
+                                    <td>
+                                        <span class="badge status-badge" 
+                                              th:classappend="${project.status == 'OPEN' ? 'bg-primary' : 
+                                                               project.status == 'IN_PROGRESS' ? 'bg-warning text-dark' : 
+                                                               project.status == 'COMPLETED' ? 'bg-success' : 
+                                                               project.status == 'ON_HOLD' ? 'bg-secondary' : 
+                                                               project.status == 'CANCELLED' ? 'bg-danger' : 'bg-dark'}"
+                                              th:text="${project.status ?: 'UNKNOWN'}">Status</span>
+                                    </td>
+                                    <td>
+                                        <strong th:text="${project.operator ?: '-'}">Operator</strong>
+                                    </td>
+                                    <td>
+                                        <span th:text="${project.constructionCompany ?: '-'}">Baufirma</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info" th:text="${project.numberOfHomes}">0</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${project.productPrice != null}" 
+                                              th:text="${#numbers.formatDecimal(project.productPrice, 0, 'COMMA', 2, 'POINT')} + ' €'">0,00 €</span>
+                                        <span th:unless="${project.productPrice != null}" class="text-muted">-</span>
+                                    </td>
+                                    <td>
+                                        <div th:if="${project.salesStart != null and project.salesEnd != null}">
+                                            <small class="text-muted">
+                                                <span th:text="${#temporals.format(project.salesStart, 'dd.MM.yyyy')}">Start</span>
+                                                -
+                                                <span th:text="${#temporals.format(project.salesEnd, 'dd.MM.yyyy')}">Ende</span>
+                                            </small>
+                                        </div>
+                                        <div th:unless="${project.salesStart != null and project.salesEnd != null}" class="text-muted">
+                                            Nicht definiert
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm btn-group-actions" role="group">
+                                            <a th:href="@{/web/projects/{id}(id=${project.id})}" 
+                                               class="btn btn-outline-primary" 
+                                               title="Details anzeigen">
+                                                👁️
+                                            </a>
+											<button type="button" 
+											        class="btn btn-outline-warning" 
+											        title="Status ändern"
+											        th:data-project-id="${project.id}"
+											        th:data-current-status="${project.status ?: 'UNKNOWN'}"
+											        onclick="openStatusModal(this.getAttribute('data-project-id'), this.getAttribute('data-current-status'))">
+											    ⚡
+											</button>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Footer -->
+        <div th:unless="${projects == null or #lists.isEmpty(projects)}" class="row mt-4">
+            <div class="col-md-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-2">
+                                <h5 th:text="${projects.size()}">0</h5>
+                                <small class="text-muted">Gesamt</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h5 th:text="${projects.?[status == 'OPEN'].size()}">0</h5>
+                                <small class="text-muted">Offen</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h5 th:text="${projects.?[status == 'IN_PROGRESS'].size()}">0</h5>
+                                <small class="text-muted">In Bearbeitung</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h5 th:text="${projects.?[status == 'COMPLETED'].size()}">0</h5>
+                                <small class="text-muted">Abgeschlossen</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h5 th:text="${#aggregates.sum(projects.![numberOfHomes])}">0</h5>
+                                <small class="text-muted">Häuser gesamt</small>
+                            </div>
+                            <div class="col-md-2">
+                                <h5 th:text="${projects.?[contractPresent == true].size()}">0</h5>
+                                <small class="text-muted">Mit Vertrag</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Update Modal -->
+        <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">⚡ Projektstatus ändern</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:object="${statusUpdateForm}" th:action="@{/web/projects/status}" method="post">
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{projectId}" id="modalProjectId">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Aktueller Status:</label>
+                                <div>
+                                    <span class="badge bg-secondary" id="currentStatusBadge">Current</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="newStatus" class="form-label">Neuer Status:</label>
+                                <select class="form-select" th:field="*{newStatus}" id="newStatus" required>
+                                    <option value="">-- Status wählen --</option>
+                                    <option value="OPEN">🔵 Offen</option>
+                                    <option value="IN_PROGRESS">🟡 In Bearbeitung</option>
+                                    <option value="COMPLETED">🟢 Abgeschlossen</option>
+                                    <option value="ON_HOLD">⏸️ Pausiert</option>
+                                    <option value="CANCELLED">🔴 Abgebrochen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                            <button type="submit" class="btn btn-primary">💾 Status aktualisieren</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <div layout:fragment="scripts">
+        <script>
+            function filterProjects() {
+                const searchInput = document.getElementById('searchInput');
+                const statusFilter = document.getElementById('statusFilter');
+                const table = document.getElementById('projectsTable');
+                const rows = table.getElementsByClassName('project-row');
+                
+                const searchFilter = searchInput.value.toLowerCase();
+                const statusFilterValue = statusFilter.value.toLowerCase();
+                
+                for (let i = 0; i < rows.length; i++) {
+                    const operator = rows[i].cells[2].textContent.toLowerCase();
+                    const company = rows[i].cells[3].textContent.toLowerCase();
+                    const statusText = rows[i].cells[1].textContent.toLowerCase();
+                    
+                    const matchesSearch = operator.includes(searchFilter) || 
+                                        company.includes(searchFilter) || 
+                                        statusText.includes(searchFilter);
+                    const matchesStatus = statusFilterValue === '' || statusText.includes(statusFilterValue);
+                    
+                    if (matchesSearch && matchesStatus) {
+                        rows[i].style.display = '';
+                    } else {
+                        rows[i].style.display = 'none';
+                    }
+                }
+            }
+            
+            function openStatusModal(projectId, currentStatus) {
+                document.getElementById('modalProjectId').value = projectId;
+                document.getElementById('currentStatusBadge').textContent = currentStatus;
+                
+                // Set current status as selected option
+                const newStatusSelect = document.getElementById('newStatus');
+                newStatusSelect.value = '';
+                
+                const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                modal.show();
+            }
+        </script>
+    </div>
+</body>
+</html>

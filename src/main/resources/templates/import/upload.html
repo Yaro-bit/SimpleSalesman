@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title th:text="'Excel Import - SimpleSalesman'">Excel Import</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">📄 Excel Import</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <a th:href="@{/web/dashboard}" class="btn btn-outline-secondary">
+                    ← Zurück zum Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">📁 Excel-Datei hochladen</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Error Messages -->
+                        <div th:if="${errorMessage}" class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
+                        </div>
+
+                        <!-- Import Result (on errors) -->
+                        <div th:if="${result}" class="alert alert-warning" role="alert">
+                            <h6>Import-Ergebnis:</h6>
+                            <ul>
+                                <li><strong>Verarbeitet:</strong> <span th:text="${result.recordsProcessed}">0</span> Datensätze</li>
+                                <li><strong>Erfolgreich:</strong> <span th:text="${result.success ? 'Ja' : 'Nein'}">Nein</span></li>
+                            </ul>
+                            <div th:if="${result.errors != null and !result.errors.isEmpty()}">
+                                <strong>Fehler:</strong>
+                                <ul>
+                                    <li th:each="error : ${result.errors}" th:text="${error}">Error</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Upload Form -->
+                        <form th:action="@{/web/import}" method="post" enctype="multipart/form-data" id="uploadForm">
+                            <div class="mb-4">
+                                <label for="file" class="form-label">
+                                    <strong>Excel-Datei auswählen</strong> <span class="text-danger">*</span>
+                                </label>
+                                <input type="file" 
+                                       class="form-control" 
+                                       id="file" 
+                                       name="file" 
+                                       accept=".xlsx,.xls"
+                                       required>
+                                <div class="form-text">
+                                    Unterstützte Formate: .xlsx, .xls | Maximale Größe: 10MB
+                                </div>
+                            </div>
+
+                            <!-- File Info Display -->
+                            <div id="fileInfo" class="mb-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <strong>Ausgewählte Datei:</strong>
+                                    <div>📄 <span id="fileName">-</span></div>
+                                    <div>📏 <span id="fileSize">-</span></div>
+                                    <div>📅 <span id="fileType">-</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="uploadBtn" disabled>
+                                    <span class="spinner-border spinner-border-sm d-none" id="spinner"></span>
+                                    📤 Datei hochladen und importieren
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card bg-light">
+                    <div class="card-header">
+                        <h6 class="mb-0">💡 Hinweise zum Excel-Import</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>📋 Unterstützte Daten:</h6>
+                                <ul class="small">
+                                    <li>Projekte mit Adressen</li>
+                                    <li>Automatische Region-Erstellung</li>
+                                    <li>Projektdaten (Status, Termine, Preise)</li>
+                                    <li>Baufirmen und Operatoren</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>⚙️ Technische Anforderungen:</h6>
+                                <ul class="small">
+                                    <li>Excel-Format: .xlsx oder .xls</li>
+                                    <li>Maximale Dateigröße: 10MB</li>
+                                    <li>Erste Zeile = Header (wird übersprungen)</li>
+                                    <li>Fehlerhafte Zeilen werden protokolliert</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Alternative -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">🔧 Für Entwickler: REST API</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">Sie können den Import auch direkt über die REST API durchführen:</p>
+                        <code>POST /api/v1/import</code>
+                        <div class="mt-2">
+                            <a href="/swagger-ui.html" class="btn btn-outline-info btn-sm" target="_blank">
+                                📚 API Dokumentation öffnen
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <div layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const fileInput = document.getElementById('file');
+                const uploadBtn = document.getElementById('uploadBtn');
+                const uploadForm = document.getElementById('uploadForm');
+                const fileInfo = document.getElementById('fileInfo');
+                const spinner = document.getElementById('spinner');
+
+                // File selection handler
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    
+                    if (file) {
+                        // Show file info
+                        document.getElementById('fileName').textContent = file.name;
+                        document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                        document.getElementById('fileType').textContent = file.type || 'Unknown';
+                        fileInfo.style.display = 'block';
+                        
+                        // Enable upload button
+                        uploadBtn.disabled = false;
+                        
+                        // Validate file
+                        if (file.size > 10 * 1024 * 1024) {
+                            uploadBtn.disabled = true;
+                            uploadBtn.textContent = '❌ Datei zu groß (max. 10MB)';
+                            uploadBtn.classList.add('btn-danger');
+                            uploadBtn.classList.remove('btn-primary');
+                        } else if (!file.name.toLowerCase().match(/\.(xlsx|xls)$/)) {
+                            uploadBtn.disabled = true;
+                            uploadBtn.textContent = '❌ Nur Excel-Dateien erlaubt';
+                            uploadBtn.classList.add('btn-danger');
+                            uploadBtn.classList.remove('btn-primary');
+                        } else {
+                            uploadBtn.textContent = '📤 Datei hochladen und importieren';
+                            uploadBtn.classList.add('btn-primary');
+                            uploadBtn.classList.remove('btn-danger');
+                        }
+                    } else {
+                        fileInfo.style.display = 'none';
+                        uploadBtn.disabled = true;
+                    }
+                });
+
+                // Form submission handler
+                uploadForm.addEventListener('submit', function(e) {
+                    uploadBtn.disabled = true;
+                    uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Import läuft...';
+                    
+                    // Show progress (simulate)
+                    let progress = 0;
+                    const progressInterval = setInterval(function() {
+                        progress += 10;
+                        if (progress <= 90) {
+                            uploadBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Import läuft... ${progress}%`;
+                        } else {
+                            clearInterval(progressInterval);
+                        }
+                    }, 500);
+                });
+
+                // Format file size helper
+                function formatFileSize(bytes) {
+                    if (bytes === 0) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

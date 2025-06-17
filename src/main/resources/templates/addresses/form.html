@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title th:text="${isEdit ? 'Adresse bearbeiten - SimpleSalesman' : 'Neue Adresse - SimpleSalesman'}">
+        Adresse - SimpleSalesman
+    </title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">
+                <span th:if="${isEdit}">✏️ Adresse bearbeiten</span>
+                <span th:unless="${isEdit}">➕ Neue Adresse</span>
+            </h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <a th:href="@{/web/addresses}" class="btn btn-outline-secondary">
+                    ← Zurück zur Liste
+                </a>
+            </div>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a th:href="@{/web/dashboard}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/web/addresses}">Adressen</a></li>
+                <li class="breadcrumb-item active" th:text="${isEdit ? 'Bearbeiten' : 'Neue Adresse'}">Form</li>
+            </ol>
+        </nav>
+
+        <!-- Main Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <span th:if="${isEdit}">📝 Adressdaten bearbeiten</span>
+                            <span th:unless="${isEdit}">📝 Neue Adresse erfassen</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Form -->
+                        <form th:object="${addressForm}" 
+                              th:action="${isEdit ? '/web/addresses/' + addressForm.id : '/web/addresses'}" 
+                              method="post" 
+                              novalidate>
+                            
+                            <!-- Hidden ID field for edit mode -->
+                            <input th:if="${isEdit}" type="hidden" th:field="*{id}">
+                            
+                            <!-- Address Text Field -->
+                            <div class="mb-3">
+                                <label for="addressText" class="form-label">
+                                    <strong>Adresse</strong> <span class="text-danger">*</span>
+                                </label>
+                                <textarea class="form-control" 
+                                         id="addressText" 
+                                         th:field="*{addressText}" 
+                                         th:classappend="${#fields.hasErrors('addressText')} ? 'is-invalid' : ''"
+                                         rows="3" 
+                                         placeholder="z.B. Hauptstraße 123, 4020 Linz"
+                                         maxlength="500"
+                                         required></textarea>
+                                
+                                <!-- Validation Error -->
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('addressText')}">
+                                    <ul class="mb-0">
+                                        <li th:each="error : ${#fields.errors('addressText')}" th:text="${error}">Error</li>
+                                    </ul>
+                                </div>
+                                
+                                <!-- Character Counter -->
+                                <div class="form-text">
+                                    <span id="charCount">0</span>/500 Zeichen
+                                </div>
+                            </div>
+
+                            <!-- Region Name Field -->
+                            <div class="mb-3">
+                                <label for="regionName" class="form-label">
+                                    <strong>Region</strong>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="regionName" 
+                                       th:field="*{regionName}" 
+                                       th:classappend="${#fields.hasErrors('regionName')} ? 'is-invalid' : ''"
+                                       placeholder="z.B. Oberösterreich, Linz-Stadt"
+                                       maxlength="100">
+                                
+                                <!-- Validation Error -->
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('regionName')}">
+                                    <ul class="mb-0">
+                                        <li th:each="error : ${#fields.errors('regionName')}" th:text="${error}">Error</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="form-text">
+                                    Optional: Hilft bei der Organisation und Filterung
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                <div>
+                                    <a th:href="@{/web/addresses}" class="btn btn-outline-secondary">
+                                        ← Abbrechen
+                                    </a>
+                                </div>
+                                <div>
+                                    <button type="reset" class="btn btn-outline-warning me-2">
+                                        🔄 Zurücksetzen
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <span th:if="${isEdit}">💾 Änderungen speichern</span>
+                                        <span th:unless="${isEdit}">➕ Adresse erstellen</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Information Card -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">💡 Hinweise zum Ausfüllen</h6>
+                        <ul class="mb-0 small">
+                            <li><strong>Adresse:</strong> Geben Sie die vollständige Adresse mit Straße, Hausnummer, PLZ und Ort an</li>
+                            <li><strong>Region:</strong> Optional zur besseren Kategorisierung (z.B. Bundesland, Bezirk)</li>
+                            <li>Felder mit <span class="text-danger">*</span> sind Pflichtfelder</li>
+                            <li th:if="${isEdit}">Nach dem Speichern können Sie Projekte und Notizen zu dieser Adresse hinzufügen</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Card (for edit mode) -->
+        <div th:if="${isEdit}" class="row justify-content-center mt-4">
+            <div class="col-lg-8">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">👁️ Aktuelle Daten</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>ID:</strong> <span th:text="${addressForm.id}">-</span><br>
+                                <strong>Adresse:</strong> <span th:text="${addressForm.addressText}">-</span>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Region:</strong> 
+                                <span th:text="${addressForm.regionName ?: 'Keine Region'}" 
+                                      th:classappend="${addressForm.regionName == null ? 'text-muted' : ''}">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <div layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const addressTextArea = document.getElementById('addressText');
+                const charCount = document.getElementById('charCount');
+                
+                // Character counter update
+                function updateCharCount() {
+                    const length = addressTextArea.value.length;
+                    charCount.textContent = length;
+                    
+                    // Color coding
+                    if (length > 450) {
+                        charCount.className = 'text-danger fw-bold';
+                    } else if (length > 400) {
+                        charCount.className = 'text-warning';
+                    } else {
+                        charCount.className = 'text-muted';
+                    }
+                }
+                
+                // Initialize counter
+                updateCharCount();
+                
+                // Update on input
+                addressTextArea.addEventListener('input', updateCharCount);
+                
+                // Form validation
+                const form = document.querySelector('form');
+                form.addEventListener('submit', function(e) {
+                    const addressText = addressTextArea.value.trim();
+                    
+                    if (addressText.length < 5) {
+                        e.preventDefault();
+                        addressTextArea.classList.add('is-invalid');
+                        addressTextArea.focus();
+                        return false;
+                    }
+                });
+                
+                // Real-time validation feedback
+                addressTextArea.addEventListener('blur', function() {
+                    if (this.value.trim().length < 5) {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                });
+                
+                // Auto-focus on load
+                if (!addressTextArea.value) {
+                    addressTextArea.focus();
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

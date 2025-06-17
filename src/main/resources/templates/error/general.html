@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+
+<head>
+    <title th:text="'Fehler ' + ${statusCode} + ' - SimpleSalesman'">Fehler - SimpleSalesman</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="text-center py-5">
+                    <!-- Error Icon -->
+                    <div class="mb-4">
+                        <span class="display-1" th:switch="${statusCode}">
+                            <span th:case="'404'">🔍</span>
+                            <span th:case="'403'">🔒</span>
+                            <span th:case="'500'">⚠️</span>
+                            <span th:case="*">❌</span>
+                        </span>
+                    </div>
+                    
+                    <!-- Error Title -->
+                    <h1 class="display-4 mb-3" th:text="${errorTitle ?: 'Fehler aufgetreten'}">
+                        Fehler aufgetreten
+                    </h1>
+                    
+                    <!-- Error Message -->
+                    <p class="lead mb-4" th:text="${errorMessage ?: 'Es ist ein unerwarteter Fehler aufgetreten.'}">
+                        Es ist ein unerwarteter Fehler aufgetreten.
+                    </p>
+                    
+                    <!-- Status Information -->
+                    <div class="alert alert-light mb-4" th:if="${statusCode}">
+                        <strong>HTTP Status:</strong> 
+                        <span th:text="${statusCode}">Unknown</span>
+                        <span th:if="${statusText}">- <span th:text="${statusText}">Status Text</span></span>
+                    </div>
+                    
+                    <!-- Navigation Options -->
+                    <div class="d-grid gap-2 d-md-block">
+                        <a th:href="@{/web/dashboard}" class="btn btn-primary btn-lg">
+                            🏠 Zum Dashboard
+                        </a>
+                        <a th:href="@{/web/addresses}" class="btn btn-outline-primary btn-lg">
+                            📍 Zur Adressliste
+                        </a>
+                        <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+                            ← Zurück
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Additional Information -->
+                <div class="card mt-5" th:if="${requestUri}">
+                    <div class="card-header">
+                        <h6 class="mb-0">ℹ️ Technische Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-3">Angeforderte URL:</dt>
+                            <dd class="col-sm-9">
+                                <code th:text="${requestUri}">URL</code>
+                            </dd>
+                            <dt class="col-sm-3">Zeitpunkt:</dt>
+                            <dd class="col-sm-9" th:text="${#temporals.format(#temporals.createNow(), 'dd.MM.yyyy HH:mm:ss')}">
+                                Jetzt
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                
+                <!-- Help Information -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">💡 Was können Sie tun?</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li th:if="${statusCode == '404'}">Überprüfen Sie die URL auf Tippfehler</li>
+                            <li th:if="${statusCode == '403'}">Stellen Sie sicher, dass Sie die erforderlichen Berechtigungen haben</li>
+                            <li th:if="${statusCode == '500'}">Versuchen Sie es in ein paar Minuten erneut</li>
+                            <li>Kehren Sie zum Dashboard zurück und versuchen Sie es von dort aus</li>
+                            <li>Kontaktieren Sie den Administrator, falls das Problem weiterhin besteht</li>
+                            <li>Nutzen Sie die API-Dokumentation unter <a href="/swagger-ui.html" target="_blank">/swagger-ui.html</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            // Auto-reload für 500er Fehler nach 30 Sekunden
+            if ([[${statusCode}]] === '500') {
+                setTimeout(function() {
+                    if (confirm('Seite automatisch neu laden?')) {
+                        window.location.reload();
+                    }
+                }, 30000);
+            }
+        </script>
+    </div>
+</body>
+</html>
