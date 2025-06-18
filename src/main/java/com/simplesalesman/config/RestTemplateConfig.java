@@ -1,10 +1,11 @@
-package com.simplesalesman.controller;
+package com.simplesalesman.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 /**
  * Configuration class for providing a RestTemplate bean in the SimpleSalesman application.
@@ -23,22 +24,22 @@ import org.springframework.web.client.RestTemplate;
  * - A log entry is created upon bean initialization
  *
  * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.3
+ * @version 0.0.6
+ * @since 0.0.5
  */
 @Configuration
 public class RestTemplateConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(RestTemplateConfig.class);
 
-    /**
-     * Creates and registers a {@link RestTemplate} bean.
-     *
-     * @return a new RestTemplate instance
-     */
     @Bean
     public RestTemplate restTemplate() {
-        logger.info("RestTemplate bean initialized");
-        return new RestTemplate();
+        logger.info("RestTemplate bean initialized with basic timeout settings");
+
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000); // 5 seconds
+        factory.setReadTimeout(5000);    // 5 seconds
+
+        return new RestTemplate(factory);
     }
 }

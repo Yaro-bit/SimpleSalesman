@@ -14,9 +14,43 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Utility class for parsing Excel (XLSX) files into {@link Project} entities.
+ *
+ * This component is responsible for reading and transforming Excel rows into
+ * valid domain objects including {@link Region}, {@link Address}, and {@link Project}.
+ * It handles various cell formats (dates, booleans, decimals) and provides robust
+ * fallback behavior for unexpected or malformed data.
+ *
+ * Usage:
+ * - Used exclusively by {@link com.simplesalesman.service.ExcelImportService}
+ * - Expects a specific column structure in the first worksheet
+ *
+ * Excel Format Assumptions (0-based columns):
+ * - [1] Region Name (String)
+ * - [2] Construction End Date (Date)
+ * - [3] Construction Completed (Boolean)
+ * - [4] Address Text (String)
+ * - [5–15] Project fields
+ *
+ * Error Handling:
+ * - Faulty rows are skipped individually with logging to stderr
+ * - Fields with invalid formats are defaulted (e.g., 0, false, null)
+ *
+ * @author SimpleSalesman Team
+ * @version 0.0.6
+ * @since 0.0.5
+ */
 @Component
 public class ExcelUtil {
 
+    /**
+     * Parses the given Excel input stream and converts rows to a list of {@link Project} objects.
+     *
+     * @param inputStream input stream of uploaded Excel file (XLSX)
+     * @return list of Project entities parsed from the file
+     * @throws Exception on structural or file format issues
+     */
     public List<Project> parse(InputStream inputStream) throws Exception {
         List<Project> projects = new ArrayList<>();
 
@@ -24,7 +58,7 @@ public class ExcelUtil {
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rows = sheet.iterator();
 
-            if (rows.hasNext()) rows.next(); // Header überspringen
+            if (rows.hasNext()) rows.next(); // Skip header row
 
             while (rows.hasNext()) {
                 Row row = rows.next();
@@ -34,11 +68,13 @@ public class ExcelUtil {
                     Address address = new Address();
                     Region region = new Region();
 
+                    // Set basic region and address
                     region.setName(getCellValue(row.getCell(1)));
                     address.setAddressText(getCellValue(row.getCell(4)));
                     address.setRegion(region);
                     project.setAddress(address);
 
+                    // Set project fields
                     project.setPlannedConstructionEnd(parseDate(row.getCell(2)));
                     project.setConstructionCompleted(parseBoolean(getCellValue(row.getCell(3))));
                     project.setOperator(getCellValue(row.getCell(5)));
@@ -63,7 +99,12 @@ public class ExcelUtil {
         return projects;
     }
 
-    // Gibt den Zellwert IMMER als String zurück, unabhängig vom Typ
+    /**
+     * Converts any cell type into a trimmed String representation.
+     *
+     * @param cell Excel cell
+     * @return stringified value
+     */
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
         switch (cell.getCellType()) {
@@ -78,18 +119,19 @@ public class ExcelUtil {
             case BOOLEAN:
                 return Boolean.toString(cell.getBooleanCellValue());
             case FORMULA:
-                // Formelzellen evaluieren
                 FormulaEvaluator evaluator = cell.getSheet().getWorkbook().getCreationHelper().createFormulaEvaluator();
                 return getCellValue(evaluator.evaluateInCell(cell));
-            case BLANK:
-            case _NONE:
-            case ERROR:
             default:
                 return "";
         }
     }
 
-    // Erkennt sowohl Excel-Datumszellen als auch ISO-Date-Strings
+    /**
+     * Parses a {@link LocalDate} from a cell if it's formatted as a date or contains ISO date text.
+     *
+     * @param cell the Excel cell
+     * @return parsed LocalDate or null
+     */
     private LocalDate parseDate(Cell cell) {
         try {
             if (cell == null) return null;
@@ -107,6 +149,12 @@ public class ExcelUtil {
         return null;
     }
 
+    /**
+     * Parses a numeric string to int, removing any non-digit characters.
+     *
+     * @param s input string
+     * @return integer or 0
+     */
     private int parseInt(String s) {
         try {
             String cleaned = s.replaceAll("[^\\d]", "");
@@ -116,19 +164,34 @@ public class ExcelUtil {
         }
     }
 
-    // Erkennt "ja", "1", "true", "wahr" als true; "nein", "0", "false" als false
+    /**
+     * Parses a boolean value from text like "ja", "1", "true", "wahr".
+     *
+     * @param value the input string
+     * @return true or false
+     */
     private boolean parseBoolean(String value) {
         String v = value.trim().toLowerCase();
         return v.equals("true") || v.equals("1") || v.equals("ja") || v.equals("wahr");
     }
 
-    // Erkennt "1", "ja", "true" als true für Vertrag/Status-Felder
+    /**
+     * Parses contract presence from values like "1", "ja", "true".
+     *
+     * @param value cell content
+     * @return true if contract is present
+     */
     private boolean parseContractPresent(String value) {
         String v = value.trim().toLowerCase();
         return v.equals("1") || v.equals("ja") || v.equals("true") || v.equals("wahr");
     }
 
-    // Erkennt sowohl numerische als auch String-Werte, konvertiert ,/./leer
+    /**
+     * Parses a decimal value from a cell, accepting both numeric and comma-separated strings.
+     *
+     * @param cell the Excel cell
+     * @return parsed BigDecimal or 0
+     */
     private BigDecimal parseDecimal(Cell cell) {
         try {
             if (cell != null) {

@@ -3,26 +3,39 @@ package com.simplesalesman.entity;
 import jakarta.persistence.*;
 import java.util.List;
 
+/**
+ * JPA Entity representing an address in the SimpleSalesman application.
+ *
+ * Each address is associated with a specific region and may have multiple
+ * projects and notes assigned to it. Used as a central data structure for sales
+ * visits.
+ *
+ * Relationships: - ManyToOne: Region - OneToMany: Project, Note
+ *
+ * @author: SimpleSalesman Team
+ * @version 0.0.6
+ * @since 0.0.1
+ */
 @Entity
 public class Address {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private String addressText;
+	private String addressText;
 
-    @ManyToOne
-    @JoinColumn(name = "region_id")
-    private Region region;
+	@ManyToOne
+	@JoinColumn(name = "region_id")
+	private Region region;
 
-    @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Project> projects;
+	@OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Project> projects;
 
-    @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Note> notes;
-    
-    // Getter und Setter
+	@OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Note> notes;
+
+	// Getter und Setter
 	public Long getId() {
 		return id;
 	}
@@ -63,6 +76,21 @@ public class Address {
 		this.notes = notes;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (!(o instanceof Address))
+			return false;
 
-    
+		Address other = (Address) o;
+
+		// Nur vergleichen, wenn ID != null → sonst false
+		return id != null && id.equals(other.id);
+	}
+
+	@Override
+	public int hashCode() {
+		return id != null ? id.hashCode() : 0;
+	}
 }

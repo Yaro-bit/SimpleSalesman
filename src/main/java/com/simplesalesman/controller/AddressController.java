@@ -33,8 +33,8 @@ import java.util.List;
  * - DELETE /api/v1/addresses/{id} - Delete address by ID
  *
  * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.1
+ * @version 0.0.6
+ * @since 0.0.4
  */
 @RestController
 @RequestMapping("/api/v1/addresses")

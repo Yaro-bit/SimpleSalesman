@@ -1,47 +1,46 @@
 package com.simplesalesman.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
- * Data Transfer Object (DTO) representing a note attached to an address.
+ * Data Transfer Object (DTO) representing a note attached to an address in the SimpleSalesman system.
+ * 
+ * Notes are typically created by field agents during or after door-to-door visits,
+ * and linked to specific address records for historical context.
+ * 
+ * This object is used for transferring note data between frontend and backend layers.
  *
- * Notes are created by sales team members during or after D2D visits and
- * are associated with a specific address entity.
- *
- * This object is used to transfer note data between frontend and backend.
- *
- * Author: SimpleSalesman Team  
- * @version 0.0.5  
- * @since 0.0.3
+ * @author SimpleSalesman Team
+ * @version 0.0.6
+ * @since 0.0.4
  */
+@Schema(description = "Note attached to an address")
 public class NoteDto {
 
     private static final Logger logger = LoggerFactory.getLogger(NoteDto.class);
 
-    /**
-     * Unique identifier of the note.
-     */
+    @Schema(description = "Unique identifier of the note", example = "17", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
-    /**
-     * The textual content of the note.
-     */
+    @Schema(description = "Text content of the note", example = "Customer asked for callback next week", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank(message = "Note text must not be blank")
+    @Size(max = 5000, message = "Note text must not exceed 5000 characters")
     private String text;
 
-    /**
-     * Timestamp when the note was created.
-     */
+    @Schema(description = "Timestamp of when the note was created", example = "2025-06-18T09:30:00")
     private LocalDateTime createdAt;
 
-    /**
-     * Username of the person who created the note.
-     */
+    @Schema(description = "Username of the creator", example = "john.doe")
     private String createdBy;
 
-    // === Getters and Setters ===
+
 
     public Long getId() {
         return id;
@@ -57,7 +56,7 @@ public class NoteDto {
     }
 
     public void setText(String text) {
-        logger.debug("NoteDto text set to '{}'", text != null ? text : "null");
+        logger.debug("NoteDto text set to '{}'", text != null ? text : "<null>");
         this.text = text;
     }
 
@@ -75,7 +74,31 @@ public class NoteDto {
     }
 
     public void setCreatedBy(String createdBy) {
-        logger.debug("NoteDto createdBy set to '{}'", createdBy);
+        logger.debug("NoteDto createdBy set to '{}'", createdBy != null ? createdBy : "<null>");
         this.createdBy = createdBy;
+    }
+
+
+
+    @Override
+    public String toString() {
+        return String.format("NoteDto{id=%d, createdBy='%s', createdAt=%s, text='%s'}",
+                id, createdBy, createdAt, text != null ? text : "<null>");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NoteDto)) return false;
+        NoteDto noteDto = (NoteDto) o;
+        return Objects.equals(id, noteDto.id) &&
+                Objects.equals(text, noteDto.text) &&
+                Objects.equals(createdAt, noteDto.createdAt) &&
+                Objects.equals(createdBy, noteDto.createdBy);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, text, createdAt, createdBy);
     }
 }

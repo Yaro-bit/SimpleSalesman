@@ -10,6 +10,10 @@ import java.util.stream.Collectors;
  * Mapper für Address <-> AddressDto.
  * Achtung: toEntity() mapped nur Basisfelder!
  * Für Region, Projekte, Notizen: Lookup im Service nötig.
+ *
+ * @author SimpleSalesman Team
+ * @version 0.0.6
+ * @since 0.0.3
  */
 @Component
 public class AddressMapper {
@@ -22,13 +26,9 @@ public class AddressMapper {
         this.noteMapper = noteMapper;
     }
 
-    /**
-     * Mapped ein Address-Entity zu einem AddressDto.
-     */
     public AddressDto toDto(Address address) {
-        if (address == null) {
-            return null;
-        }
+        if (address == null) return null;
+
         AddressDto dto = new AddressDto();
         dto.setId(address.getId());
         dto.setAddressText(address.getAddressText());
@@ -46,20 +46,12 @@ public class AddressMapper {
         return dto;
     }
 
-    /**
-     * Mapped ein AddressDto zu einem Address-Entity (Basisfelder).
-     * Achtung: Projekte, Notizen und Region müssen im Service zugeordnet werden!
-     */
     public Address toEntity(AddressDto dto) {
-        if (dto == null) {
-            return null;
-        }
+        if (dto == null) return null;
+
         Address address = new Address();
-        address.setId(dto.getId()); // Meist für Update-Fall genutzt, sonst von DB vergeben
+        address.setId(dto.getId());
         address.setAddressText(dto.getAddressText());
-        // address.setRegion(...) // Muss im Service zugewiesen werden!
-        // address.setProjects(...) // Optional im Service!
-        // address.setNotes(...) // Optional im Service!
         return address;
     }
 }

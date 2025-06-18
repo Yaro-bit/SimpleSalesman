@@ -31,8 +31,8 @@ import java.util.stream.Collectors;
  * - Supports granular role-based access via Keycloak realm roles
  *
  * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.1
+ * @version 0.0.6
+ * @since 0.0.4
  */
 @Configuration
 @EnableWebSecurity

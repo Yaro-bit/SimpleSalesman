@@ -31,9 +31,9 @@ import java.util.List;
  * - Assumes authenticated access via JWT
  * - Status updates are restricted to authorized roles (enforced in the service or via method-level security)
  *
- * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.1
+ * @Author SimpleSalesman Team
+ * @Version 0.0.5
+ * @Since 0.0.1
  */
 @RestController
 @RequestMapping("/api/v1/projects")

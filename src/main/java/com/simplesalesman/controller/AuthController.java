@@ -35,12 +35,12 @@ import org.springframework.web.bind.annotation.*;
  * - Automatic user validation against internal database
  *
  * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.1
+ * @version 0.0.6
+ * @since 0.0.4
  */
 @RestController
 @RequestMapping("/api/v1/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") //CHANGEIT For production, only allow specific domains
 public class AuthController {
     
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);

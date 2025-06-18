@@ -26,8 +26,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Usage: Methods annotated with @Async will use this executor automatically.
  * 
  * @author SimpleSalesman Team
- * @version 0.0.5
- * @since 0.0.5
+ * @version 0.0.6
+ * @since 0.0.4
  */
 @Configuration
 @EnableAsync // Enables Spring's asynchronous method execution capability
@@ -61,7 +61,7 @@ public class AsyncConfig {
 	 * @return Configured ThreadPoolTaskExecutor for async operations
 	 */
 	@Bean(name = "taskExecutor")
-	public Executor taskExecutor() {
+	public ThreadPoolTaskExecutor taskExecutor() {
 		log.info("Configuring async task executor...");
 		
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -101,7 +101,7 @@ public class AsyncConfig {
 	 * @param executor The configured ThreadPoolTaskExecutor
 	 */
 	private static void logExecutorConfiguration(ThreadPoolTaskExecutor executor) {
-		log.info("=== Async Task Executor Configuration ===");
+		log.debug("=== Async Task Executor Configuration ===");
 		log.info("Core Pool Size: {}", executor.getCorePoolSize());
 		log.info("Max Pool Size: {}", executor.getMaxPoolSize());
 		log.info("Queue Capacity: {}", executor.getQueueCapacity());

@@ -33,9 +33,9 @@ import java.util.Map;
  * - PUT /api/v1/notes/{noteId}
  * - DELETE /api/v1/notes/{noteId}
  *
- * @author
- * @version 0.0.5
- * @since 0.0.3
+ * @author SimpleSalesman Team
+ * @version 0.0.6
+ * @since 0.0.4
  */
 @RestController
 @RequestMapping("/api/v1/notes")
@@ -84,10 +84,12 @@ public class NoteController {
         String text = payload.get("text");
         String createdBy = payload.get("createdBy");
 
-        logger.info("POST request to add note to address ID {} by '{}'", addressId, createdBy);
-        noteService.addNoteToAddress(addressId, text, createdBy);
-        logger.debug("Note successfully added to address ID {}", addressId);
+        if (text == null || text.trim().isEmpty()) {
+            logger.warn("Empty note text received for address ID {}", addressId);
+            return ResponseEntity.badRequest().body(Map.of("error", "Note text must not be empty"));
+        }
 
+        noteService.addNoteToAddress(addressId, text, createdBy);
         return ResponseEntity.ok(Map.of("message", "Note saved successfully"));
     }
 
@@ -104,11 +106,23 @@ public class NoteController {
             @RequestBody Map<String, String> payload) {
 
         String newText = payload.get("text");
-        logger.info("PUT request to update note ID {}", noteId);
-        noteService.updateNoteText(noteId, newText);
-        logger.debug("Note ID {} successfully updated", noteId);
 
-        return ResponseEntity.ok(Map.of("message", "Note updated successfully"));
+        if (newText == null || newText.trim().isEmpty()) {
+            logger.warn("Empty update text received for note ID {}", noteId);
+            return ResponseEntity.badRequest().body(Map.of("error", "Note text must not be empty"));
+        }
+
+        try {
+            noteService.updateNoteText(noteId, newText);
+            logger.debug("Note ID {} successfully updated", noteId);
+            return ResponseEntity.ok(Map.of("message", "Note updated successfully"));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Note ID {} not found or invalid: {}", noteId, e.getMessage());
+            return ResponseEntity.status(404).body(Map.of("error", "Note not found"));
+        } catch (Exception e) {
+            logger.error("Unexpected error updating note ID {}: {}", noteId, e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
     }
 
     /**
@@ -120,9 +134,17 @@ public class NoteController {
     @DeleteMapping("/{noteId}")
     public ResponseEntity<Map<String, String>> deleteNote(@PathVariable Long noteId) {
         logger.info("DELETE request to remove note ID {}", noteId);
-        noteService.deleteNoteById(noteId);
-        logger.debug("Note ID {} successfully deleted", noteId);
 
-        return ResponseEntity.ok(Map.of("message", "Note deleted successfully"));
+        try {
+            noteService.deleteNoteById(noteId);
+            logger.debug("Note ID {} successfully deleted", noteId);
+            return ResponseEntity.ok(Map.of("message", "Note deleted successfully"));
+        } catch (IllegalArgumentException e) {
+            logger.warn("Note ID {} not found or invalid: {}", noteId, e.getMessage());
+            return ResponseEntity.status(404).body(Map.of("error", "Note not found"));
+        } catch (Exception e) {
+            logger.error("Unexpected error deleting note ID {}: {}", noteId, e.getMessage());
+            return ResponseEntity.status(500).body(Map.of("error", "Internal server error"));
+        }
     }
 }
