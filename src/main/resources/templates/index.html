@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title th:text="${pageTitle}">Simple Salesman API GUI - OAuth</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			padding: 20px;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			background: white;
+			border-radius: 15px;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+			overflow: hidden;
+		}
+
+		.header {
+			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+			padding: 30px;
+			text-align: center;
+			color: white;
+		}
+
+		.header h1 {
+			font-size: 2.5rem;
+			margin-bottom: 10px;
+		}
+
+		.auth-section {
+			background: #f8f9fa;
+			padding: 20px;
+			border-bottom: 2px solid #e9ecef;
+		}
+
+		.auth-status {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 15px;
+		}
+
+		.status-indicator {
+			padding: 8px 16px;
+			border-radius: 20px;
+			font-weight: bold;
+			font-size: 0.9rem;
+		}
+
+		.status-connected {
+			background: #d4edda;
+			color: #155724;
+		}
+
+		.status-disconnected {
+			background: #f8d7da;
+			color: #721c24;
+		}
+
+		.auth-info {
+			background: white;
+			padding: 15px;
+			border-radius: 8px;
+			margin-bottom: 15px;
+			border-left: 4px solid #4facfe;
+		}
+
+		.user-info {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+			gap: 10px;
+			font-size: 0.9rem;
+		}
+
+		.user-info strong {
+			color: #333;
+		}
+
+		.api-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+			gap: 20px;
+			padding: 30px;
+		}
+
+		.api-card {
+			background: white;
+			border-radius: 12px;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+			overflow: hidden;
+			transition: transform 0.3s ease;
+		}
+
+		.api-card:hover {
+			transform: translateY(-5px);
+		}
+
+		.api-header {
+			padding: 20px;
+			color: white;
+			font-weight: bold;
+			text-align: center;
+		}
+
+		.get {
+			background: linear-gradient(135deg, #11998e, #38ef7d);
+		}
+
+		.post {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+		}
+
+		.put {
+			background: linear-gradient(135deg, #f093fb, #f5576c);
+		}
+
+		.delete {
+			background: linear-gradient(135deg, #fc466b, #3f5efb);
+		}
+
+		.api-body {
+			padding: 20px;
+		}
+
+		.form-group {
+			margin-bottom: 15px;
+		}
+
+		.form-group label {
+			display: block;
+			margin-bottom: 5px;
+			font-weight: 600;
+			color: #333;
+		}
+
+		.form-group input,
+		.form-group textarea,
+		.form-group select {
+			width: 100%;
+			padding: 10px;
+			border: 2px solid #e9ecef;
+			border-radius: 8px;
+			font-size: 14px;
+			transition: border-color 0.3s ease;
+		}
+
+		.form-group input:focus,
+		.form-group textarea:focus,
+		.form-group select:focus {
+			outline: none;
+			border-color: #4facfe;
+		}
+
+		.btn {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			border: none;
+			padding: 12px 24px;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 14px;
+			font-weight: 600;
+			transition: all 0.3s ease;
+			width: 100%;
+		}
+
+		.btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+		}
+
+		.btn:disabled {
+			background: #6c757d;
+			cursor: not-allowed;
+			transform: none;
+			box-shadow: none;
+		}
+
+		.btn-success {
+			background: linear-gradient(135deg, #28a745, #20c997);
+		}
+
+		.btn-success:hover {
+			box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+		}
+
+		.btn-danger {
+			background: linear-gradient(135deg, #dc3545, #c82333);
+		}
+
+		.btn-danger:hover {
+			box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+		}
+
+		.response-area {
+			margin-top: 20px;
+			padding: 15px;
+			background: #f8f9fa;
+			border-radius: 8px;
+			border-left: 4px solid #4facfe;
+		}
+
+		.response-area h4 {
+			margin-bottom: 10px;
+			color: #333;
+		}
+
+		.response-content {
+			background: #2d3748;
+			color: #e2e8f0;
+			padding: 15px;
+			border-radius: 6px;
+			font-family: 'Courier New', monospace;
+			font-size: 13px;
+			max-height: 300px;
+			overflow-y: auto;
+			white-space: pre-wrap;
+		}
+
+		.file-input {
+			border: 2px dashed #4facfe;
+			border-radius: 8px;
+			padding: 20px;
+			text-align: center;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+
+		.file-input:hover {
+			background: #f8f9fa;
+		}
+
+		.config-section {
+			background: #fff3cd;
+			border: 1px solid #ffeaa7;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 15px;
+		}
+
+		.config-section h4 {
+			color: #856404;
+			margin-bottom: 10px;
+		}
+
+		.config-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+			gap: 10px;
+		}
+
+		.config-item {
+			background: white;
+			padding: 10px;
+			border-radius: 4px;
+			font-size: 0.9rem;
+		}
+
+		.config-item strong {
+			color: #333;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container">
+		<div class="header">
+			<h1 th:text="${apiTitle}">Simple Salesman API</h1>
+			<p th:text="${apiDescription}">OAuth2 Authentication Flow</p>
+		</div>
+
+		<div class="auth-section">
+			<div class="config-section">
+				<h4>🔧 OAuth Configuration</h4>
+				<div class="config-grid">
+					<div class="config-item">
+						<strong>Keycloak:</strong> <span id="keycloakDisplay" th:text="${keycloakBaseUrl}">Loading...</span>
+					</div>
+					<div class="config-item">
+						<strong>Client ID:</strong> <span id="clientIdDisplay" th:text="${clientId}">Loading...</span>
+					</div>
+					<div class="config-item">
+						<strong>API Host:</strong> <span id="apiHostDisplay" th:text="${apiHost}">Loading...</span>
+					</div>
+					<div class="config-item">
+						<strong>Redirect URI:</strong> <span id="redirectUriDisplay" th:text="${redirectUri}">Loading...</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="auth-status">
+				<div>
+					<span class="status-indicator" id="authStatus"
+						th:class="'status-indicator ' + (${isAuthenticated} ? 'status-connected' : 'status-disconnected')"
+						th:text="${isAuthenticated} ? '🔓 Authenticated' : '🔒 Not Authenticated'">
+						🔒 Not Authenticated
+					</span>
+				</div>
+				<div style="display: flex; gap: 10px;">
+					<button class="btn btn-success" onclick="loginWithKeycloak()" style="width: auto;" id="loginBtn"
+						th:style="${isAuthenticated} ? 'display: none;' : 'width: auto;'">
+						🔐 Login with Keycloak
+					</button>
+					<button class="btn btn-danger" onclick="logout()" style="width: auto;" id="logoutBtn"
+						th:style="${isAuthenticated} ? 'width: auto;' : 'display: none;'">
+						🚪 Logout
+					</button>
+				</div>
+			</div>
+
+			<div class="auth-info" id="userInfo" th:style="${isAuthenticated} ? '' : 'display: none;'">
+				<h4>👤 User Information</h4>
+				<div class="user-info" id="userInfoContent">
+					<!-- User info will be populated by JavaScript -->
+				</div>
+			</div>
+		</div>
+
+		<div class="api-grid">
+			<!-- Address Endpoints -->
+			<div class="api-card">
+				<div class="api-header get">GET /addresses</div>
+				<div class="api-body">
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/addresses', null, 'response-addresses')">
+						Get All Addresses
+					</button>
+					<div class="response-area" id="response-addresses" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-addresses-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header get">GET /addresses/:id</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Address ID</label>
+						<input type="number" id="addressId" th:value="${defaultAddressId}">
+					</div>
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/addresses/' + document.getElementById('addressId').value, null, 'response-address')">
+						Get Address
+					</button>
+					<div class="response-area" id="response-address" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-address-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Note Endpoints -->
+			<div class="api-card">
+				<div class="api-header get">GET /notes/:addressId</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Address ID</label>
+						<input type="number" id="notesAddressId" th:value="${defaultAddressId}">
+					</div>
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/notes/' + document.getElementById('notesAddressId').value, null, 'response-notes')">
+						Get Notes
+					</button>
+					<div class="response-area" id="response-notes" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-notes-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header post">POST /notes/:addressId</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Address ID</label>
+						<input type="number" id="postNoteAddressId" th:value="${defaultAddressId}">
+					</div>
+					<div class="form-group">
+						<label>Note Text</label>
+						<textarea id="noteText" rows="3" placeholder="Enter your note here..." th:text="${defaultNoteText}"></textarea>
+					</div>
+					<div class="form-group">
+						<label>Created By</label>
+						<input type="email" id="createdBy" th:value="${defaultUsername}">
+					</div>
+					<button class="btn" onclick="createNote()">Create Note</button>
+					<div class="response-area" id="response-create-note" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-create-note-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header put">PUT /notes/:id</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Note ID</label>
+						<input type="number" id="updateNoteId" th:value="${defaultNoteId}">
+					</div>
+					<div class="form-group">
+						<label>Updated Text</label>
+						<textarea id="updateNoteText" rows="3" placeholder="Update note text..." th:text="${defaultUpdateText}"></textarea>
+					</div>
+					<button class="btn" onclick="updateNote()">Update Note</button>
+					<div class="response-area" id="response-update-note" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-update-note-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header delete">DELETE /notes/:id</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Note ID</label>
+						<input type="number" id="deleteNoteId" th:value="${defaultNoteId}">
+					</div>
+					<button class="btn" onclick="makeRequest('DELETE', '/api/v1/notes/' + document.getElementById('deleteNoteId').value, null, 'response-delete-note')">
+						Delete Note
+					</button>
+					<div class="response-area" id="response-delete-note" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-delete-note-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Project Endpoints -->
+			<div class="api-card">
+				<div class="api-header get">GET /projects</div>
+				<div class="api-body">
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/projects', null, 'response-projects')">
+						Get All Projects
+					</button>
+					<div class="response-area" id="response-projects" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-projects-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header get">GET /projects/:id</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Project ID</label>
+						<input type="number" id="projectId" th:value="${defaultProjectId}">
+					</div>
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/projects/' + document.getElementById('projectId').value, null, 'response-project')">
+						Get Project
+					</button>
+					<div class="response-area" id="response-project" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-project-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="api-card">
+				<div class="api-header get">GET /projects/:id/status</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Project ID</label>
+						<input type="number" id="projectStatusId" th:value="${defaultProjectId}">
+					</div>
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/projects/' + document.getElementById('projectStatusId').value + '/status', null, 'response-project-status')">
+						Get Project Status
+					</button>
+					<div class="response-area" id="response-project-status" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-project-status-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Weather Endpoint -->
+			<div class="api-card">
+				<div class="api-header get">GET /weather</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Region</label>
+						<input type="text" id="weatherRegion" th:value="${defaultRegion}">
+					</div>
+					<button class="btn" onclick="makeRequest('GET', '/api/v1/weather?region=' + encodeURIComponent(document.getElementById('weatherRegion').value), null, 'response-weather')">
+						Get Weather
+					</button>
+					<div class="response-area" id="response-weather" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-weather-content"></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Import Endpoint -->
+			<div class="api-card">
+				<div class="api-header post">POST /import</div>
+				<div class="api-body">
+					<div class="form-group">
+						<label>Excel File</label>
+						<div class="file-input" onclick="document.getElementById('importFile').click()">
+							<input type="file" id="importFile" accept=".xlsx,.xls" style="display: none;" onchange="updateFileName()">
+							<p id="fileName">Click to select Excel file (.xlsx, .xls)</p>
+						</div>
+					</div>
+					<button class="btn" onclick="uploadFile()">Import File</button>
+					<div class="response-area" id="response-import" style="display: none;">
+						<h4>Response:</h4>
+						<div class="response-content" id="response-import-content"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		
+		// OAuth Configuration injected by Thymeleaf
+		const OAUTH_CONFIG = {
+			apiHost: /*[[${apiHost}]]*/ 'http://localhost:8081',
+			keycloakBaseUrl: /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080',
+			realm: /*[[${realm}]]*/ 'simple-salesman-backend',
+			clientId: /*[[${clientId}]]*/ 'simple-salesman-backend',
+			redirectUri: /*[[${redirectUri}]]*/ window.location.origin + '/'
+		};
+
+		// Authentication state from server
+		const SERVER_AUTH_STATE = {
+			isAuthenticated: /*[[${isAuthenticated}]]*/ false,
+			currentUsername: /*[[${currentUsername}]]*/ null
+		};
+
+		// Debug mode
+		const DEBUG_MODE = /*[[${debug}]]*/ false;
+
+		// Calculate Keycloak URLs
+		const keycloakAuthUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/auth`;
+		const keycloakTokenUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/token`;
+		const keycloakLogoutUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/logout`;
+
+		// Runtime state
+		let accessToken = '';
+		let refreshToken = '';
+		let userInfo = {};
+
+		// Generate PKCE code verifier and challenge
+		function generateCodeVerifier() {
+			const array = new Uint8Array(32);
+			crypto.getRandomValues(array);
+			return btoa(String.fromCharCode.apply(null, array))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=/g, '');
+		}
+
+		async function generateCodeChallenge(verifier) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(verifier);
+			const digest = await crypto.subtle.digest('SHA-256', data);
+			return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+				.replace(/\+/g, '-')
+				.replace(/\//g, '_')
+				.replace(/=/g, '');
+		}
+
+		// OAuth2 login flow
+		async function loginWithKeycloak() {
+			if (DEBUG_MODE) console.log('🔐 Starting OAuth login flow');
+			
+			const codeVerifier = generateCodeVerifier();
+			const codeChallenge = await generateCodeChallenge(codeVerifier);
+			const state = generateCodeVerifier();
+
+			// Store PKCE values
+			sessionStorage.setItem('code_verifier', codeVerifier);
+			sessionStorage.setItem('oauth_state', state);
+
+			const params = new URLSearchParams({
+				response_type: 'code',
+				client_id: OAUTH_CONFIG.clientId,
+				redirect_uri: OAUTH_CONFIG.redirectUri,
+				scope: 'openid profile email',
+				state: state,
+				code_challenge: codeChallenge,
+				code_challenge_method: 'S256'
+			});
+
+			const authUrl = `${keycloakAuthUrl}?${params.toString()}`;
+			if (DEBUG_MODE) console.log('🔗 Redirecting to:', authUrl);
+			
+			window.location.href = authUrl;
+		}
+
+		// Handle OAuth callback
+		async function handleOAuthCallback() {
+			const urlParams = new URLSearchParams(window.location.search);
+			const code = urlParams.get('code');
+			const state = urlParams.get('state');
+			const error = urlParams.get('error');
+
+			if (error) {
+				console.error('OAuth Error:', error, urlParams.get('error_description'));
+				alert(`OAuth Error: ${error} - ${urlParams.get('error_description')}`);
+				return;
+			}
+
+			if (!code || !state) {
+				return; // Not an OAuth callback
+			}
+
+			if (DEBUG_MODE) console.log('🔄 Processing OAuth callback');
+
+			// Verify state
+			const storedState = sessionStorage.getItem('oauth_state');
+			if (state !== storedState) {
+				console.error('OAuth state mismatch');
+				alert('Invalid OAuth state. Possible CSRF attack.');
+				return;
+			}
+
+			const codeVerifier = sessionStorage.getItem('code_verifier');
+			if (!codeVerifier) {
+				console.error('Missing code verifier');
+				alert('Missing code verifier. Please try logging in again.');
+				return;
+			}
+
+			try {
+				// Exchange code for tokens
+				const tokenResponse = await fetch(keycloakTokenUrl, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded'
+					},
+					body: new URLSearchParams({
+						grant_type: 'authorization_code',
+						client_id: OAUTH_CONFIG.clientId,
+						code: code,
+						redirect_uri: OAUTH_CONFIG.redirectUri,
+						code_verifier: codeVerifier
+					})
+				});
+
+				if (!tokenResponse.ok) {
+					throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+				}
+
+				const tokens = await tokenResponse.json();
+				accessToken = tokens.access_token;
+				refreshToken = tokens.refresh_token;
+
+				// Decode JWT to get user info
+				const payload = JSON.parse(atob(accessToken.split('.')[1]));
+				userInfo = {
+					username: payload.preferred_username || payload.sub,
+					email: payload.email,
+					name: payload.name,
+					roles: payload.realm_access?.roles || [],
+					exp: payload.exp
+				};
+
+				// Clean up
+				sessionStorage.removeItem('code_verifier');
+				sessionStorage.removeItem('oauth_state');
+
+				// Clear URL parameters
+				window.history.replaceState({}, document.title, window.location.pathname);
+
+				updateAuthStatus(true);
+				displayUserInfo();
+
+				if (DEBUG_MODE) console.log('✅ OAuth login successful');
+
+			} catch (error) {
+				console.error('Token exchange error:', error);
+				alert(`Authentication failed: ${error.message}`);
+			}
+		}
+
+		function logout() {
+			if (DEBUG_MODE) console.log('🚪 Logging out');
+			
+			accessToken = '';
+			refreshToken = '';
+			userInfo = {};
+			updateAuthStatus(false);
+			
+			const logoutUrl = `${keycloakLogoutUrl}?redirect_uri=${encodeURIComponent(OAUTH_CONFIG.redirectUri)}`;
+			window.location.href = logoutUrl;
+		}
+
+		function updateAuthStatus(isAuthenticated) {
+			const statusElement = document.getElementById('authStatus');
+			const loginBtn = document.getElementById('loginBtn');
+			const logoutBtn = document.getElementById('logoutBtn');
+			const userInfoDiv = document.getElementById('userInfo');
+
+			if (isAuthenticated) {
+				statusElement.textContent = '🔓 Authenticated';
+				statusElement.className = 'status-indicator status-connected';
+				loginBtn.style.display = 'none';
+				logoutBtn.style.display = 'block';
+				userInfoDiv.style.display = 'block';
+			} else {
+				statusElement.textContent = '🔒 Not Authenticated';
+				statusElement.className = 'status-indicator status-disconnected';
+				loginBtn.style.display = 'block';
+				logoutBtn.style.display = 'none';
+				userInfoDiv.style.display = 'none';
+			}
+		}
+
+		function displayUserInfo() {
+			const userInfoContent = document.getElementById('userInfoContent');
+			userInfoContent.innerHTML = `
+				<div><strong>Username:</strong> ${userInfo.username || 'N/A'}</div>
+				<div><strong>Email:</strong> ${userInfo.email || 'N/A'}</div>
+				<div><strong>Name:</strong> ${userInfo.name || 'N/A'}</div>
+				<div><strong>Roles:</strong> ${userInfo.roles?.join(', ') || 'None'}</div>
+				<div><strong>Token Expires:</strong> ${new Date(userInfo.exp * 1000).toLocaleString()}</div>
+			`;
+		}
+
+		async function makeRequest(method, endpoint, body = null, responseId = null) {
+			if (!accessToken) {
+				alert('Please login first');
+				return;
+			}
+
+			// Check if token is expired
+			if (userInfo.exp && Date.now() / 1000 > userInfo.exp) {
+				alert('Token expired. Please login again.');
+				logout();
+				return;
+			}
+
+			const url = OAUTH_CONFIG.apiHost + endpoint;
+			const headers = {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + accessToken
+			};
+
+			try {
+				const response = await fetch(url, {
+					method: method,
+					headers: headers,
+					body: body ? JSON.stringify(body) : null
+				});
+
+				const responseText = await response.text();
+				let responseData;
+
+				try {
+					responseData = JSON.parse(responseText);
+				} catch {
+					responseData = responseText;
+				}
+
+				const displayData = {
+					status: response.status,
+					statusText: response.statusText,
+					data: responseData
+				};
+
+				if (responseId) {
+					showResponse(responseId, displayData);
+				}
+			} catch (error) {
+				const errorData = {
+					error: error.message,
+					timestamp: new Date().toISOString()
+				};
+
+				if (responseId) {
+					showResponse(responseId, errorData);
+				}
+			}
+		}
+
+		async function createNote() {
+			const addressId = document.getElementById('postNoteAddressId').value;
+			const text = document.getElementById('noteText').value;
+			const createdBy = document.getElementById('createdBy').value;
+
+			const body = {
+				text: text,
+				createdBy: createdBy
+			};
+
+			await makeRequest('POST', '/api/v1/notes/' + addressId, body, 'response-create-note');
+		}
+
+		async function updateNote() {
+			const noteId = document.getElementById('updateNoteId').value;
+			const text = document.getElementById('updateNoteText').value;
+
+			const body = {
+				text: text
+			};
+
+			await makeRequest('PUT', '/api/v1/notes/' + noteId, body, 'response-update-note');
+		}
+
+		async function uploadFile() {
+			const fileInput = document.getElementById('importFile');
+			const file = fileInput.files[0];
+
+			if (!file) {
+				alert('Please select a file first');
+				return;
+			}
+
+			if (!accessToken) {
+				alert('Please login first');
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append('file', file);
+
+			try {
+				const response = await fetch(OAUTH_CONFIG.apiHost + '/api/v1/import', {
+					method: 'POST',
+					headers: {
+						'Authorization': 'Bearer ' + accessToken
+					},
+					body: formData
+				});
+
+				const responseText = await response.text();
+				let responseData;
+
+				try {
+					responseData = JSON.parse(responseText);
+				} catch {
+					responseData = responseText;
+				}
+
+				const displayData = {
+					status: response.status,
+					statusText: response.statusText,
+					data: responseData
+				};
+
+				showResponse('response-import', displayData);
+			} catch (error) {
+				const errorData = {
+					error: error.message,
+					timestamp: new Date().toISOString()
+				};
+				showResponse('response-import', errorData);
+			}
+		}
+
+		function updateFileName() {
+			const fileInput = document.getElementById('importFile');
+			const fileName = document.getElementById('fileName');
+
+			if (fileInput.files.length > 0) {
+				fileName.textContent = fileInput.files[0].name;
+			} else {
+				fileName.textContent = 'Click to select Excel file (.xlsx, .xls)';
+			}
+		}
+
+		function showResponse(responseId, data) {
+			const responseArea = document.getElementById(responseId);
+			const responseContent = document.getElementById(responseId + '-content');
+
+			if (responseArea && responseContent) {
+				responseContent.textContent = JSON.stringify(data, null, 2);
+				responseArea.style.display = 'block';
+				responseArea.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+			}
+		}
+
+		// Initialize application
+		document.addEventListener('DOMContentLoaded', function() {
+			if (DEBUG_MODE) {
+				console.log('🔧 SimpleSalesman API GUI Initialized');
+				console.log('📊 OAuth Configuration:', OAUTH_CONFIG);
+				console.log('🔐 Server Auth State:', SERVER_AUTH_STATE);
+				console.log('🌐 Current URL:', window.location.href);
+			}
+
+			// Set initial auth status from server state
+			updateAuthStatus(SERVER_AUTH_STATE.isAuthenticated);
+			
+			// Handle OAuth callback if present
+			handleOAuthCallback();
+		});
+
+		/*]]>*/
+	</script>
+</body>
+
+</html>

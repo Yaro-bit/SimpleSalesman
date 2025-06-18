@@ -22,13 +22,15 @@ import java.util.stream.Collectors;
  * This configuration enables:
  * - OAuth2 Resource Server support using JWT tokens issued by Keycloak
  * - URL-based access rules for securing REST API endpoints
- * - JWT to Spring Security authority conversion
+ * - JWT to Spring Security authority conversion  
  * - Method-level access control via annotations
+ * - Public access to web GUI endpoints (Thymeleaf templates)
  *
  * Security considerations:
- * - Stateless security using Bearer tokens
- * - CSRF disabled for APIs
+ * - Stateless security using Bearer tokens for API endpoints
+ * - CSRF disabled for APIs (not needed for same-origin Thymeleaf)
  * - Supports granular role-based access via Keycloak realm roles
+ * - No CORS needed since frontend and backend are same-origin
  *
  * @author SimpleSalesman Team
  * @version 0.0.6
@@ -59,14 +61,35 @@ public class SecurityConfig {
                 log.debug("CSRF protection disabled for REST API");
             })
 
-            // Define access rules for API endpoints
+            // Define access rules for endpoints
             .authorizeHttpRequests(auth -> {
                 auth
-                    .requestMatchers("/api/v1/import").permitAll()  // public endpoint
-                    .requestMatchers("/api/**").authenticated()     // all other API endpoints require auth
-                    .anyRequest().permitAll();                      // non-API requests are allowed
+                    // Public endpoints - Web GUI (Thymeleaf templates)
+                    .requestMatchers("/", "/gui", "/api-gui", "/index", "/health").permitAll()
+                    
+                    // Static resources (CSS, JS, images, favicon)
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                    .requestMatchers("/favicon.ico", "/robots.txt", "/sitemap.xml").permitAll()
+                    
+                    // Spring Boot actuator health endpoint (public for monitoring)
+                    .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                    
+                    // Spring Boot error page
+                    .requestMatchers("/error").permitAll()
+                    
+                    // Public API endpoints
+                    .requestMatchers("/api/v1/import").permitAll()
+                    
+                    // Protected API endpoints - require authentication
+                    .requestMatchers("/api/**").authenticated()
+                    
+                    // Protected actuator endpoints - require authentication
+                    .requestMatchers("/actuator/**").authenticated()
+                    
+                    // All other requests allowed (for Thymeleaf resources, etc.)
+                    .anyRequest().permitAll();
 
-                log.debug("Authorization rules set: /api/v1/import is public, /api/** requires authentication");
+                log.debug("Authorization rules set: Web GUI public, /api/v1/import public, /api/** requires authentication");
             })
 
             // Enable OAuth2 resource server with JWT validation
@@ -78,7 +101,7 @@ public class SecurityConfig {
                 log.info("OAuth2 Resource Server with JWT enabled");
             });
 
-        log.info("Security Filter Chain successfully configured");
+        log.info("Security Filter Chain successfully configured - No CORS needed (same-origin)");
         return http.build();
     }
 

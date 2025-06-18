@@ -8,8 +8,20 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current:** 0.0.6  
+**Current:** 0.0.7  
 **Last Update:** 2025-06-18
+
+### Changes in Version 0.0.7
+
+Interactive API GUI -  Thymeleaf template for browser-based API testing
+OAuth2 Authentication: Secure Keycloak login flow with PKCE (eliminates CORS issues)
+Live API Testing: User-friendly interface for all REST endpoints with real-time response display
+Token Management: Automatic JWT handling, expiry detection, and secure logout
+Configuration Display: Real-time OAuth settings and user information panel
+Responsive Design: Modern gradient UI with mobile-friendly layout
+Production Ready: Thymeleaf integration for deployment flexibility across environments
+
+
 
 ### Changes in Version 0.0.6
 
