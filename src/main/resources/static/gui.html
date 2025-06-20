@@ -66,7 +66,7 @@
 			padding: 24px 28px;
 			border-radius: 14px;
 			box-shadow: 0 5px 20px rgba(0,0,0,0.09);
-			max-width: 700px;
+			max-width: 1200px;
 			margin-bottom: 30px;
 		}
 		.section {
@@ -126,6 +126,107 @@
 		}
 		.back-button:hover {
 			background: #dee2e6;
+		}
+
+		/* Table Styles */
+		.data-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 20px 0;
+			background: white;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+		}
+		.data-table th {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			padding: 12px 15px;
+			text-align: left;
+			cursor: pointer;
+			user-select: none;
+			transition: background 0.2s;
+		}
+		.data-table th:hover {
+			background: linear-gradient(135deg, #5a6fd8, #6b42a0);
+		}
+		.data-table th.sorted-asc::after {
+			content: " ↑";
+			color: #fff;
+		}
+		.data-table th.sorted-desc::after {
+			content: " ↓";
+			color: #fff;
+		}
+		.data-table td {
+			padding: 12px 15px;
+			border-bottom: 1px solid #f1f3f4;
+		}
+		.data-table tr:hover {
+			background: #f8f9fa;
+		}
+		.data-table tr:last-child td {
+			border-bottom: none;
+		}
+
+		/* Project Tags */
+		.project-tag {
+			display: inline-block;
+			background: #e7f3ff;
+			color: #0066cc;
+			padding: 3px 8px;
+			border-radius: 12px;
+			font-size: 0.8rem;
+			margin: 2px;
+		}
+
+		/* Pagination */
+		.pagination {
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+			margin: 20px 0;
+		}
+		.pagination button {
+			padding: 8px 12px;
+			border: 1px solid #ddd;
+			background: white;
+			cursor: pointer;
+			border-radius: 4px;
+			transition: all 0.2s;
+		}
+		.pagination button:hover {
+			background: #f0f0f0;
+		}
+		.pagination button.active {
+			background: #667eea;
+			color: white;
+			border-color: #667eea;
+		}
+		.pagination button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		/* Search and Filter */
+		.table-controls {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		.search-input {
+			padding: 8px 12px;
+			border: 2px solid #e9ecef;
+			border-radius: 6px;
+			min-width: 200px;
+			font-size: 14px;
+		}
+		.search-input:focus {
+			outline: none;
+			border-color: #667eea;
 		}
 		
 		/* Modal/Popup Styles */
@@ -268,6 +369,30 @@
 			font-style: italic;
 		}
 		#weather { font-size: 1.05rem; }
+
+		/* Toggle buttons for different views */
+		.view-toggle {
+			margin-bottom: 20px;
+		}
+		.view-toggle button {
+			padding: 8px 16px;
+			border: 1px solid #667eea;
+			background: white;
+			color: #667eea;
+			cursor: pointer;
+			margin-right: 5px;
+			border-radius: 4px;
+			transition: all 0.2s;
+		}
+		.view-toggle button.active {
+			background: #667eea;
+			color: white;
+		}
+		.view-toggle button:hover {
+			background: #5a6fd8;
+			color: white;
+		}
+
 		@media (max-width: 800px) {
 			.sidebar { display: none; }
 			.main { margin-left: 0; }
@@ -275,6 +400,16 @@
 				margin: 10% auto;
 				width: 95%;
 				padding: 20px;
+			}
+			.data-table {
+				font-size: 0.9rem;
+			}
+			.data-table th, .data-table td {
+				padding: 8px 10px;
+			}
+			.table-controls {
+				flex-direction: column;
+				align-items: stretch;
 			}
 		}
 	</style>
@@ -297,7 +432,47 @@
 	<div class="main">
 		<!-- Adressen Sektion -->
 		<div class="section active" id="addressesSection">
-			<div class="box">
+			<!-- View Toggle -->
+			<div class="view-toggle">
+				<button onclick="showAddressView('table')" class="active" id="view-table">Tabellenansicht</button>
+				<button onclick="showAddressView('navigation')" id="view-navigation">Navigation</button>
+			</div>
+
+			<!-- Neue Adressen-Tabelle -->
+			<div class="box" id="addressesTableBox">
+				<h2>Alle Adressen</h2>
+				<div class="table-controls">
+					<input type="text" id="addressSearchInput" class="search-input" placeholder="Suche nach Adresse..." onkeyup="filterAddressTable()">
+					<div>
+						<span>Zeige </span>
+						<select id="addressPageSize" onchange="changeAddressPageSize()">
+							<option value="10">10</option>
+							<option value="20" selected>20</option>
+							<option value="50">50</option>
+						</select>
+						<span> Einträge</span>
+					</div>
+				</div>
+				<table id="addressesTable" class="data-table">
+					<thead>
+						<tr>
+							<th onclick="sortAddressTable('plz')">PLZ</th>
+							<th onclick="sortAddressTable('street')">Straße</th>
+							<th onclick="sortAddressTable('number')">Hausnummer</th>
+							<th onclick="sortAddressTable('region')">Region</th>
+							<th>Projekte</th>
+							<th>Aktionen</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><td colspan="6" class="loading">Adressen werden geladen...</td></tr>
+					</tbody>
+				</table>
+				<div id="addressesPagination" class="pagination"></div>
+			</div>
+
+			<!-- Bestehende PLZ-Navigation (ausblendbar) -->
+			<div class="box" id="addressesNavigationBox" style="display:none;">
 				<h2>Adresse auswählen</h2>
 				
 				<!-- Breadcrumb Navigation -->
@@ -336,9 +511,34 @@
 		<div class="section" id="notesSection">
 			<div class="box">
 				<h2>Alle Notizen</h2>
-				<div id="allNotesList">
-					<p>Wählen Sie zuerst eine Adresse aus, um Notizen anzuzeigen.</p>
+				<div class="table-controls">
+					<input type="text" id="notesSearchInput" class="search-input" placeholder="Suche in Notizen..." onkeyup="filterNotesTable()">
+					<div>
+						<span>Zeige </span>
+						<select id="notesPageSize" onchange="changeNotesPageSize()">
+							<option value="10">10</option>
+							<option value="20" selected>20</option>
+							<option value="50">50</option>
+						</select>
+						<span> Einträge</span>
+					</div>
 				</div>
+				<table id="notesTable" class="data-table">
+					<thead>
+						<tr>
+							<th onclick="sortNotesTable('id')">ID</th>
+							<th onclick="sortNotesTable('address')">Adresse</th>
+							<th onclick="sortNotesTable('text')">Notiztext</th>
+							<th onclick="sortNotesTable('createdBy')">Erstellt von</th>
+							<th onclick="sortNotesTable('createdAt')">Datum</th>
+							<th>Aktionen</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><td colspan="6" class="loading">Notizen werden geladen...</td></tr>
+					</tbody>
+				</table>
+				<div id="notesPagination" class="pagination"></div>
 			</div>
 		</div>
 
@@ -407,54 +607,71 @@
 	<script>
 		// ----------- Global Variables -----------
 		let allAddresses = [];
+		let allNotes = [];
+		let allProjects = [];
 		let currentStep = 'plz'; // 'plz', 'street', 'number'
 		let selectedPlz = null;
 		let selectedStreet = null;
 		let selectedNumber = null;
 		let selectedAddressId = null;
 
+		// Table state
+		let currentAddressView = 'table';
+		let addressTableState = {
+			currentPage: 1,
+			pageSize: 20,
+			sortField: 'plz',
+			sortOrder: 'asc',
+			searchTerm: ''
+		};
+		let notesTableState = {
+			currentPage: 1,
+			pageSize: 20,
+			sortField: 'id',
+			sortOrder: 'desc',
+			searchTerm: ''
+		};
+
 		// ----------- USERNAME aus Token -----------
 		document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
 
 		// ----------- Initial Load -----------
 		window.addEventListener('load', function() {
-			// Prüfe ob wir einen Token haben
 			const token = sessionStorage.getItem('access_token');
 			if (!token) {
 				console.warn('Kein access_token im sessionStorage gefunden. Versuche ohne Token...');
 			}
 			
 			loadAllAddresses();
+			loadAllNotes();
 			loadWeatherData();
 			
-			// Debug info
 			if (window.location.search.includes('debug=true')) {
 				showDebugInfo();
 			}
 		});
 
-		// Debug-Funktion für Entwicklung
 		function showDebugInfo() {
 			console.log('=== SimpleSalesman Debug Info ===');
 			console.log('Token im sessionStorage:', !!sessionStorage.getItem('access_token'));
 			console.log('Username:', sessionStorage.getItem('username'));
 			console.log('Backend URL:', window.location.origin);
 			
-			// Debug Button hinzufügen
 			const debugBtn = document.createElement('button');
-			debugBtn.textContent = 'Debug: Show Loaded Addresses';
+			debugBtn.textContent = 'Debug: Show Data';
 			debugBtn.style.position = 'fixed';
 			debugBtn.style.top = '10px';
 			debugBtn.style.right = '10px';
 			debugBtn.style.zIndex = '9999';
 			debugBtn.onclick = () => {
-				console.log('Loaded addresses:', allAddresses);
-				alert(`${allAddresses.length} Adressen geladen. Details siehe Konsole.`);
+				console.log('Addresses:', allAddresses);
+				console.log('Notes:', allNotes);
+				alert(`${allAddresses.length} Adressen, ${allNotes.length} Notizen geladen.`);
 			};
 			document.body.appendChild(debugBtn);
 		}
 
-		// ----------- Address Loading and Navigation -----------
+		// ----------- Address Loading and Table Management -----------
 		async function loadAllAddresses() {
 			try {
 				const token = sessionStorage.getItem('access_token');
@@ -467,187 +684,432 @@
 				}
 				
 				allAddresses = await res.json();
-				showAllPlzs();
+				renderAddressesTable();
+				showAllPlzs(); // For navigation view
 			} catch (error) {
 				console.error('Fehler beim Laden der Adressen:', error);
-				document.getElementById('plzList').innerHTML = `<p style="color:red;">Fehler beim Laden der PLZs: ${error.message}</p>`;
+				document.querySelector('#addressesTable tbody').innerHTML = 
+					`<tr><td colspan="6" style="color:red;">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
-		function showAllPlzs() {
-			// Extrahiere unique PLZs aus allen Adressen
-			const plzs = [...new Set(allAddresses
-				.map(a => a.postalCode || a.plz) // Fallback für verschiedene Feldnamen
-				.filter(plz => plz) // Entferne null/undefined
-			)].sort();
-			
-			const el = document.getElementById('plzList');
-			el.innerHTML = '';
-			
-			if (plzs.length === 0) {
-				el.innerHTML = '<p>Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
-				return;
-			}
-			
-			plzs.forEach(plz => {
-				const btn = document.createElement('button');
-				btn.textContent = plz;
-				btn.onclick = () => selectPlz(plz);
-				el.appendChild(btn);
-			});
-		}
-
-		function selectPlz(plz) {
-			selectedPlz = plz;
-			selectedStreet = null;
-			selectedNumber = null;
-			currentStep = 'street';
-			
-			// Update breadcrumb
-			document.getElementById('breadcrumb').innerHTML = 
-				`PLZ: ${plz} > <span class="current">Straße auswählen</span>`;
-			
-			// Show back button and street selection
-			document.getElementById('backButton').style.display = 'block';
-			document.getElementById('plzSelection').style.display = 'none';
-			document.getElementById('streetSelection').style.display = 'block';
-			document.getElementById('numberSelection').style.display = 'none';
-			
-			// Get unique streets for this PLZ - berücksichtige verschiedene Feldnamen
-			const streets = [...new Set(allAddresses
-				.filter(a => (a.postalCode || a.plz) == plz)
-				.map(a => a.street || a.addressText?.split(' ')[0] || 'Unbekannte Straße') // Fallback für addressText
-				.filter(street => street && street !== 'Unbekannte Straße')
-			)].sort();
-			
-			showStreets(streets);
-		}
-
-		function showStreets(streets) {
-			const el = document.getElementById('streetList');
-			el.innerHTML = '';
-			
-			streets.forEach(street => {
-				const btn = document.createElement('button');
-				btn.textContent = street;
-				btn.onclick = () => selectStreet(street);
-				el.appendChild(btn);
-			});
-		}
-
-		function selectStreet(street) {
-			selectedStreet = street;
-			selectedNumber = null;
-			currentStep = 'number';
-			
-			// Update breadcrumb
-			document.getElementById('breadcrumb').innerHTML = 
-				`PLZ: ${selectedPlz} > Straße: ${street} > <span class="current">Hausnummer auswählen</span>`;
-			
-			// Show number selection
-			document.getElementById('streetSelection').style.display = 'none';
-			document.getElementById('numberSelection').style.display = 'block';
-			
-			// Get house numbers for this PLZ and street
-			// Da möglicherweise nur addressText vorhanden ist, extrahieren wir die Hausnummer
-			const numbers = allAddresses
-				.filter(a => {
-					const plzMatch = (a.postalCode || a.plz) == selectedPlz;
-					const streetMatch = (a.street === street) || 
-						(a.addressText && a.addressText.includes(street));
-					return plzMatch && streetMatch;
-				})
-				.map(a => {
-					// Versuche Hausnummer zu extrahieren
-					if (a.houseNumber) return a.houseNumber;
-					if (a.addressText) {
-						// Extrahiere Nummer aus addressText (z.B. "Musterstraße 123" -> "123")
-						const match = a.addressText.match(/\d+[a-zA-Z]*/);
-						return match ? match[0] : 'Nr. unbekannt';
-					}
-					return 'Nr. unbekannt';
-				})
-				.filter(number => number !== 'Nr. unbekannt')
-				.sort((a, b) => {
-					// Try to sort numerically
-					const numA = parseInt(a);
-					const numB = parseInt(b);
-					if (!isNaN(numA) && !isNaN(numB)) {
-						return numA - numB;
-					}
-					return a.localeCompare(b);
-				});
-			
-			showNumbers(numbers);
-		}
-
-		function showNumbers(numbers) {
-			const el = document.getElementById('numberList');
-			el.innerHTML = '';
-			
-			numbers.forEach(number => {
-				const btn = document.createElement('button');
-				btn.textContent = number;
-				btn.onclick = () => selectNumber(number);
-				el.appendChild(btn);
-			});
-		}
-
-		function selectNumber(number) {
-			selectedNumber = number;
-			
-			// Find the address - handle different data structures
-			const address = allAddresses.find(a => {
-				const plzMatch = (a.postalCode || a.plz) == selectedPlz;
-				const streetMatch = (a.street === selectedStreet) || 
-					(a.addressText && a.addressText.includes(selectedStreet));
+		async function loadAllNotes() {
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
 				
-				let numberMatch = false;
-				if (a.houseNumber) {
-					numberMatch = a.houseNumber === number;
-				} else if (a.addressText) {
-					numberMatch = a.addressText.includes(number);
+				// Load all notes by getting notes for each address
+				allNotes = [];
+				for (const address of allAddresses) {
+					const res = await fetch(`/api/v1/notes/${address.id}`, { headers });
+					if (res.ok) {
+						const notes = await res.json();
+						notes.forEach(note => {
+							note.address = address; // Add address reference
+						});
+						allNotes.push(...notes);
+					}
+				}
+				renderNotesTable();
+			} catch (error) {
+				console.error('Fehler beim Laden der Notizen:', error);
+				document.querySelector('#notesTable tbody').innerHTML = 
+					`<tr><td colspan="6" style="color:red;">Fehler: ${error.message}</td></tr>`;
+			}
+		}
+
+		// ----------- Address Table Functions -----------
+		function renderAddressesTable() {
+			const { currentPage, pageSize, sortField, sortOrder, searchTerm } = addressTableState;
+			
+			// Filter addresses
+			let filteredAddresses = allAddresses.filter(addr => {
+				if (!searchTerm) return true;
+				const searchString = `${extractPlz(addr)} ${extractStreet(addr)} ${extractNumber(addr)} ${addr.regionName || ''}`.toLowerCase();
+				return searchString.includes(searchTerm.toLowerCase());
+			});
+
+			// Sort addresses
+			filteredAddresses.sort((a, b) => {
+				let aVal, bVal;
+				switch(sortField) {
+					case 'plz':
+						aVal = extractPlz(a) || '';
+						bVal = extractPlz(b) || '';
+						break;
+					case 'street':
+						aVal = extractStreet(a) || '';
+						bVal = extractStreet(b) || '';
+						break;
+					case 'number':
+						aVal = extractNumber(a) || '';
+						bVal = extractNumber(b) || '';
+						break;
+					case 'region':
+						aVal = a.regionName || '';
+						bVal = b.regionName || '';
+						break;
+					default:
+						aVal = a.addressText || '';
+						bVal = b.addressText || '';
 				}
 				
-				return plzMatch && streetMatch && numberMatch;
+				const comparison = aVal.toString().localeCompare(bVal.toString(), 'de', { numeric: true });
+				return sortOrder === 'asc' ? comparison : -comparison;
 			});
-			
-			if (address) {
-				selectedAddressId = address.id;
-				openNotesModal();
+
+			// Paginate
+			const totalPages = Math.ceil(filteredAddresses.length / pageSize);
+			const startIndex = (currentPage - 1) * pageSize;
+			const paginatedAddresses = filteredAddresses.slice(startIndex, startIndex + pageSize);
+
+			// Render table
+			const tbody = document.querySelector('#addressesTable tbody');
+			tbody.innerHTML = '';
+
+			if (paginatedAddresses.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="6" class="loading">Keine Adressen gefunden</td></tr>';
 			} else {
-				alert('Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.');
-				console.error('Address not found for:', { selectedPlz, selectedStreet, number });
+				paginatedAddresses.forEach(addr => {
+					const projects = (addr.projects || []).map(p => 
+						`<span class="project-tag">${p.status || 'Unbekannt'}</span>`
+					).join('');
+
+					tbody.innerHTML += `
+						<tr>
+							<td>${extractPlz(addr) || '-'}</td>
+							<td>${extractStreet(addr) || '-'}</td>
+							<td>${extractNumber(addr) || '-'}</td>
+							<td>${addr.regionName || '-'}</td>
+							<td>${projects || '-'}</td>
+							<td>
+								<button onclick="openNotesModalForAddress(${addr.id})" style="background:#667eea;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">
+									Notizen
+								</button>
+							</td>
+						</tr>
+					`;
+				});
+			}
+
+			// Update sort indicators
+			document.querySelectorAll('#addressesTable th').forEach(th => {
+				th.classList.remove('sorted-asc', 'sorted-desc');
+			});
+			const sortedTh = document.querySelector(`#addressesTable th[onclick="sortAddressTable('${sortField}')"]`);
+			if (sortedTh) {
+				sortedTh.classList.add(`sorted-${sortOrder}`);
+			}
+
+			// Render pagination
+			renderAddressPagination(totalPages);
+		}
+
+		function renderAddressPagination(totalPages) {
+			const pagination = document.getElementById('addressesPagination');
+			pagination.innerHTML = '';
+
+			if (totalPages <= 1) return;
+
+			const { currentPage } = addressTableState;
+
+			// Previous button
+			const prevBtn = document.createElement('button');
+			prevBtn.textContent = '‹ Zurück';
+			prevBtn.disabled = currentPage === 1;
+			prevBtn.onclick = () => {
+				if (currentPage > 1) {
+					addressTableState.currentPage--;
+					renderAddressesTable();
+				}
+			};
+			pagination.appendChild(prevBtn);
+
+			// Page numbers
+			const maxVisiblePages = 5;
+			let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+			let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+			if (endPage - startPage + 1 < maxVisiblePages) {
+				startPage = Math.max(1, endPage - maxVisiblePages + 1);
+			}
+
+			for (let page = startPage; page <= endPage; page++) {
+				const pageBtn = document.createElement('button');
+				pageBtn.textContent = page;
+				pageBtn.className = page === currentPage ? 'active' : '';
+				pageBtn.onclick = () => {
+					addressTableState.currentPage = page;
+					renderAddressesTable();
+				};
+				pagination.appendChild(pageBtn);
+			}
+
+			// Next button
+			const nextBtn = document.createElement('button');
+			nextBtn.textContent = 'Weiter ›';
+			nextBtn.disabled = currentPage === totalPages;
+			nextBtn.onclick = () => {
+				if (currentPage < totalPages) {
+					addressTableState.currentPage++;
+					renderAddressesTable();
+				}
+			};
+			pagination.appendChild(nextBtn);
+		}
+
+		function sortAddressTable(field) {
+			if (addressTableState.sortField === field) {
+				addressTableState.sortOrder = addressTableState.sortOrder === 'asc' ? 'desc' : 'asc';
+			} else {
+				addressTableState.sortField = field;
+				addressTableState.sortOrder = 'asc';
+			}
+			addressTableState.currentPage = 1;
+			renderAddressesTable();
+		}
+
+		function filterAddressTable() {
+			addressTableState.searchTerm = document.getElementById('addressSearchInput').value;
+			addressTableState.currentPage = 1;
+			renderAddressesTable();
+		}
+
+		function changeAddressPageSize() {
+			addressTableState.pageSize = parseInt(document.getElementById('addressPageSize').value);
+			addressTableState.currentPage = 1;
+			renderAddressesTable();
+		}
+
+		// ----------- Notes Table Functions -----------
+		function renderNotesTable() {
+			const { currentPage, pageSize, sortField, sortOrder, searchTerm } = notesTableState;
+			
+			// Filter notes
+			let filteredNotes = allNotes.filter(note => {
+				if (!searchTerm) return true;
+				const searchString = `${note.text || ''} ${note.createdBy || ''} ${getAddressString(note.address)}`.toLowerCase();
+				return searchString.includes(searchTerm.toLowerCase());
+			});
+
+			// Sort notes
+			filteredNotes.sort((a, b) => {
+				let aVal, bVal;
+				switch(sortField) {
+					case 'id':
+						aVal = a.id || 0;
+						bVal = b.id || 0;
+						break;
+					case 'address':
+						aVal = getAddressString(a.address);
+						bVal = getAddressString(b.address);
+						break;
+					case 'text':
+						aVal = a.text || '';
+						bVal = b.text || '';
+						break;
+					case 'createdBy':
+						aVal = a.createdBy || '';
+						bVal = b.createdBy || '';
+						break;
+					case 'createdAt':
+						aVal = new Date(a.createdAt || 0);
+						bVal = new Date(b.createdAt || 0);
+						break;
+					default:
+						aVal = a.id || 0;
+						bVal = b.id || 0;
+				}
+				
+				if (sortField === 'createdAt' || sortField === 'id') {
+					return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+				} else {
+					const comparison = aVal.toString().localeCompare(bVal.toString(), 'de');
+					return sortOrder === 'asc' ? comparison : -comparison;
+				}
+			});
+
+			// Paginate
+			const totalPages = Math.ceil(filteredNotes.length / pageSize);
+			const startIndex = (currentPage - 1) * pageSize;
+			const paginatedNotes = filteredNotes.slice(startIndex, startIndex + pageSize);
+
+			// Render table
+			const tbody = document.querySelector('#notesTable tbody');
+			tbody.innerHTML = '';
+
+			if (paginatedNotes.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="6" class="loading">Keine Notizen gefunden</td></tr>';
+			} else {
+				paginatedNotes.forEach(note => {
+					const addressStr = getAddressString(note.address);
+					const dateStr = note.createdAt ? new Date(note.createdAt).toLocaleString('de-DE') : '-';
+					const textPreview = (note.text || '').length > 100 ? 
+						(note.text || '').substring(0, 100) + '...' : 
+						(note.text || '');
+
+					tbody.innerHTML += `
+						<tr>
+							<td>${note.id || '-'}</td>
+							<td>${addressStr}</td>
+							<td title="${note.text || ''}">${textPreview}</td>
+							<td>${note.createdBy || '-'}</td>
+							<td>${dateStr}</td>
+							<td>
+								<button onclick="openNotesModalForAddress(${note.address?.id})" style="background:#667eea;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;margin-right:4px;">
+									Anzeigen
+								</button>
+							</td>
+						</tr>
+					`;
+				});
+			}
+
+			// Update sort indicators
+			document.querySelectorAll('#notesTable th').forEach(th => {
+				th.classList.remove('sorted-asc', 'sorted-desc');
+			});
+			const sortedTh = document.querySelector(`#notesTable th[onclick="sortNotesTable('${sortField}')"]`);
+			if (sortedTh) {
+				sortedTh.classList.add(`sorted-${sortOrder}`);
+			}
+
+			// Render pagination
+			renderNotesPagination(totalPages);
+		}
+
+		function renderNotesPagination(totalPages) {
+			const pagination = document.getElementById('notesPagination');
+			pagination.innerHTML = '';
+
+			if (totalPages <= 1) return;
+
+			const { currentPage } = notesTableState;
+
+			// Previous button
+			const prevBtn = document.createElement('button');
+			prevBtn.textContent = '‹ Zurück';
+			prevBtn.disabled = currentPage === 1;
+			prevBtn.onclick = () => {
+				if (currentPage > 1) {
+					notesTableState.currentPage--;
+					renderNotesTable();
+				}
+			};
+			pagination.appendChild(prevBtn);
+
+			// Page numbers
+			const maxVisiblePages = 5;
+			let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+			let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+			for (let page = startPage; page <= endPage; page++) {
+				const pageBtn = document.createElement('button');
+				pageBtn.textContent = page;
+				pageBtn.className = page === currentPage ? 'active' : '';
+				pageBtn.onclick = () => {
+					notesTableState.currentPage = page;
+					renderNotesTable();
+				};
+				pagination.appendChild(pageBtn);
+			}
+
+			// Next button
+			const nextBtn = document.createElement('button');
+			nextBtn.textContent = 'Weiter ›';
+			nextBtn.disabled = currentPage === totalPages;
+			nextBtn.onclick = () => {
+				if (currentPage < totalPages) {
+					notesTableState.currentPage++;
+					renderNotesTable();
+				}
+			};
+			pagination.appendChild(nextBtn);
+		}
+
+		function sortNotesTable(field) {
+			if (notesTableState.sortField === field) {
+				notesTableState.sortOrder = notesTableState.sortOrder === 'asc' ? 'desc' : 'asc';
+			} else {
+				notesTableState.sortField = field;
+				notesTableState.sortOrder = field === 'createdAt' || field === 'id' ? 'desc' : 'asc';
+			}
+			notesTableState.currentPage = 1;
+			renderNotesTable();
+		}
+
+		function filterNotesTable() {
+			notesTableState.searchTerm = document.getElementById('notesSearchInput').value;
+			notesTableState.currentPage = 1;
+			renderNotesTable();
+		}
+
+		function changeNotesPageSize() {
+			notesTableState.pageSize = parseInt(document.getElementById('notesPageSize').value);
+			notesTableState.currentPage = 1;
+			renderNotesTable();
+		}
+
+		// ----------- Helper Functions -----------
+		function extractPlz(address) {
+			return address.postalCode || address.plz || extractFromAddressText(address.addressText, /\b\d{4,5}\b/);
+		}
+
+		function extractStreet(address) {
+			if (address.street) return address.street;
+			if (address.addressText) {
+				// Try to extract street name before house number
+				const match = address.addressText.match(/^([^,\d]+)/);
+				return match ? match[1].trim() : address.addressText.split(',')[0].trim();
+			}
+			return '';
+		}
+
+		function extractNumber(address) {
+			return address.houseNumber || extractFromAddressText(address.addressText, /\d+[a-zA-Z]*/);
+		}
+
+		function extractFromAddressText(addressText, regex) {
+			if (!addressText) return '';
+			const match = addressText.match(regex);
+			return match ? match[0] : '';
+		}
+
+		function getAddressString(address) {
+			if (!address) return '-';
+			const plz = extractPlz(address);
+			const street = extractStreet(address);
+			const number = extractNumber(address);
+			return `${plz} ${street} ${number}`.trim();
+		}
+
+		// ----------- View Toggle Functions -----------
+		function showAddressView(view) {
+			currentAddressView = view;
+			
+			// Update toggle buttons
+			document.querySelectorAll('.view-toggle button').forEach(btn => btn.classList.remove('active'));
+			document.getElementById(`view-${view}`).classList.add('active');
+
+			// Show/hide appropriate boxes
+			if (view === 'table') {
+				document.getElementById('addressesTableBox').style.display = 'block';
+				document.getElementById('addressesNavigationBox').style.display = 'none';
+			} else {
+				document.getElementById('addressesTableBox').style.display = 'none';
+				document.getElementById('addressesNavigationBox').style.display = 'block';
 			}
 		}
 
-		function goBack() {
-			if (currentStep === 'street') {
-				// Back to PLZ selection
-				currentStep = 'plz';
-				selectedPlz = null;
-				document.getElementById('breadcrumb').innerHTML = '<span class="current">PLZ auswählen</span>';
-				document.getElementById('backButton').style.display = 'none';
-				document.getElementById('plzSelection').style.display = 'block';
-				document.getElementById('streetSelection').style.display = 'none';
-				document.getElementById('numberSelection').style.display = 'none';
-			} else if (currentStep === 'number') {
-				// Back to street selection
-				currentStep = 'street';
-				selectedStreet = null;
-				document.getElementById('breadcrumb').innerHTML = 
-					`PLZ: ${selectedPlz} > <span class="current">Straße auswählen</span>`;
-				document.getElementById('streetSelection').style.display = 'block';
-				document.getElementById('numberSelection').style.display = 'none';
+		// ----------- Modal Functions -----------
+		function openNotesModalForAddress(addressId) {
+			selectedAddressId = addressId;
+			const address = allAddresses.find(a => a.id === addressId);
+			if (address) {
+				document.getElementById('modalTitle').textContent = `Notizen für ${getAddressString(address)}`;
+				document.getElementById('notesModal').style.display = 'block';
+				loadNotesInModal();
 			}
-		}
-
-		// ----------- Notes Modal -----------
-		function openNotesModal() {
-			const addressText = `${selectedPlz} ${selectedStreet} ${selectedNumber}`;
-			document.getElementById('modalTitle').textContent = `Notizen für ${addressText}`;
-			document.getElementById('notesModal').style.display = 'block';
-			loadNotesInModal();
 		}
 
 		function closeNotesModal() {
@@ -678,7 +1140,6 @@
 						const div = document.createElement('div');
 						div.className = 'note-item';
 						
-						// Handle different possible field names
 						const noteText = note.text || note.content || note.description || 'Notiz ohne Text';
 						const creator = note.createdBy || note.author || note.user || 'Unbekannt';
 						const timestamp = note.createdAt || note.timestamp || note.created;
@@ -725,7 +1186,6 @@
 					headers['Authorization'] = 'Bearer ' + token;
 				}
 				
-				// Request structure based on your NoteController
 				const requestBody = {
 					text: text,
 					createdBy: sessionStorage.getItem('username') || 'Unbekannt'
@@ -740,8 +1200,8 @@
 				if (res.ok) {
 					document.getElementById('modalNewNote').value = '';
 					await loadNotesInModal();
+					await loadAllNotes(); // Refresh notes table
 					
-					// Show success message
 					const successMsg = document.createElement('div');
 					successMsg.style.color = 'green';
 					successMsg.style.marginTop = '10px';
@@ -766,7 +1226,152 @@
 			}
 		}
 
-		// ----------- Wetter -----------
+		// ----------- Original Navigation Functions (preserved) -----------
+		function showAllPlzs() {
+			const plzs = [...new Set(allAddresses
+				.map(a => extractPlz(a))
+				.filter(plz => plz)
+			)].sort();
+			
+			const el = document.getElementById('plzList');
+			el.innerHTML = '';
+			
+			if (plzs.length === 0) {
+				el.innerHTML = '<p>Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
+				return;
+			}
+			
+			plzs.forEach(plz => {
+				const btn = document.createElement('button');
+				btn.textContent = plz;
+				btn.onclick = () => selectPlz(plz);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectPlz(plz) {
+			selectedPlz = plz;
+			selectedStreet = null;
+			selectedNumber = null;
+			currentStep = 'street';
+			
+			document.getElementById('breadcrumb').innerHTML = 
+				`PLZ: ${plz} > <span class="current">Straße auswählen</span>`;
+			
+			document.getElementById('backButton').style.display = 'block';
+			document.getElementById('plzSelection').style.display = 'none';
+			document.getElementById('streetSelection').style.display = 'block';
+			document.getElementById('numberSelection').style.display = 'none';
+			
+			const streets = [...new Set(allAddresses
+				.filter(a => extractPlz(a) == plz)
+				.map(a => extractStreet(a))
+				.filter(street => street)
+			)].sort();
+			
+			showStreets(streets);
+		}
+
+		function showStreets(streets) {
+			const el = document.getElementById('streetList');
+			el.innerHTML = '';
+			
+			streets.forEach(street => {
+				const btn = document.createElement('button');
+				btn.textContent = street;
+				btn.onclick = () => selectStreet(street);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectStreet(street) {
+			selectedStreet = street;
+			selectedNumber = null;
+			currentStep = 'number';
+			
+			document.getElementById('breadcrumb').innerHTML = 
+				`PLZ: ${selectedPlz} > Straße: ${street} > <span class="current">Hausnummer auswählen</span>`;
+			
+			document.getElementById('streetSelection').style.display = 'none';
+			document.getElementById('numberSelection').style.display = 'block';
+			
+			const numbers = allAddresses
+				.filter(a => {
+					const plzMatch = extractPlz(a) == selectedPlz;
+					const streetMatch = extractStreet(a) === street;
+					return plzMatch && streetMatch;
+				})
+				.map(a => extractNumber(a))
+				.filter(number => number)
+				.sort((a, b) => {
+					const numA = parseInt(a);
+					const numB = parseInt(b);
+					if (!isNaN(numA) && !isNaN(numB)) {
+						return numA - numB;
+					}
+					return a.localeCompare(b);
+				});
+			
+			showNumbers(numbers);
+		}
+
+		function showNumbers(numbers) {
+			const el = document.getElementById('numberList');
+			el.innerHTML = '';
+			
+			numbers.forEach(number => {
+				const btn = document.createElement('button');
+				btn.textContent = number;
+				btn.onclick = () => selectNumber(number);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectNumber(number) {
+			selectedNumber = number;
+			
+			const address = allAddresses.find(a => {
+				const plzMatch = extractPlz(a) == selectedPlz;
+				const streetMatch = extractStreet(a) === selectedStreet;
+				const numberMatch = extractNumber(a) === number;
+				return plzMatch && streetMatch && numberMatch;
+			});
+			
+			if (address) {
+				selectedAddressId = address.id;
+				openNotesModal();
+			} else {
+				alert('Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.');
+			}
+		}
+
+		function goBack() {
+			if (currentStep === 'street') {
+				currentStep = 'plz';
+				selectedPlz = null;
+				document.getElementById('breadcrumb').innerHTML = '<span class="current">PLZ auswählen</span>';
+				document.getElementById('backButton').style.display = 'none';
+				document.getElementById('plzSelection').style.display = 'block';
+				document.getElementById('streetSelection').style.display = 'none';
+				document.getElementById('numberSelection').style.display = 'none';
+			} else if (currentStep === 'number') {
+				currentStep = 'street';
+				selectedStreet = null;
+				document.getElementById('breadcrumb').innerHTML = 
+					`PLZ: ${selectedPlz} > <span class="current">Straße auswählen</span>`;
+				document.getElementById('streetSelection').style.display = 'block';
+				document.getElementById('numberSelection').style.display = 'none';
+			}
+		}
+
+		function openNotesModal() {
+			const addressText = `${selectedPlz} ${selectedStreet} ${selectedNumber}`;
+			document.getElementById('modalTitle').textContent = `Notizen für ${addressText}`;
+			document.getElementById('notesModal').style.display = 'block';
+			loadNotesInModal();
+		}
+
+		// ----------- Weather Functions -----------
 		async function loadWeatherData() {
 			if (navigator.geolocation) {
 				navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -809,43 +1414,72 @@
 			}
 		}
 
-		// ----------- Sektion Navigation -----------
+		// ----------- Section Navigation -----------
 		function showSection(sectionName) {
-			// Alle Sektionen verstecken
 			document.querySelectorAll('.section').forEach(section => {
 				section.classList.remove('active');
 			});
 			
-			// Alle Sidebar-Buttons deaktivieren
 			document.querySelectorAll('.sidebar button').forEach(btn => {
 				btn.classList.remove('active');
 			});
 			
-			// Gewählte Sektion anzeigen
 			document.getElementById(sectionName + 'Section').classList.add('active');
 			document.getElementById('btn-' + sectionName).classList.add('active');
 			
-			// Spezielle Aktionen für bestimmte Sektionen
 			if (sectionName === 'projects') {
 				loadProjects();
 			} else if (sectionName === 'weather') {
 				loadWeatherData();
+			} else if (sectionName === 'notes' && allNotes.length === 0) {
+				loadAllNotes();
 			}
 		}
 
-		// ----------- Projekt-Funktionalität -----------
+		// ----------- Project Functions -----------
 		async function loadProjects() {
 			try {
 				const token = sessionStorage.getItem('access_token');
-				// Hinweis: Projects-Endpoint müsste im Backend implementiert werden
-				document.getElementById('projectGrid').innerHTML = '<p>Projekt-Funktionalität wird implementiert...</p>';
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+				
+				const res = await fetch('/api/v1/projects', { headers });
+				
+				if (res.ok) {
+					const projects = await res.json();
+					displayProjects(projects);
+				} else {
+					document.getElementById('projectGrid').innerHTML = '<p>Fehler beim Laden der Projekte</p>';
+				}
 			} catch (error) {
 				console.error('Fehler beim Laden der Projekte:', error);
-				document.getElementById('projectGrid').innerHTML = '<p>Fehler beim Laden der Projekte</p>';
+				document.getElementById('projectGrid').innerHTML = '<p>Projekt-Funktionalität wird implementiert...</p>';
 			}
 		}
 
-		// ----------- Import-Funktionalität -----------
+		function displayProjects(projects) {
+			const grid = document.getElementById('projectGrid');
+			grid.innerHTML = '';
+			
+			if (projects.length === 0) {
+				grid.innerHTML = '<p>Keine Projekte gefunden.</p>';
+				return;
+			}
+			
+			projects.forEach(project => {
+				const card = document.createElement('div');
+				card.className = 'project-card';
+				card.innerHTML = `
+					<h3>Projekt #${project.id}</h3>
+					<p><strong>Status:</strong> ${project.status || 'Unbekannt'}</p>
+					<p><strong>Operator:</strong> ${project.operator || '-'}</p>
+					<p><strong>Anzahl Häuser:</strong> ${project.numberOfHomes || 0}</p>
+					<p><strong>Preis:</strong> ${project.productPrice ? project.productPrice + '€' : '-'}</p>
+				`;
+				grid.appendChild(card);
+			});
+		}
+
+		// ----------- Import Functions -----------
 		document.getElementById('importForm').addEventListener('submit', async function(e) {
 			e.preventDefault();
 			const fileInput = document.getElementById('fileInput');
@@ -874,8 +1508,8 @@
 				if (result.success) {
 					document.getElementById('importResult').innerHTML = 
 						`<p style="color:green;">Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.</p>`;
-					// Reload addresses after successful import
 					loadAllAddresses();
+					loadAllNotes();
 				} else {
 					document.getElementById('importResult').innerHTML = 
 						`<p style="color:red;">Import fehlgeschlagen: ${result.errors.join(', ')}</p>`;
