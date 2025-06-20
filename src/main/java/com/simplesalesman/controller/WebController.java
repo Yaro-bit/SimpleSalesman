@@ -129,7 +129,11 @@ public class WebController {
                     baseUrl, keycloakBaseUrl, keycloakRealm, keycloakClientId);
         }
 
-        return "index"; // Returns src/main/resources/templates/index.html
+        if (!isAuthenticated) {
+            // Optional: model.addAttribute(...) für Loginseite
+            return "login"; // zeigt login.html
+        }
+        return "gui"; // zeigt gui.html (statt "index")
     }
 
     /**

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login | Simple Salesman</title>
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
+		body {
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			padding: 20px;
+		}
+		.container {
+			max-width: 420px;
+			margin: 60px auto 0 auto;
+			background: white;
+			border-radius: 15px;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+			overflow: hidden;
+			padding: 36px 30px 36px 30px;
+			text-align: center;
+		}
+		.header {
+			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+			padding: 24px;
+			color: white;
+			border-radius: 12px;
+			margin-bottom: 32px;
+		}
+		.header h1 {
+			font-size: 2.0rem;
+			margin-bottom: 8px;
+		}
+		.login-hint {
+			font-size: 1.2rem;
+			color: #444;
+			margin-bottom: 32px;
+		}
+		.btn {
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			border: none;
+			padding: 16px 24px;
+			border-radius: 8px;
+			cursor: pointer;
+			font-size: 1.1rem;
+			font-weight: 600;
+			transition: all 0.3s ease;
+			width: 100%;
+		}
+		.btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+		}
+	</style>
+</head>
+<body>
+	<div class="container" id="loginPanel">
+		<div class="header">
+			<h1>Simple Salesman</h1>
+			<p>Vertrieb-Panel – Login</p>
+		</div>
+		<div class="login-hint">
+			Sie müssen sich einloggen, um fortzufahren.
+		</div>
+		<button class="btn" onclick="loginWithKeycloak()">
+			🔐 Login mit Keycloak
+		</button>
+	</div>
+
+	<script th:inline="javascript">
+		const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
+
+		// Weiterleitung, falls schon eingeloggt
+		if (IS_AUTHENTICATED) {
+			window.location.replace("gui.html");
+		}
+
+		// Keycloak-Konfiguration (ersetze per Thymeleaf oder passe Werte direkt an)
+		const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080';
+		const REALM = /*[[${realm}]]*/ 'simple-salesman-backend';
+		const CLIENT_ID = /*[[${clientId}]]*/ 'frontend-app';
+		const REDIRECT_URI = /*[[${redirectUri}]]*/ window.location.origin + '/';
+
+		// --- PKCE Flow ---
+		function generateCodeVerifier() {
+			const array = new Uint8Array(32);
+			window.crypto.getRandomValues(array);
+			return btoa(String.fromCharCode.apply(null, array))
+				.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+		async function generateCodeChallenge(verifier) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(verifier);
+			const digest = await window.crypto.subtle.digest('SHA-256', data);
+			const hashArray = Array.from(new Uint8Array(digest));
+			let base64 = btoa(String.fromCharCode.apply(null, hashArray));
+			return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+
+		async function loginWithKeycloak() {
+			const codeVerifier = generateCodeVerifier();
+			const codeChallenge = await generateCodeChallenge(codeVerifier);
+			const state = generateCodeVerifier();
+
+			sessionStorage.setItem('code_verifier', codeVerifier);
+			sessionStorage.setItem('oauth_state', state);
+
+			const params = new URLSearchParams({
+				response_type: 'code',
+				client_id: CLIENT_ID,
+				redirect_uri: REDIRECT_URI,
+				scope: 'openid profile email',
+				state: state,
+				code_challenge: codeChallenge,
+				code_challenge_method: 'S256'
+			});
+			const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
+			window.location.href = authUrl;
+		}
+
+		// --- Handle OAuth2 Callback: Token holen und auf gui.html weiterleiten ---
+		document.addEventListener("DOMContentLoaded", async function () {
+			const urlParams = new URLSearchParams(window.location.search);
+			const code = urlParams.get('code');
+			const state = urlParams.get('state');
+			if (code && state) {
+				const codeVerifier = sessionStorage.getItem('code_verifier');
+				const storedState = sessionStorage.getItem('oauth_state');
+				if (state !== storedState) {
+					alert("Ungültiger State! Bitte erneut anmelden.");
+					return;
+				}
+				const tokenResponse = await fetch(
+					`${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/token`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/x-www-form-urlencoded" },
+						body: new URLSearchParams({
+							grant_type: "authorization_code",
+							code: code,
+							redirect_uri: REDIRECT_URI,
+							client_id: CLIENT_ID,
+							code_verifier: codeVerifier
+						}),
+					}
+				);
+				if (tokenResponse.ok) {
+					const tokens = await tokenResponse.json();
+					// Speichere Access-Token im Browser (z.B. für weitere API Calls)
+					sessionStorage.setItem('access_token', tokens.access_token);
+					// Username extrahieren:
+					const payload = JSON.parse(atob(tokens.access_token.split('.')[1]));
+					sessionStorage.setItem('username', payload.preferred_username || payload.email || 'User');
+					// Bereinige die URL
+					window.history.replaceState({}, document.title, window.location.pathname);
+					// Redirect auf GUI
+					window.location = "gui.html";
+				} else {
+					alert("Fehler beim Token holen.");
+				}
+			}
+		});
+	</script>
+</body>
+</html>

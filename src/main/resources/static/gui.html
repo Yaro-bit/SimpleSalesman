@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Simple Salesman GUI</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
+	<style>
+		body {
+			margin: 0;
+			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+		}
+		.header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 18px 30px;
+			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+			color: white;
+			font-size: 1.2rem;
+		}
+		.sidebar {
+			width: 200px;
+			background: #fff;
+			box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+			padding-top: 18px;
+			height: calc(100vh - 60px);
+			position: fixed;
+			top: 60px;
+			left: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			z-index: 1;
+		}
+		.sidebar button {
+			margin: 0 12px 8px 12px;
+			padding: 12px 0;
+			border: none;
+			border-radius: 8px;
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			font-weight: bold;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		.sidebar button:hover {
+			transform: translateX(4px) scale(1.03);
+			box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
+		}
+		.sidebar button.active {
+			background: linear-gradient(135deg, #4facfe, #00f2fe);
+			transform: translateX(4px) scale(1.03);
+		}
+		.main {
+			margin-left: 200px;
+			padding: 32px 5vw;
+			flex: 1;
+		}
+		.box {
+			background: #fff;
+			padding: 24px 28px;
+			border-radius: 14px;
+			box-shadow: 0 5px 20px rgba(0,0,0,0.09);
+			max-width: 700px;
+			margin-bottom: 30px;
+		}
+		.section {
+			display: none;
+		}
+		.section.active {
+			display: block;
+		}
+		.list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 20px;
+		}
+		.list button {
+			padding: 7px 17px;
+			margin-bottom: 8px;
+			border: none;
+			border-radius: 6px;
+			background: #f2f5ff;
+			color: #222;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background 0.18s;
+		}
+		.list button.selected {
+			background: #667eea;
+			color: #fff;
+		}
+		.list button:hover {
+			background: #e8f0ff;
+		}
+		.list button.selected:hover {
+			background: #667eea;
+		}
+		.breadcrumb {
+			background: #f8f9fa;
+			padding: 10px 15px;
+			border-radius: 6px;
+			margin-bottom: 20px;
+			font-size: 0.9rem;
+			color: #666;
+		}
+		.breadcrumb .current {
+			color: #667eea;
+			font-weight: 600;
+		}
+		.back-button {
+			padding: 6px 12px;
+			margin-bottom: 15px;
+			border: none;
+			border-radius: 4px;
+			background: #e9ecef;
+			color: #495057;
+			cursor: pointer;
+			transition: background 0.2s;
+		}
+		.back-button:hover {
+			background: #dee2e6;
+		}
+		
+		/* Modal/Popup Styles */
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1000;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0,0,0,0.5);
+		}
+		.modal-content {
+			background-color: white;
+			margin: 5% auto;
+			padding: 30px;
+			border-radius: 12px;
+			width: 90%;
+			max-width: 600px;
+			max-height: 80vh;
+			overflow-y: auto;
+			box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+		}
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+			padding-bottom: 15px;
+			border-bottom: 2px solid #f1f3f4;
+		}
+		.modal-header h3 {
+			margin: 0;
+			color: #333;
+		}
+		.close {
+			font-size: 28px;
+			font-weight: bold;
+			cursor: pointer;
+			color: #aaa;
+			transition: color 0.2s;
+		}
+		.close:hover {
+			color: #667eea;
+		}
+		.note-list {
+			background: #f8f9fa;
+			border-radius: 8px;
+			padding: 15px;
+			margin-bottom: 20px;
+			max-height: 200px;
+			overflow-y: auto;
+		}
+		.note-item {
+			padding: 8px 0;
+			border-bottom: 1px solid #e3e6f0;
+			font-size: 0.95rem;
+		}
+		.note-item:last-child { 
+			border-bottom: none; 
+		}
+		.note-meta {
+			font-size: 0.8rem;
+			color: #666;
+			margin-top: 2px;
+		}
+		.note-form textarea {
+			width: 100%;
+			min-height: 80px;
+			border-radius: 6px;
+			border: 1.7px solid #e9ecef;
+			padding: 12px;
+			font-size: 1rem;
+			margin-bottom: 15px;
+			resize: vertical;
+			font-family: inherit;
+		}
+		.note-form button {
+			padding: 10px 20px;
+			border: none;
+			border-radius: 6px;
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			font-weight: 600;
+			cursor: pointer;
+			float: right;
+		}
+		
+		.import-form {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+		.file-input {
+			padding: 20px;
+			border: 2px dashed #e9ecef;
+			border-radius: 8px;
+			text-align: center;
+			cursor: pointer;
+			transition: border-color 0.2s;
+		}
+		.file-input:hover {
+			border-color: #667eea;
+		}
+		.btn {
+			padding: 10px 20px;
+			border: none;
+			border-radius: 6px;
+			background: linear-gradient(135deg, #667eea, #764ba2);
+			color: white;
+			font-weight: 600;
+			cursor: pointer;
+			transition: transform 0.2s;
+		}
+		.btn:hover {
+			transform: scale(1.02);
+		}
+		.weather-info {
+			font-size: 1.1rem;
+			padding: 15px;
+			background: #f8f9fa;
+			border-radius: 8px;
+			margin-bottom: 15px;
+		}
+		.project-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			gap: 20px;
+		}
+		.project-card {
+			background: #f8f9fa;
+			padding: 20px;
+			border-radius: 8px;
+			border-left: 4px solid #667eea;
+		}
+		.loading {
+			text-align: center;
+			color: #666;
+			font-style: italic;
+		}
+		#weather { font-size: 1.05rem; }
+		@media (max-width: 800px) {
+			.sidebar { display: none; }
+			.main { margin-left: 0; }
+			.modal-content {
+				margin: 10% auto;
+				width: 95%;
+				padding: 20px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="header">
+		<div>Simple Salesman GUI</div>
+		<div>
+			<span id="username">User</span> | 
+			<span id="weather">Wetter wird geladen…</span>
+		</div>
+	</div>
+	<div class="sidebar">
+		<button onclick="showSection('addresses')" class="active" id="btn-addresses">Adressen</button>
+		<button onclick="showSection('notes')" id="btn-notes">Notizen</button>
+		<button onclick="showSection('projects')" id="btn-projects">Projekte</button>
+		<button onclick="showSection('import')" id="btn-import">Import</button>
+		<button onclick="showSection('weather')" id="btn-weather">Wetter</button>
+	</div>
+	<div class="main">
+		<!-- Adressen Sektion -->
+		<div class="section active" id="addressesSection">
+			<div class="box">
+				<h2>Adresse auswählen</h2>
+				
+				<!-- Breadcrumb Navigation -->
+				<div class="breadcrumb" id="breadcrumb">
+					<span class="current">PLZ auswählen</span>
+				</div>
+				
+				<!-- Back Button (initially hidden) -->
+				<button class="back-button" id="backButton" onclick="goBack()" style="display:none;">
+					← Zurück
+				</button>
+				
+				<!-- PLZ Selection -->
+				<div id="plzSelection">
+					<b>Verfügbare Postleitzahlen:</b>
+					<div class="list" id="plzList">
+						<p class="loading">PLZs werden geladen...</p>
+					</div>
+				</div>
+				
+				<!-- Street Selection (initially hidden) -->
+				<div id="streetSelection" style="display:none;">
+					<b>Straßen:</b>
+					<div class="list" id="streetList"></div>
+				</div>
+				
+				<!-- House Number Selection (initially hidden) -->
+				<div id="numberSelection" style="display:none;">
+					<b>Hausnummern:</b>
+					<div class="list" id="numberList"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Notizen Sektion -->
+		<div class="section" id="notesSection">
+			<div class="box">
+				<h2>Alle Notizen</h2>
+				<div id="allNotesList">
+					<p>Wählen Sie zuerst eine Adresse aus, um Notizen anzuzeigen.</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Projekte Sektion -->
+		<div class="section" id="projectsSection">
+			<div class="box">
+				<h2>Projekte</h2>
+				<div class="project-grid" id="projectGrid">
+					<p class="loading">Projekte werden geladen...</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Import Sektion -->
+		<div class="section" id="importSection">
+			<div class="box">
+				<h2>Excel Import</h2>
+				<form class="import-form" id="importForm">
+					<div class="file-input" onclick="document.getElementById('fileInput').click()">
+						<input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
+						<p>Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher</p>
+						<small>Unterstützte Formate: .xlsx, .xls</small>
+					</div>
+					<button type="submit" class="btn">Datei importieren</button>
+				</form>
+				<div id="importResult" style="margin-top: 20px;"></div>
+			</div>
+		</div>
+
+		<!-- Wetter Sektion -->
+		<div class="section" id="weatherSection">
+			<div class="box">
+				<h2>Wetter Information</h2>
+				<div class="weather-info" id="weatherInfo">
+					<p class="loading">Wetter wird geladen...</p>
+				</div>
+				<div>
+					<h3>Wetter für Region abfragen</h3>
+					<input type="text" id="regionInput" placeholder="Region eingeben (z.B. Linz)" style="padding:8px; margin-right:10px;">
+					<button onclick="fetchWeatherByRegion()" class="btn">Wetter abrufen</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Notes Modal -->
+	<div id="notesModal" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 id="modalTitle">Notizen für Adresse</h3>
+				<span class="close" onclick="closeNotesModal()">&times;</span>
+			</div>
+			<div class="modal-body">
+				<div class="note-list" id="modalNoteList">
+					<p class="loading">Notizen werden geladen...</p>
+				</div>
+				<form class="note-form" id="modalNoteForm">
+					<textarea id="modalNewNote" placeholder="Neue Notiz schreiben..."></textarea>
+					<button type="submit">Notiz speichern</button>
+					<div style="clear:both;"></div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// ----------- Global Variables -----------
+		let allAddresses = [];
+		let currentStep = 'plz'; // 'plz', 'street', 'number'
+		let selectedPlz = null;
+		let selectedStreet = null;
+		let selectedNumber = null;
+		let selectedAddressId = null;
+
+		// ----------- USERNAME aus Token -----------
+		document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
+
+		// ----------- Initial Load -----------
+		window.addEventListener('load', function() {
+			// Prüfe ob wir einen Token haben
+			const token = sessionStorage.getItem('access_token');
+			if (!token) {
+				console.warn('Kein access_token im sessionStorage gefunden. Versuche ohne Token...');
+			}
+			
+			loadAllAddresses();
+			loadWeatherData();
+			
+			// Debug info
+			if (window.location.search.includes('debug=true')) {
+				showDebugInfo();
+			}
+		});
+
+		// Debug-Funktion für Entwicklung
+		function showDebugInfo() {
+			console.log('=== SimpleSalesman Debug Info ===');
+			console.log('Token im sessionStorage:', !!sessionStorage.getItem('access_token'));
+			console.log('Username:', sessionStorage.getItem('username'));
+			console.log('Backend URL:', window.location.origin);
+			
+			// Debug Button hinzufügen
+			const debugBtn = document.createElement('button');
+			debugBtn.textContent = 'Debug: Show Loaded Addresses';
+			debugBtn.style.position = 'fixed';
+			debugBtn.style.top = '10px';
+			debugBtn.style.right = '10px';
+			debugBtn.style.zIndex = '9999';
+			debugBtn.onclick = () => {
+				console.log('Loaded addresses:', allAddresses);
+				alert(`${allAddresses.length} Adressen geladen. Details siehe Konsole.`);
+			};
+			document.body.appendChild(debugBtn);
+		}
+
+		// ----------- Address Loading and Navigation -----------
+		async function loadAllAddresses() {
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+				
+				const res = await fetch('/api/v1/addresses', { headers });
+				
+				if (!res.ok) {
+					throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+				}
+				
+				allAddresses = await res.json();
+				showAllPlzs();
+			} catch (error) {
+				console.error('Fehler beim Laden der Adressen:', error);
+				document.getElementById('plzList').innerHTML = `<p style="color:red;">Fehler beim Laden der PLZs: ${error.message}</p>`;
+			}
+		}
+
+		function showAllPlzs() {
+			// Extrahiere unique PLZs aus allen Adressen
+			const plzs = [...new Set(allAddresses
+				.map(a => a.postalCode || a.plz) // Fallback für verschiedene Feldnamen
+				.filter(plz => plz) // Entferne null/undefined
+			)].sort();
+			
+			const el = document.getElementById('plzList');
+			el.innerHTML = '';
+			
+			if (plzs.length === 0) {
+				el.innerHTML = '<p>Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
+				return;
+			}
+			
+			plzs.forEach(plz => {
+				const btn = document.createElement('button');
+				btn.textContent = plz;
+				btn.onclick = () => selectPlz(plz);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectPlz(plz) {
+			selectedPlz = plz;
+			selectedStreet = null;
+			selectedNumber = null;
+			currentStep = 'street';
+			
+			// Update breadcrumb
+			document.getElementById('breadcrumb').innerHTML = 
+				`PLZ: ${plz} > <span class="current">Straße auswählen</span>`;
+			
+			// Show back button and street selection
+			document.getElementById('backButton').style.display = 'block';
+			document.getElementById('plzSelection').style.display = 'none';
+			document.getElementById('streetSelection').style.display = 'block';
+			document.getElementById('numberSelection').style.display = 'none';
+			
+			// Get unique streets for this PLZ - berücksichtige verschiedene Feldnamen
+			const streets = [...new Set(allAddresses
+				.filter(a => (a.postalCode || a.plz) == plz)
+				.map(a => a.street || a.addressText?.split(' ')[0] || 'Unbekannte Straße') // Fallback für addressText
+				.filter(street => street && street !== 'Unbekannte Straße')
+			)].sort();
+			
+			showStreets(streets);
+		}
+
+		function showStreets(streets) {
+			const el = document.getElementById('streetList');
+			el.innerHTML = '';
+			
+			streets.forEach(street => {
+				const btn = document.createElement('button');
+				btn.textContent = street;
+				btn.onclick = () => selectStreet(street);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectStreet(street) {
+			selectedStreet = street;
+			selectedNumber = null;
+			currentStep = 'number';
+			
+			// Update breadcrumb
+			document.getElementById('breadcrumb').innerHTML = 
+				`PLZ: ${selectedPlz} > Straße: ${street} > <span class="current">Hausnummer auswählen</span>`;
+			
+			// Show number selection
+			document.getElementById('streetSelection').style.display = 'none';
+			document.getElementById('numberSelection').style.display = 'block';
+			
+			// Get house numbers for this PLZ and street
+			// Da möglicherweise nur addressText vorhanden ist, extrahieren wir die Hausnummer
+			const numbers = allAddresses
+				.filter(a => {
+					const plzMatch = (a.postalCode || a.plz) == selectedPlz;
+					const streetMatch = (a.street === street) || 
+						(a.addressText && a.addressText.includes(street));
+					return plzMatch && streetMatch;
+				})
+				.map(a => {
+					// Versuche Hausnummer zu extrahieren
+					if (a.houseNumber) return a.houseNumber;
+					if (a.addressText) {
+						// Extrahiere Nummer aus addressText (z.B. "Musterstraße 123" -> "123")
+						const match = a.addressText.match(/\d+[a-zA-Z]*/);
+						return match ? match[0] : 'Nr. unbekannt';
+					}
+					return 'Nr. unbekannt';
+				})
+				.filter(number => number !== 'Nr. unbekannt')
+				.sort((a, b) => {
+					// Try to sort numerically
+					const numA = parseInt(a);
+					const numB = parseInt(b);
+					if (!isNaN(numA) && !isNaN(numB)) {
+						return numA - numB;
+					}
+					return a.localeCompare(b);
+				});
+			
+			showNumbers(numbers);
+		}
+
+		function showNumbers(numbers) {
+			const el = document.getElementById('numberList');
+			el.innerHTML = '';
+			
+			numbers.forEach(number => {
+				const btn = document.createElement('button');
+				btn.textContent = number;
+				btn.onclick = () => selectNumber(number);
+				el.appendChild(btn);
+			});
+		}
+
+		function selectNumber(number) {
+			selectedNumber = number;
+			
+			// Find the address - handle different data structures
+			const address = allAddresses.find(a => {
+				const plzMatch = (a.postalCode || a.plz) == selectedPlz;
+				const streetMatch = (a.street === selectedStreet) || 
+					(a.addressText && a.addressText.includes(selectedStreet));
+				
+				let numberMatch = false;
+				if (a.houseNumber) {
+					numberMatch = a.houseNumber === number;
+				} else if (a.addressText) {
+					numberMatch = a.addressText.includes(number);
+				}
+				
+				return plzMatch && streetMatch && numberMatch;
+			});
+			
+			if (address) {
+				selectedAddressId = address.id;
+				openNotesModal();
+			} else {
+				alert('Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.');
+				console.error('Address not found for:', { selectedPlz, selectedStreet, number });
+			}
+		}
+
+		function goBack() {
+			if (currentStep === 'street') {
+				// Back to PLZ selection
+				currentStep = 'plz';
+				selectedPlz = null;
+				document.getElementById('breadcrumb').innerHTML = '<span class="current">PLZ auswählen</span>';
+				document.getElementById('backButton').style.display = 'none';
+				document.getElementById('plzSelection').style.display = 'block';
+				document.getElementById('streetSelection').style.display = 'none';
+				document.getElementById('numberSelection').style.display = 'none';
+			} else if (currentStep === 'number') {
+				// Back to street selection
+				currentStep = 'street';
+				selectedStreet = null;
+				document.getElementById('breadcrumb').innerHTML = 
+					`PLZ: ${selectedPlz} > <span class="current">Straße auswählen</span>`;
+				document.getElementById('streetSelection').style.display = 'block';
+				document.getElementById('numberSelection').style.display = 'none';
+			}
+		}
+
+		// ----------- Notes Modal -----------
+		function openNotesModal() {
+			const addressText = `${selectedPlz} ${selectedStreet} ${selectedNumber}`;
+			document.getElementById('modalTitle').textContent = `Notizen für ${addressText}`;
+			document.getElementById('notesModal').style.display = 'block';
+			loadNotesInModal();
+		}
+
+		function closeNotesModal() {
+			document.getElementById('notesModal').style.display = 'none';
+			document.getElementById('modalNewNote').value = '';
+		}
+
+		async function loadNotesInModal() {
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+				
+				const res = await fetch(`/api/v1/notes/${selectedAddressId}`, { headers });
+				
+				if (!res.ok) {
+					throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+				}
+				
+				const notes = await res.json();
+				
+				const el = document.getElementById('modalNoteList');
+				el.innerHTML = '';
+				
+				if (notes.length === 0) {
+					el.innerHTML = '<p><i>Keine Notizen vorhanden.</i></p>';
+				} else {
+					notes.forEach(note => {
+						const div = document.createElement('div');
+						div.className = 'note-item';
+						
+						// Handle different possible field names
+						const noteText = note.text || note.content || note.description || 'Notiz ohne Text';
+						const creator = note.createdBy || note.author || note.user || 'Unbekannt';
+						const timestamp = note.createdAt || note.timestamp || note.created;
+						
+						let timeString = '';
+						if (timestamp) {
+							try {
+								timeString = ' | ' + new Date(timestamp).toLocaleString('de-DE');
+							} catch (e) {
+								timeString = ` | ${timestamp}`;
+							}
+						}
+						
+						div.innerHTML = `
+							<div>${noteText}</div>
+							<div class="note-meta">Von: ${creator}${timeString}</div>
+						`;
+						el.appendChild(div);
+					});
+				}
+			} catch (error) {
+				console.error('Fehler beim Laden der Notizen:', error);
+				document.getElementById('modalNoteList').innerHTML = 
+					`<p style="color:red;">Fehler beim Laden der Notizen: ${error.message}</p>`;
+			}
+		}
+
+		// Modal form submission
+		document.getElementById('modalNoteForm').addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const text = document.getElementById('modalNewNote').value.trim();
+			if (!text || !selectedAddressId) {
+				alert('Bitte geben Sie einen Notiztext ein.');
+				return;
+			}
+
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = {
+					'Content-Type': 'application/json'
+				};
+				
+				if (token) {
+					headers['Authorization'] = 'Bearer ' + token;
+				}
+				
+				// Request structure based on your NoteController
+				const requestBody = {
+					text: text,
+					createdBy: sessionStorage.getItem('username') || 'Unbekannt'
+				};
+				
+				const res = await fetch(`/api/v1/notes/${selectedAddressId}`, {
+					method: 'POST',
+					headers: headers,
+					body: JSON.stringify(requestBody)
+				});
+
+				if (res.ok) {
+					document.getElementById('modalNewNote').value = '';
+					await loadNotesInModal();
+					
+					// Show success message
+					const successMsg = document.createElement('div');
+					successMsg.style.color = 'green';
+					successMsg.style.marginTop = '10px';
+					successMsg.textContent = 'Notiz erfolgreich gespeichert!';
+					document.querySelector('.modal-body').appendChild(successMsg);
+					setTimeout(() => successMsg.remove(), 3000);
+				} else {
+					const errorText = await res.text();
+					throw new Error(`HTTP ${res.status}: ${errorText || res.statusText}`);
+				}
+			} catch (error) {
+				console.error('Fehler beim Speichern der Notiz:', error);
+				alert(`Fehler beim Speichern der Notiz: ${error.message}`);
+			}
+		});
+
+		// Close modal when clicking outside
+		window.onclick = function(event) {
+			const modal = document.getElementById('notesModal');
+			if (event.target === modal) {
+				closeNotesModal();
+			}
+		}
+
+		// ----------- Wetter -----------
+		async function loadWeatherData() {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(async (pos) => {
+					const lat = pos.coords.latitude;
+					const lon = pos.coords.longitude;
+					try {
+						const token = sessionStorage.getItem('access_token');
+						const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+						
+						const res = await fetch(`/api/v1/weather?lat=${lat}&lon=${lon}`, { headers });
+						const weatherText = await res.text();
+						document.getElementById('weather').textContent = weatherText;
+						document.getElementById('weatherInfo').innerHTML = `<p><strong>Aktueller Standort:</strong> ${weatherText}</p>`;
+					} catch (error) {
+						console.error('Fehler beim Laden der Wetterdaten:', error);
+						document.getElementById('weather').textContent = 'Wetter nicht verfügbar';
+					}
+				}, () => {
+					document.getElementById('weather').textContent = 'Standort nicht verfügbar';
+				});
+			} else {
+				document.getElementById('weather').textContent = 'Geolocation nicht unterstützt';
+			}
+		}
+
+		async function fetchWeatherByRegion() {
+			const region = document.getElementById('regionInput').value.trim();
+			if (!region) return;
+
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+				
+				const res = await fetch(`/api/v1/weather?region=${encodeURIComponent(region)}`, { headers });
+				const weatherText = await res.text();
+				document.getElementById('weatherInfo').innerHTML = `<p><strong>${region}:</strong> ${weatherText}</p>`;
+			} catch (error) {
+				console.error('Fehler beim Laden der Wetterdaten:', error);
+				document.getElementById('weatherInfo').innerHTML = '<p>Fehler beim Laden der Wetterdaten</p>';
+			}
+		}
+
+		// ----------- Sektion Navigation -----------
+		function showSection(sectionName) {
+			// Alle Sektionen verstecken
+			document.querySelectorAll('.section').forEach(section => {
+				section.classList.remove('active');
+			});
+			
+			// Alle Sidebar-Buttons deaktivieren
+			document.querySelectorAll('.sidebar button').forEach(btn => {
+				btn.classList.remove('active');
+			});
+			
+			// Gewählte Sektion anzeigen
+			document.getElementById(sectionName + 'Section').classList.add('active');
+			document.getElementById('btn-' + sectionName).classList.add('active');
+			
+			// Spezielle Aktionen für bestimmte Sektionen
+			if (sectionName === 'projects') {
+				loadProjects();
+			} else if (sectionName === 'weather') {
+				loadWeatherData();
+			}
+		}
+
+		// ----------- Projekt-Funktionalität -----------
+		async function loadProjects() {
+			try {
+				const token = sessionStorage.getItem('access_token');
+				// Hinweis: Projects-Endpoint müsste im Backend implementiert werden
+				document.getElementById('projectGrid').innerHTML = '<p>Projekt-Funktionalität wird implementiert...</p>';
+			} catch (error) {
+				console.error('Fehler beim Laden der Projekte:', error);
+				document.getElementById('projectGrid').innerHTML = '<p>Fehler beim Laden der Projekte</p>';
+			}
+		}
+
+		// ----------- Import-Funktionalität -----------
+		document.getElementById('importForm').addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const fileInput = document.getElementById('fileInput');
+			const file = fileInput.files[0];
+			
+			if (!file) {
+				document.getElementById('importResult').innerHTML = '<p style="color:red;">Bitte wählen Sie eine Datei aus.</p>';
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append('file', file);
+
+			try {
+				const token = sessionStorage.getItem('access_token');
+				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+				
+				const res = await fetch('/api/v1/import', {
+					method: 'POST',
+					headers: headers,
+					body: formData
+				});
+
+				const result = await res.json();
+				
+				if (result.success) {
+					document.getElementById('importResult').innerHTML = 
+						`<p style="color:green;">Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.</p>`;
+					// Reload addresses after successful import
+					loadAllAddresses();
+				} else {
+					document.getElementById('importResult').innerHTML = 
+						`<p style="color:red;">Import fehlgeschlagen: ${result.errors.join(', ')}</p>`;
+				}
+			} catch (error) {
+				console.error('Import-Fehler:', error);
+				document.getElementById('importResult').innerHTML = 
+					'<p style="color:red;">Fehler beim Importieren der Datei.</p>';
+			}
+		});
+
+		// Drag & Drop für Datei-Upload
+		const fileInput = document.getElementById('fileInput');
+		const fileInputArea = document.querySelector('.file-input');
+
+		fileInputArea.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			fileInputArea.style.borderColor = '#667eea';
+		});
+
+		fileInputArea.addEventListener('dragleave', (e) => {
+			e.preventDefault();
+			fileInputArea.style.borderColor = '#e9ecef';
+		});
+
+		fileInputArea.addEventListener('drop', (e) => {
+			e.preventDefault();
+			fileInputArea.style.borderColor = '#e9ecef';
+			const files = e.dataTransfer.files;
+			if (files.length > 0) {
+				fileInput.files = files;
+				fileInputArea.querySelector('p').textContent = `Datei ausgewählt: ${files[0].name}`;
+			}
+		});
+
+		fileInput.addEventListener('change', (e) => {
+			if (e.target.files.length > 0) {
+				fileInputArea.querySelector('p').textContent = `Datei ausgewählt: ${e.target.files[0].name}`;
+			}
+		});
+	</script>
+</body>
+</html>
