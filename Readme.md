@@ -73,14 +73,18 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 - Note about changed behavior since Spring Boot 2.4 (no automatic `RestTemplate` bean)
 - Bean configuration added
 
+### Changes in Version 0.0.1 - 0.0.2
+
+- Basic testing
+- Pattern creation
+
 ---
 
 ## Implemented Features
-
 - Import of `.xlsx` files containing address and project information
 - Management and querying of:
-  - Addresses
-  - Projects including status changes
+  - Addresses (CRUD)
+  - Projects (CRUD)
   - Notes (CRUD)
 - Mapping between entities and DTOs with validation and logging
 - Weather data retrieval for a selected region
@@ -96,19 +100,20 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 
 #### Implemented Components
 
+**Frontend**
+- Simple Frontend with Thymeleaf and HTML
+- Responsive design
+- Admin console with all API's
+
 **Weather Service**  
 - Description: REST-based queries via wttr.in  
-- Local processing: No (external)  
-- Model version: –  
-- Token usage: No  
+- Token usage: Yes  
 
 ## Not Included / Planned
-
-- No user interface (UI) for interacting with the API
 - Keycloak is technically integrated but not yet in production
 - GDPR tools (logging, audit trails, permission management) are still missing
-- No admin console or user overview
 - AI features and automatic text suggestions are planned but not yet implemented
+- Performance upgrade
 
 ## Used Libraries & Licenses
 
