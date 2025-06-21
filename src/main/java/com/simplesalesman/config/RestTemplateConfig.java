@@ -37,8 +37,8 @@ public class RestTemplateConfig {
         logger.info("RestTemplate bean initialized with basic timeout settings");
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(5000); // 5 seconds
-        factory.setReadTimeout(5000);    // 5 seconds
+        factory.setConnectTimeout(15000); // 15 seconds
+        factory.setReadTimeout(15000);    // 15 seconds
 
         return new RestTemplate(factory);
     }

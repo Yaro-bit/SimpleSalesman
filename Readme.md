@@ -1,6 +1,6 @@
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.7-blue)
+![version](https://img.shields.io/badge/version-0.0.8-blue)
 
 Backend prototype for a local web application designed for efficient management and documentation of address data, notes, and project status in door-to-door sales. The application is lightweight, fully local, privacy-compliant, and optimized for small teams.
 
@@ -11,6 +11,11 @@ Backend prototype for a local web application designed for efficient management 
 **Current:** 0.0.8  
 **Last Update:** 2025-06-21
 
+## Known Issues:
+    Severe performance issues on large imports:
+    Importing 70,000 address entries currently takes approximately 10,498,144 ms (≈ 2 hours, 54 minutes, 58 seconds). The same problem occurs when selecting all addresses: the browser attempts to load the entire address dataset at once, resulting in extremely poor performance and a nearly unusable frontend for large datasets.
+    Cause: Both import and retrieval routines lack batching, streaming, or pagination, leading to excessive memory and processing requirements.
+    Workaround: None at this time; consider limiting import/export size or adding pagination.
 
 ### Changes in Version 0.0.8
 Interactive API GUI update: Enhanced Thymeleaf templates for browser-based API testing
