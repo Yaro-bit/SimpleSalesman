@@ -1,4 +1,39 @@
-<!DOCTYPE html>
+<!--
+  SimpleSalesman GUI - Main Application Interface
+
+  This is the primary user interface for the SimpleSalesman application, providing:
+  - Address management with table and navigation views
+  - Notes management with modal interfaces
+  - Project overview and status tracking
+  - Excel file import functionality
+  - Weather information integration
+
+  Key Features:
+  - Dark theme design matching Keycloak styling
+  - Responsive layout with sidebar navigation
+  - Real-time data loading via REST API
+  - Secure authentication with OAuth2/JWT tokens
+  - Advanced table features (sorting, pagination, search)
+  - Modal-based note editing and viewing
+
+  Security:
+  - All API calls include JWT Bearer tokens
+  - Proper logout functionality with session cleanup
+  - Input validation on form submissions
+  - CSRF protection through proper logout handling
+
+  Browser Compatibility:
+  - Modern browsers with ES6+ support
+  - Responsive design for mobile devices
+  - Geolocation API support for weather features
+
+  @author SimpleSalesman Team
+  @version 0.0.8
+  @since 0.0.7
+  @requires Bearer token authentication
+  @requires Modern browser with JavaScript enabled
+-->
+ <!DOCTYPE html>
 <html lang="de">
 <head>
 	<meta charset="UTF-8">
@@ -6,165 +41,242 @@
 	<title>Simple Salesman GUI</title>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
 	<style>
+		:root {
+			--keycloak-primary: #0066cc;
+			--keycloak-primary-hover: #004499;
+			--keycloak-primary-light: #1a4a7a;
+			--keycloak-secondary: #2a2a2a;
+			--keycloak-background: #1e1e1e;
+			--keycloak-sidebar: #161616;
+			--keycloak-content: #262626;
+			--keycloak-white: #ffffff;
+			--keycloak-text: #f0f0f0;
+			--keycloak-text-secondary: #a0a0a0;
+			--keycloak-text-muted: #6f6f6f;
+			--keycloak-border: #404040;
+			--keycloak-border-light: #333333;
+			--keycloak-success: #24a148;
+			--keycloak-error: #da1e28;
+			--keycloak-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+			--keycloak-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+		}
+
 		body {
 			margin: 0;
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			background: var(--keycloak-background);
 			height: 100vh;
 			display: flex;
 			flex-direction: column;
+			color: var(--keycloak-text);
 		}
+
 		.header {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			padding: 18px 30px;
-			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-			color: white;
-			font-size: 1.2rem;
+			padding: 16px 24px;
+			background: var(--keycloak-sidebar);
+			color: var(--keycloak-text);
+			font-size: 1.1rem;
+			font-weight: 600;
+			border-bottom: 1px solid var(--keycloak-border);
+			box-shadow: var(--keycloak-shadow);
 		}
+
+		.logout-btn {
+			padding: 6px 12px;
+			margin-left: 8px;
+			border: 1px solid var(--keycloak-border);
+			border-radius: 4px;
+			background: var(--keycloak-secondary);
+			color: var(--keycloak-text);
+			font-size: 0.9rem;
+			font-weight: 400;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.logout-btn:hover {
+			background: var(--keycloak-error);
+			color: var(--keycloak-white);
+			border-color: var(--keycloak-error);
+		}
+
 		.sidebar {
 			width: 200px;
-			background: #fff;
-			box-shadow: 2px 0 12px rgba(0,0,0,0.08);
-			padding-top: 18px;
-			height: calc(100vh - 60px);
+			background: var(--keycloak-sidebar);
+			box-shadow: var(--keycloak-shadow);
+			padding-top: 16px;
 			position: fixed;
-			top: 60px;
+			top: 217px;
 			left: 0;
 			display: flex;
 			flex-direction: column;
-			gap: 10px;
+			gap: 4px;
 			z-index: 1;
+			border-right: 1px solid var(--keycloak-border);
 		}
+
 		.sidebar button {
-			margin: 0 12px 8px 12px;
-			padding: 12px 0;
+			margin: 0 8px 2px 8px;
+			padding: 12px 16px;
 			border: none;
-			border-radius: 8px;
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
-			font-weight: bold;
+			border-radius: 4px;
+			background: transparent;
+			color: var(--keycloak-text-secondary);
+			font-weight: 400;
 			cursor: pointer;
-			transition: all 0.2s;
+			transition: all 0.2s ease;
+			text-align: left;
 		}
+
 		.sidebar button:hover {
-			transform: translateX(4px) scale(1.03);
-			box-shadow: 0 3px 10px rgba(102, 126, 234, 0.15);
+			background: var(--keycloak-secondary);
+			color: var(--keycloak-text);
 		}
+
 		.sidebar button.active {
-			background: linear-gradient(135deg, #4facfe, #00f2fe);
-			transform: translateX(4px) scale(1.03);
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
 		}
+
 		.main {
 			margin-left: 200px;
-			padding: 32px 5vw;
+			padding: 24px;
 			flex: 1;
+			background: var(--keycloak-background);
 		}
+
 		.box {
-			background: #fff;
-			padding: 24px 28px;
-			border-radius: 14px;
-			box-shadow: 0 5px 20px rgba(0,0,0,0.09);
+			background: var(--keycloak-content);
+			padding: 24px;
+			border-radius: 6px;
+			box-shadow: var(--keycloak-shadow);
 			max-width: 1200px;
-			margin-bottom: 30px;
+			margin-bottom: 24px;
+			border: 1px solid var(--keycloak-border);
 		}
+
 		.section {
 			display: none;
 		}
+
 		.section.active {
 			display: block;
 		}
+
 		.list {
 			display: flex;
 			flex-wrap: wrap;
-			gap: 10px;
-			margin-bottom: 20px;
+			gap: 8px;
+			margin-bottom: 16px;
 		}
+
 		.list button {
-			padding: 7px 17px;
+			padding: 8px 16px;
 			margin-bottom: 8px;
-			border: none;
-			border-radius: 6px;
-			background: #f2f5ff;
-			color: #222;
-			font-weight: 500;
+			border: 1px solid var(--keycloak-border);
+			border-radius: 4px;
+			background: var(--keycloak-content);
+			color: var(--keycloak-text);
+			font-weight: 400;
 			cursor: pointer;
-			transition: background 0.18s;
+			transition: all 0.2s ease;
 		}
+
 		.list button.selected {
-			background: #667eea;
-			color: #fff;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
+			border-color: var(--keycloak-primary);
 		}
+
 		.list button:hover {
-			background: #e8f0ff;
+			background: var(--keycloak-secondary);
+			border-color: var(--keycloak-primary);
 		}
+
 		.list button.selected:hover {
-			background: #667eea;
+			background: var(--keycloak-primary-hover);
 		}
+
 		.breadcrumb {
-			background: #f8f9fa;
-			padding: 10px 15px;
-			border-radius: 6px;
-			margin-bottom: 20px;
+			background: var(--keycloak-secondary);
+			padding: 12px 16px;
+			border-radius: 4px;
+			margin-bottom: 16px;
 			font-size: 0.9rem;
-			color: #666;
+			color: var(--keycloak-text-secondary);
+			border: 1px solid var(--keycloak-border);
 		}
+
 		.breadcrumb .current {
-			color: #667eea;
+			color: var(--keycloak-primary);
 			font-weight: 600;
 		}
+
 		.back-button {
-			padding: 6px 12px;
-			margin-bottom: 15px;
-			border: none;
+			padding: 8px 16px;
+			margin-bottom: 16px;
+			border: 1px solid var(--keycloak-border);
 			border-radius: 4px;
-			background: #e9ecef;
-			color: #495057;
+			background: var(--keycloak-secondary);
+			color: var(--keycloak-text);
 			cursor: pointer;
-			transition: background 0.2s;
+			transition: all 0.2s ease;
 		}
+
 		.back-button:hover {
-			background: #dee2e6;
+			background: var(--keycloak-border);
 		}
 
 		/* Table Styles */
 		.data-table {
 			width: 100%;
 			border-collapse: collapse;
-			margin: 20px 0;
-			background: white;
-			border-radius: 8px;
+			margin: 16px 0;
+			background: var(--keycloak-content);
+			border-radius: 6px;
 			overflow: hidden;
-			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			box-shadow: var(--keycloak-shadow);
+			border: 1px solid var(--keycloak-border);
 		}
+
 		.data-table th {
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
-			padding: 12px 15px;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
+			padding: 12px 16px;
 			text-align: left;
 			cursor: pointer;
 			user-select: none;
-			transition: background 0.2s;
+			transition: background 0.2s ease;
+			font-weight: 600;
 		}
+
 		.data-table th:hover {
-			background: linear-gradient(135deg, #5a6fd8, #6b42a0);
+			background: var(--keycloak-primary-hover);
 		}
+
 		.data-table th.sorted-asc::after {
 			content: " ↑";
-			color: #fff;
+			color: var(--keycloak-white);
 		}
+
 		.data-table th.sorted-desc::after {
 			content: " ↓";
-			color: #fff;
+			color: var(--keycloak-white);
 		}
+
 		.data-table td {
-			padding: 12px 15px;
-			border-bottom: 1px solid #f1f3f4;
+			padding: 12px 16px;
+			border-bottom: 1px solid var(--keycloak-border);
+			color: var(--keycloak-text);
 		}
+
 		.data-table tr:hover {
-			background: #f8f9fa;
+			background: var(--keycloak-secondary);
 		}
+
 		.data-table tr:last-child td {
 			border-bottom: none;
 		}
@@ -172,40 +284,48 @@
 		/* Project Tags */
 		.project-tag {
 			display: inline-block;
-			background: #e7f3ff;
-			color: #0066cc;
-			padding: 3px 8px;
-			border-radius: 12px;
+			background: var(--keycloak-primary-light);
+			color: var(--keycloak-primary);
+			padding: 4px 8px;
+			border-radius: 4px;
 			font-size: 0.8rem;
 			margin: 2px;
+			border: 1px solid var(--keycloak-primary);
 		}
 
 		/* Pagination */
 		.pagination {
 			display: flex;
 			justify-content: center;
-			gap: 10px;
-			margin: 20px 0;
+			gap: 8px;
+			margin: 16px 0;
 		}
+
 		.pagination button {
 			padding: 8px 12px;
-			border: 1px solid #ddd;
-			background: white;
+			border: 1px solid var(--keycloak-border);
+			background: var(--keycloak-content);
 			cursor: pointer;
 			border-radius: 4px;
-			transition: all 0.2s;
+			transition: all 0.2s ease;
+			color: var(--keycloak-text);
 		}
+
 		.pagination button:hover {
-			background: #f0f0f0;
+			background: var(--keycloak-secondary);
+			border-color: var(--keycloak-primary);
 		}
+
 		.pagination button.active {
-			background: #667eea;
-			color: white;
-			border-color: #667eea;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
+			border-color: var(--keycloak-primary);
 		}
+
 		.pagination button:disabled {
 			opacity: 0.5;
 			cursor: not-allowed;
+			background: var(--keycloak-secondary);
 		}
 
 		/* Search and Filter */
@@ -213,20 +333,25 @@
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-bottom: 20px;
+			margin-bottom: 16px;
 			flex-wrap: wrap;
-			gap: 10px;
+			gap: 12px;
 		}
+
 		.search-input {
 			padding: 8px 12px;
-			border: 2px solid #e9ecef;
-			border-radius: 6px;
+			border: 1px solid var(--keycloak-border);
+			border-radius: 4px;
 			min-width: 200px;
 			font-size: 14px;
+			color: var(--keycloak-text);
+			background: var(--keycloak-content);
 		}
+
 		.search-input:focus {
 			outline: none;
-			border-color: #667eea;
+			border-color: var(--keycloak-primary);
+			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
 		}
 		
 		/* Modal/Popup Styles */
@@ -238,159 +363,275 @@
 			top: 0;
 			width: 100%;
 			height: 100%;
-			background-color: rgba(0,0,0,0.5);
+			background-color: rgba(0, 0, 0, 0.5);
 		}
+
 		.modal-content {
-			background-color: white;
+			background-color: var(--keycloak-content);
 			margin: 5% auto;
-			padding: 30px;
-			border-radius: 12px;
+			padding: 24px;
+			border-radius: 6px;
 			width: 90%;
 			max-width: 600px;
 			max-height: 80vh;
 			overflow-y: auto;
-			box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+			box-shadow: var(--keycloak-shadow-hover);
+			border: 1px solid var(--keycloak-border);
 		}
+
 		.modal-header {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			margin-bottom: 20px;
-			padding-bottom: 15px;
-			border-bottom: 2px solid #f1f3f4;
+			margin-bottom: 16px;
+			padding-bottom: 12px;
+			border-bottom: 1px solid var(--keycloak-border);
 		}
+
 		.modal-header h3 {
 			margin: 0;
-			color: #333;
+			color: var(--keycloak-text);
+			font-weight: 600;
 		}
+
 		.close {
-			font-size: 28px;
+			font-size: 24px;
 			font-weight: bold;
 			cursor: pointer;
-			color: #aaa;
-			transition: color 0.2s;
+			color: var(--keycloak-text-secondary);
+			transition: color 0.2s ease;
 		}
+
 		.close:hover {
-			color: #667eea;
+			color: var(--keycloak-primary);
 		}
+
 		.note-list {
-			background: #f8f9fa;
-			border-radius: 8px;
-			padding: 15px;
-			margin-bottom: 20px;
+			background: var(--keycloak-secondary);
+			border-radius: 4px;
+			padding: 16px;
+			margin-bottom: 16px;
 			max-height: 200px;
 			overflow-y: auto;
+			border: 1px solid var(--keycloak-border);
 		}
+
 		.note-item {
 			padding: 8px 0;
-			border-bottom: 1px solid #e3e6f0;
-			font-size: 0.95rem;
+			border-bottom: 1px solid var(--keycloak-border);
+			font-size: 0.9rem;
+			color: var(--keycloak-text);
 		}
+
 		.note-item:last-child { 
 			border-bottom: none; 
 		}
+
 		.note-meta {
 			font-size: 0.8rem;
-			color: #666;
-			margin-top: 2px;
+			color: var(--keycloak-text-secondary);
+			margin-top: 4px;
 		}
+
 		.note-form textarea {
 			width: 100%;
 			min-height: 80px;
-			border-radius: 6px;
-			border: 1.7px solid #e9ecef;
+			border-radius: 4px;
+			border: 1px solid var(--keycloak-border);
 			padding: 12px;
 			font-size: 1rem;
-			margin-bottom: 15px;
+			margin-bottom: 12px;
 			resize: vertical;
 			font-family: inherit;
+			color: var(--keycloak-text);
+			background: var(--keycloak-content);
 		}
+
+		.note-form textarea:focus {
+			outline: none;
+			border-color: var(--keycloak-primary);
+			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
+		}
+
 		.note-form button {
 			padding: 10px 20px;
 			border: none;
-			border-radius: 6px;
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
+			border-radius: 4px;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
 			font-weight: 600;
 			cursor: pointer;
 			float: right;
+			transition: background 0.2s ease;
+		}
+
+		.note-form button:hover {
+			background: var(--keycloak-primary-hover);
 		}
 		
 		.import-form {
 			display: flex;
 			flex-direction: column;
-			gap: 15px;
+			gap: 16px;
 		}
+
 		.file-input {
-			padding: 20px;
-			border: 2px dashed #e9ecef;
-			border-radius: 8px;
+			padding: 24px;
+			border: 2px dashed var(--keycloak-border);
+			border-radius: 4px;
 			text-align: center;
 			cursor: pointer;
-			transition: border-color 0.2s;
+			transition: border-color 0.2s ease;
+			background: var(--keycloak-secondary) !important;
+			color: var(--keycloak-text) !important;
 		}
+
 		.file-input:hover {
-			border-color: #667eea;
+			border-color: var(--keycloak-primary);
+			background: var(--keycloak-border) !important;
 		}
+
+		.file-input p {
+			color: var(--keycloak-text) !important;
+			margin: 0 0 8px 0;
+		}
+
+		.file-input small {
+			color: var(--keycloak-text-secondary) !important;
+		}
+
 		.btn {
 			padding: 10px 20px;
 			border: none;
-			border-radius: 6px;
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
+			border-radius: 4px;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
 			font-weight: 600;
 			cursor: pointer;
-			transition: transform 0.2s;
+			transition: background 0.2s ease;
 		}
+
 		.btn:hover {
-			transform: scale(1.02);
+			background: var(--keycloak-primary-hover);
 		}
+
 		.weather-info {
 			font-size: 1.1rem;
-			padding: 15px;
-			background: #f8f9fa;
-			border-radius: 8px;
-			margin-bottom: 15px;
+			padding: 16px;
+			background: var(--keycloak-secondary);
+			border-radius: 4px;
+			margin-bottom: 16px;
+			border: 1px solid var(--keycloak-border-light);
+			color: var(--keycloak-text);
 		}
+
 		.project-grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-			gap: 20px;
+			gap: 16px;
 		}
+
 		.project-card {
-			background: #f8f9fa;
+			background: var(--keycloak-secondary);
 			padding: 20px;
-			border-radius: 8px;
-			border-left: 4px solid #667eea;
+			border-radius: 4px;
+			border-left: 4px solid var(--keycloak-primary);
+			border: 1px solid var(--keycloak-border-light);
+			color: var(--keycloak-text);
 		}
+
 		.loading {
 			text-align: center;
-			color: #666;
+			color: var(--keycloak-text-secondary);
 			font-style: italic;
 		}
-		#weather { font-size: 1.05rem; }
+
+		#weather { 
+			font-size: 1rem; 
+			color: var(--keycloak-text-secondary);
+		}
 
 		/* Toggle buttons for different views */
 		.view-toggle {
-			margin-bottom: 20px;
+			margin-bottom: 16px;
 		}
+
 		.view-toggle button {
 			padding: 8px 16px;
-			border: 1px solid #667eea;
-			background: white;
-			color: #667eea;
+			border: 1px solid var(--keycloak-border);
+			background: var(--keycloak-content);
+			color: var(--keycloak-text);
 			cursor: pointer;
-			margin-right: 5px;
+			margin-right: 4px;
 			border-radius: 4px;
-			transition: all 0.2s;
+			transition: all 0.2s ease;
 		}
+
 		.view-toggle button.active {
-			background: #667eea;
-			color: white;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
+			border-color: var(--keycloak-primary);
 		}
+
 		.view-toggle button:hover {
-			background: #5a6fd8;
-			color: white;
+			background: var(--keycloak-secondary);
+			border-color: var(--keycloak-primary);
+		}
+
+		.view-toggle button.active:hover {
+			background: var(--keycloak-primary-hover);
+		}
+
+		/* Success and Error Messages */
+		.success-message {
+			color: var(--keycloak-success);
+			background: #1a3a1a;
+			border: 1px solid #2d5a2d;
+			padding: 8px 12px;
+			border-radius: 4px;
+			margin: 8px 0;
+		}
+
+		.error-message {
+			color: var(--keycloak-error);
+			background: #3a1a1a;
+			border: 1px solid #5a2d2d;
+			padding: 8px 12px;
+			border-radius: 4px;
+			margin: 8px 0;
+		}
+
+		/* Form Elements */
+		select {
+			padding: 6px 8px;
+			border: 1px solid var(--keycloak-border);
+			border-radius: 4px;
+			background: var(--keycloak-content);
+			color: var(--keycloak-text);
+		}
+
+		select:focus {
+			outline: none;
+			border-color: var(--keycloak-primary);
+		}
+
+		input[type="text"] {
+			border: 1px solid var(--keycloak-border);
+			border-radius: 4px;
+			background: var(--keycloak-content);
+			color: var(--keycloak-text);
+		}
+
+		input[type="text"]:focus {
+			outline: none;
+			border-color: var(--keycloak-primary);
+			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
+		}
+
+		/* Headings */
+		h2, h3 {
+			color: var(--keycloak-text);
+			margin-top: 0;
 		}
 
 		@media (max-width: 800px) {
@@ -399,7 +640,7 @@
 			.modal-content {
 				margin: 10% auto;
 				width: 95%;
-				padding: 20px;
+				padding: 16px;
 			}
 			.data-table {
 				font-size: 0.9rem;
@@ -416,18 +657,19 @@
 </head>
 <body>
 	<div class="header">
-		<div>Simple Salesman GUI</div>
+		<div class="logo-placeholder">
+			<img  width="180px" src="/logo_saleman_original.png" alt="logo">
+		</div>
 		<div>
 			<span id="username">User</span> | 
-			<span id="weather">Wetter wird geladen…</span>
+			<span id="weather">Wetter wird geladen…</span> |
+			<button onclick="logout()" class="logout-btn">Abmelden</button>
 		</div>
 	</div>
 	<div class="sidebar">
 		<button onclick="showSection('addresses')" class="active" id="btn-addresses">Adressen</button>
 		<button onclick="showSection('notes')" id="btn-notes">Notizen</button>
-		<button onclick="showSection('projects')" id="btn-projects">Projekte</button>
 		<button onclick="showSection('import')" id="btn-import">Import</button>
-		<button onclick="showSection('weather')" id="btn-weather">Wetter</button>
 	</div>
 	<div class="main">
 		<!-- Adressen Sektion -->
@@ -635,6 +877,43 @@
 		// ----------- USERNAME aus Token -----------
 		document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
 
+		// ----------- Logout Function -----------
+		// Replace the existing logout function in your templates/gui.html with this:
+
+		function logout() {
+			// Confirm logout
+			if (confirm('Möchten Sie sich wirklich abmelden?')) {
+				try {
+					// Clear all session storage
+					sessionStorage.removeItem('access_token');
+					sessionStorage.removeItem('username');
+					sessionStorage.removeItem('refresh_token');
+					sessionStorage.removeItem('user_id');
+					
+					// Clear all local storage
+					localStorage.removeItem('access_token');
+					localStorage.removeItem('username');
+					localStorage.removeItem('refresh_token');
+					localStorage.removeItem('user_id');
+					
+					// Set logout indicator for the login page
+					sessionStorage.setItem('just_logged_out', 'true');
+					
+					// Reset global variables
+					allAddresses = [];
+					allNotes = [];
+					allProjects = [];
+					
+					// Redirect to controller logout endpoint (NOT login.html)
+					window.location.href = '/logout';
+					
+				} catch (error) {
+					console.error('Fehler beim Abmelden:', error);
+					alert('Fehler beim Abmelden. Bitte versuchen Sie es erneut.');
+				}
+			}
+		}
+
 		// ----------- Initial Load -----------
 		window.addEventListener('load', function() {
 			const token = sessionStorage.getItem('access_token');
@@ -643,7 +922,6 @@
 			}
 			
 			loadAllAddresses();
-			loadAllNotes();
 			loadWeatherData();
 			
 			if (window.location.search.includes('debug=true')) {
@@ -656,17 +934,17 @@
 			console.log('Token im sessionStorage:', !!sessionStorage.getItem('access_token'));
 			console.log('Username:', sessionStorage.getItem('username'));
 			console.log('Backend URL:', window.location.origin);
+			console.log('All addresses loaded:', allAddresses.length);
+			console.log('All notes loaded:', allNotes.length);
 			
 			const debugBtn = document.createElement('button');
 			debugBtn.textContent = 'Debug: Show Data';
-			debugBtn.style.position = 'fixed';
-			debugBtn.style.top = '10px';
-			debugBtn.style.right = '10px';
-			debugBtn.style.zIndex = '9999';
+			debugBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:8px 12px;border-radius:4px;cursor:pointer;';
 			debugBtn.onclick = () => {
 				console.log('Addresses:', allAddresses);
 				console.log('Notes:', allNotes);
-				alert(`${allAddresses.length} Adressen, ${allNotes.length} Notizen geladen.`);
+				console.log('Current view:', currentAddressView);
+				alert(`${allAddresses.length} Adressen, ${allNotes.length} Notizen geladen.\nAktuelle Ansicht: ${currentAddressView}`);
 			};
 			document.body.appendChild(debugBtn);
 		}
@@ -684,37 +962,51 @@
 				}
 				
 				allAddresses = await res.json();
+				console.log('Loaded addresses:', allAddresses.length);
 				renderAddressesTable();
 				showAllPlzs(); // For navigation view
+				
+				// Load notes after addresses are loaded
+				loadAllNotes();
 			} catch (error) {
 				console.error('Fehler beim Laden der Adressen:', error);
 				document.querySelector('#addressesTable tbody').innerHTML = 
-					`<tr><td colspan="6" style="color:red;">Fehler: ${error.message}</td></tr>`;
+					`<tr><td colspan="6" style="color:var(--keycloak-error);">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
 		async function loadAllNotes() {
 			try {
+				if (allAddresses.length === 0) {
+					console.log('No addresses loaded yet, skipping notes load');
+					return;
+				}
+				
 				const token = sessionStorage.getItem('access_token');
 				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
 				
 				// Load all notes by getting notes for each address
 				allNotes = [];
 				for (const address of allAddresses) {
-					const res = await fetch(`/api/v1/notes/${address.id}`, { headers });
-					if (res.ok) {
-						const notes = await res.json();
-						notes.forEach(note => {
-							note.address = address; // Add address reference
-						});
-						allNotes.push(...notes);
+					try {
+						const res = await fetch(`/api/v1/notes/${address.id}`, { headers });
+						if (res.ok) {
+							const notes = await res.json();
+							notes.forEach(note => {
+								note.address = address; // Add address reference
+							});
+							allNotes.push(...notes);
+						}
+					} catch (noteError) {
+						console.warn(`Error loading notes for address ${address.id}:`, noteError);
 					}
 				}
+				console.log('Loaded notes:', allNotes.length);
 				renderNotesTable();
 			} catch (error) {
 				console.error('Fehler beim Laden der Notizen:', error);
 				document.querySelector('#notesTable tbody').innerHTML = 
-					`<tr><td colspan="6" style="color:red;">Fehler: ${error.message}</td></tr>`;
+					`<tr><td colspan="6" style="color:var(--keycloak-error);">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
@@ -783,7 +1075,7 @@
 							<td>${addr.regionName || '-'}</td>
 							<td>${projects || '-'}</td>
 							<td>
-								<button onclick="openNotesModalForAddress(${addr.id})" style="background:#667eea;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;">
+								<button onclick="openNotesModalForAddress(${addr.id})" style="background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">
 									Notizen
 								</button>
 							</td>
@@ -956,7 +1248,7 @@
 							<td>${note.createdBy || '-'}</td>
 							<td>${dateStr}</td>
 							<td>
-								<button onclick="openNotesModalForAddress(${note.address?.id})" style="background:#667eea;color:white;border:none;padding:4px 8px;border-radius:4px;cursor:pointer;margin-right:4px;">
+								<button onclick="openNotesModalForAddress(${note.address?.id})" style="background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin-right:4px;">
 									Anzeigen
 								</button>
 							</td>
@@ -1163,7 +1455,7 @@
 			} catch (error) {
 				console.error('Fehler beim Laden der Notizen:', error);
 				document.getElementById('modalNoteList').innerHTML = 
-					`<p style="color:red;">Fehler beim Laden der Notizen: ${error.message}</p>`;
+					`<p style="color:var(--keycloak-error);">Fehler beim Laden der Notizen: ${error.message}</p>`;
 			}
 		}
 
@@ -1203,18 +1495,22 @@
 					await loadAllNotes(); // Refresh notes table
 					
 					const successMsg = document.createElement('div');
-					successMsg.style.color = 'green';
-					successMsg.style.marginTop = '10px';
+					successMsg.className = 'success-message';
 					successMsg.textContent = 'Notiz erfolgreich gespeichert!';
 					document.querySelector('.modal-body').appendChild(successMsg);
 					setTimeout(() => successMsg.remove(), 3000);
 				} else {
 					const errorText = await res.text();
+					console.error('Server response:', res.status, errorText);
 					throw new Error(`HTTP ${res.status}: ${errorText || res.statusText}`);
 				}
 			} catch (error) {
 				console.error('Fehler beim Speichern der Notiz:', error);
-				alert(`Fehler beim Speichern der Notiz: ${error.message}`);
+				const errorMsg = document.createElement('div');
+				errorMsg.className = 'error-message';
+				errorMsg.textContent = `Fehler beim Speichern der Notiz: ${error.message}`;
+				document.querySelector('.modal-body').appendChild(errorMsg);
+				setTimeout(() => errorMsg.remove(), 5000);
 			}
 		});
 
@@ -1431,7 +1727,7 @@
 				loadProjects();
 			} else if (sectionName === 'weather') {
 				loadWeatherData();
-			} else if (sectionName === 'notes' && allNotes.length === 0) {
+			} else if (sectionName === 'notes' && allNotes.length === 0 && allAddresses.length > 0) {
 				loadAllNotes();
 			}
 		}
@@ -1486,7 +1782,7 @@
 			const file = fileInput.files[0];
 			
 			if (!file) {
-				document.getElementById('importResult').innerHTML = '<p style="color:red;">Bitte wählen Sie eine Datei aus.</p>';
+				document.getElementById('importResult').innerHTML = '<div class="error-message">Bitte wählen Sie eine Datei aus.</div>';
 				return;
 			}
 
@@ -1507,17 +1803,17 @@
 				
 				if (result.success) {
 					document.getElementById('importResult').innerHTML = 
-						`<p style="color:green;">Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.</p>`;
+						`<div class="success-message">Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.</div>`;
 					loadAllAddresses();
 					loadAllNotes();
 				} else {
 					document.getElementById('importResult').innerHTML = 
-						`<p style="color:red;">Import fehlgeschlagen: ${result.errors.join(', ')}</p>`;
+						`<div class="error-message">Import fehlgeschlagen: ${result.errors.join(', ')}</div>`;
 				}
 			} catch (error) {
 				console.error('Import-Fehler:', error);
 				document.getElementById('importResult').innerHTML = 
-					'<p style="color:red;">Fehler beim Importieren der Datei.</p>';
+					'<div class="error-message">Fehler beim Importieren der Datei.</div>';
 			}
 		});
 
@@ -1527,17 +1823,17 @@
 
 		fileInputArea.addEventListener('dragover', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = '#667eea';
+			fileInputArea.style.borderColor = 'var(--keycloak-primary)';
 		});
 
 		fileInputArea.addEventListener('dragleave', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = '#e9ecef';
+			fileInputArea.style.borderColor = 'var(--keycloak-border)';
 		});
 
 		fileInputArea.addEventListener('drop', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = '#e9ecef';
+			fileInputArea.style.borderColor = 'var(--keycloak-border)';
 			const files = e.dataTransfer.files;
 			if (files.length > 0) {
 				fileInput.files = files;

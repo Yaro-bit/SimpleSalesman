@@ -8,8 +8,14 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current:** 0.0.7  
-**Last Update:** 2025-06-18
+**Current:** 0.0.8  
+**Last Update:** 2025-06-21
+
+
+### Changes in Version 0.0.8
+Interactive API GUI update: Enhanced Thymeleaf templates for browser-based API testing
+Refined and improved design on GUI (visual polish, usability, and responsiveness)
+
 
 ### Changes in Version 0.0.7
 

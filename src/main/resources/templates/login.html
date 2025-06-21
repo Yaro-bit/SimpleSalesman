@@ -1,77 +1,236 @@
+<!--
+  SimpleSalesman Login Page - Secure Authentication Interface
+
+  This page provides the secure login interface for the SimpleSalesman application. Key features include:
+  - Modern Keycloak/OAuth2 login flow with PKCE (Authorization Code Flow)
+  - Automatic session management, including logout handling
+  - Responsive design with dark mode, visually aligned with Keycloak themes
+  - Accessible error handling for failed login attempts
+  - Dynamic hints and success messages for user experience
+
+  Security:
+  - All authentication is handled through OAuth2 Authorization Code Flow with PKCE
+  - Bearer tokens are securely exchanged and stored in browser session storage
+  - State and code_verifier are managed per session for CSRF protection
+  - Logout ensures complete session cleanup
+
+  Browser Compatibility:
+  - Requires modern browser with ES6+ and JavaScript enabled
+  - Responsive design for mobile devices
+  - Relies on WebCrypto API for PKCE implementation
+
+  @author SimpleSalesman Team
+  @version 0.0.8
+  @since 0.0.7
+  @requires Bearer token authentication
+  @requires Modern browser with JavaScript enabled
+-->
 <!DOCTYPE html>
 <html lang="de" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Login | Simple Salesman</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
 	<style>
-		* { margin: 0; padding: 0; box-sizing: border-box; }
+		:root {
+			--keycloak-primary: #0066cc;
+			--keycloak-primary-hover: #004499;
+			--keycloak-primary-light: #1a4a7a;
+			--keycloak-secondary: #2a2a2a;
+			--keycloak-background: #1e1e1e;
+			--keycloak-sidebar: #161616;
+			--keycloak-content: #262626;
+			--keycloak-white: #ffffff;
+			--keycloak-text: #f0f0f0;
+			--keycloak-text-secondary: #a0a0a0;
+			--keycloak-text-muted: #6f6f6f;
+			--keycloak-border: #404040;
+			--keycloak-border-light: #333333;
+			--keycloak-success: #24a148;
+			--keycloak-error: #da1e28;
+			--keycloak-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+			--keycloak-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+		}
+
+		* { 
+			margin: 0; 
+			padding: 0; 
+			box-sizing: border-box; 
+		}
+
 		body {
 			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			background: var(--keycloak-background);
+			color: var(--keycloak-text);
 			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
 			padding: 20px;
 		}
+
 		.container {
-			max-width: 420px;
-			margin: 60px auto 0 auto;
-			background: white;
-			border-radius: 15px;
-			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-			overflow: hidden;
-			padding: 36px 30px 36px 30px;
+			background: var(--keycloak-content);
+			padding: 40px;
+			border-radius: 8px;
+			box-shadow: var(--keycloak-shadow-hover);
+			border: 1px solid var(--keycloak-border);
+			max-width: 400px;
+			width: 90%;
 			text-align: center;
 		}
-		.header {
-			background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-			padding: 24px;
-			color: white;
-			border-radius: 12px;
-			margin-bottom: 32px;
+
+		.logo {
+			margin-bottom: 40px;
 		}
-		.header h1 {
-			font-size: 2.0rem;
+
+		.logo-placeholder {
+			width: 200px;
+			height: 80px;
+			margin: 0 auto 20px auto;
+			border: 2px dashed var(--keycloak-border);
+			border-radius: 8px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: var(--keycloak-text-secondary);
+			font-size: 0.9rem;
+			font-weight: 500;
+			background: var(--keycloak-secondary);
+		}
+
+		.logo h1 {
+			color: var(--keycloak-primary);
+			font-size: 1.6rem;
+			font-weight: 600;
 			margin-bottom: 8px;
 		}
-		.login-hint {
-			font-size: 1.2rem;
-			color: #444;
-			margin-bottom: 32px;
+
+		.logo p {
+			color: var(--keycloak-text-secondary);
+			font-size: 0.9rem;
 		}
+
+		.logout-success {
+			background: var(--keycloak-success);
+			color: var(--keycloak-white);
+			padding: 12px 16px;
+			border-radius: 6px;
+			margin-bottom: 24px;
+			font-size: 0.9rem;
+			font-weight: 500;
+			display: none; /* Initially hidden, will be shown via JS */
+		}
+
+		.logout-success.show {
+			display: block;
+		}
+
+		.login-hint {
+			font-size: 1rem;
+			color: var(--keycloak-text-secondary);
+			margin-bottom: 24px;
+		}
+
 		.btn {
-			background: linear-gradient(135deg, #667eea, #764ba2);
-			color: white;
+			width: 100%;
+			padding: 16px;
+			background: var(--keycloak-primary);
+			color: var(--keycloak-white);
 			border: none;
-			padding: 16px 24px;
-			border-radius: 8px;
-			cursor: pointer;
+			border-radius: 6px;
 			font-size: 1.1rem;
 			font-weight: 600;
-			transition: all 0.3s ease;
-			width: 100%;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			box-shadow: var(--keycloak-shadow);
 		}
+
 		.btn:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+			background: var(--keycloak-primary-hover);
+			box-shadow: var(--keycloak-shadow-hover);
+			transform: translateY(-1px);
+		}
+
+		.error-message {
+			background: var(--keycloak-error);
+			color: var(--keycloak-white);
+			padding: 12px 16px;
+			border-radius: 6px;
+			margin-bottom: 16px;
+			font-size: 0.9rem;
+			display: none;
+		}
+
+		.footer {
+			margin-top: 32px;
+			padding-top: 16px;
+			border-top: 1px solid var(--keycloak-border);
+			color: var(--keycloak-text-muted);
+			font-size: 0.8rem;
+		}
+
+		@media (max-width: 480px) {
+			.container {
+				padding: 24px;
+				margin: 16px;
+			}
 		}
 	</style>
 </head>
 <body>
 	<div class="container" id="loginPanel">
-		<div class="header">
-			<h1>Simple Salesman</h1>
-			<p>Vertrieb-Panel – Login</p>
+		<div class="logo">
+			<div class="logo-placeholder">
+				<img  width="180px" src="/logo_saleman_original.png" alt="logo">
+			</div>
+			<h1>Anmeldung</h1>
+			<p>Vertriebsmanagement System</p>
 		</div>
+
+		<div class="logout-success" id="logoutSuccess">
+			✓ Sie haben sich erfolgreich abgemeldet
+		</div>
+
+		<div class="error-message" id="errorMessage">
+			<!-- Error messages will be displayed here -->
+		</div>
+
 		<div class="login-hint">
-			Sie müssen sich einloggen, um fortzufahren.
+			Melden Sie sich mit Ihrem Unternehmenskonto an
 		</div>
+
 		<button class="btn" onclick="loginWithKeycloak()">
-			🔐 Login mit Keycloak
+			🔑 Mit Keycloak anmelden
 		</button>
+
+		<div class="footer">
+			<p>&copy; 2025 Salesman System</p>
+		</div>
 	</div>
 
 	<script th:inline="javascript">
 		const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
+
+		// Check if user was redirected after logout
+		window.addEventListener('load', function() {
+			// Check URL parameters or storage for logout indication
+			const urlParams = new URLSearchParams(window.location.search);
+			const wasLoggedOut = urlParams.get('logout') === 'true' || 
+							   sessionStorage.getItem('just_logged_out') === 'true';
+			
+			if (wasLoggedOut) {
+				document.getElementById('logoutSuccess').classList.add('show');
+				// Clear the logout indication
+				sessionStorage.removeItem('just_logged_out');
+				// Remove logout parameter from URL without page reload
+				if (urlParams.has('logout')) {
+					const newUrl = window.location.pathname;
+					window.history.replaceState({}, '', newUrl);
+				}
+			}
+		});
 
 		// Weiterleitung, falls schon eingeloggt
 		if (IS_AUTHENTICATED) {
@@ -91,6 +250,7 @@
 			return btoa(String.fromCharCode.apply(null, array))
 				.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 		}
+
 		async function generateCodeChallenge(verifier) {
 			const encoder = new TextEncoder();
 			const data = encoder.encode(verifier);
@@ -101,24 +261,35 @@
 		}
 
 		async function loginWithKeycloak() {
-			const codeVerifier = generateCodeVerifier();
-			const codeChallenge = await generateCodeChallenge(codeVerifier);
-			const state = generateCodeVerifier();
+			try {
+				const codeVerifier = generateCodeVerifier();
+				const codeChallenge = await generateCodeChallenge(codeVerifier);
+				const state = generateCodeVerifier();
 
-			sessionStorage.setItem('code_verifier', codeVerifier);
-			sessionStorage.setItem('oauth_state', state);
+				sessionStorage.setItem('code_verifier', codeVerifier);
+				sessionStorage.setItem('oauth_state', state);
 
-			const params = new URLSearchParams({
-				response_type: 'code',
-				client_id: CLIENT_ID,
-				redirect_uri: REDIRECT_URI,
-				scope: 'openid profile email',
-				state: state,
-				code_challenge: codeChallenge,
-				code_challenge_method: 'S256'
-			});
-			const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
-			window.location.href = authUrl;
+				const params = new URLSearchParams({
+					response_type: 'code',
+					client_id: CLIENT_ID,
+					redirect_uri: REDIRECT_URI,
+					scope: 'openid profile email',
+					state: state,
+					code_challenge: codeChallenge,
+					code_challenge_method: 'S256'
+				});
+				const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
+				window.location.href = authUrl;
+			} catch (error) {
+				console.error('Fehler beim Keycloak-Login:', error);
+				showError('Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.');
+			}
+		}
+
+		function showError(message) {
+			const errorDiv = document.getElementById('errorMessage');
+			errorDiv.textContent = message;
+			errorDiv.style.display = 'block';
 		}
 
 		// --- Handle OAuth2 Callback: Token holen und auf gui.html weiterleiten ---
@@ -126,13 +297,16 @@
 			const urlParams = new URLSearchParams(window.location.search);
 			const code = urlParams.get('code');
 			const state = urlParams.get('state');
+			
 			if (code && state) {
 				const codeVerifier = sessionStorage.getItem('code_verifier');
 				const storedState = sessionStorage.getItem('oauth_state');
+				
 				if (state !== storedState) {
 					alert("Ungültiger State! Bitte erneut anmelden.");
 					return;
 				}
+				
 				const tokenResponse = await fetch(
 					`${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/token`,
 					{
@@ -147,6 +321,7 @@
 						}),
 					}
 				);
+				
 				if (tokenResponse.ok) {
 					const tokens = await tokenResponse.json();
 					// Speichere Access-Token im Browser (z.B. für weitere API Calls)

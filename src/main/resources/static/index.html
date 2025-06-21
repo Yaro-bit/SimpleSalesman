@@ -1,0 +1,750 @@
+<!--
+  SimpleSalesman API GUI - Static Version
+
+  This static HTML page provides an interactive GUI for testing and managing the SimpleSalesman API, with a focus on local configuration and OAuth2 authentication via Keycloak. The page is intended for use in local or test environments, allowing users to set up OAuth2 parameters and perform authenticated REST API operations directly from the browser.
+
+  Key Features:
+  - Editable configuration for API endpoint, Keycloak URL, realm, and client ID (with localStorage persistence)
+  - OAuth2 Authorization Code Flow with PKCE for secure login
+  - JWT token management and user info display
+  - Live testing for address, note, project, and weather endpoints (GET/POST/other as defined)
+  - All requests secured with Bearer tokens (JWT)
+  - Responsive, modern UI styled to match Keycloak
+  - No backend logic; all state and authentication handled client-side in the browser
+
+  Security:
+  - Authentication flow uses OAuth2 Authorization Code with PKCE (RFC 7636)
+  - Tokens are only stored in session and memory (never persisted)
+  - State and code_verifier stored in sessionStorage per OAuth2 best practice
+  - Logout clears all authentication state
+
+  Usage:
+  - Requires a modern browser with ES6+ and JavaScript enabled
+  - Designed for local testing, development, or as an admin/testing utility
+
+  @author SimpleSalesman Team
+  @version 0.0.8
+  @since 0.0.6
+  @requires Bearer token authentication
+  @requires Modern browser with JavaScript enabled
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Salesman API GUI - Static</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
+    <style>
+        :root {
+            --keycloak-primary: #0066cc;
+            --keycloak-primary-hover: #004499;
+            --keycloak-primary-light: #1a4a7a;
+            --keycloak-secondary: #2a2a2a;
+            --keycloak-background: #1e1e1e;
+            --keycloak-sidebar: #161616;
+            --keycloak-content: #262626;
+            --keycloak-white: #ffffff;
+            --keycloak-text: #f0f0f0;
+            --keycloak-text-secondary: #a0a0a0;
+            --keycloak-text-muted: #6f6f6f;
+            --keycloak-border: #404040;
+            --keycloak-border-light: #333333;
+            --keycloak-success: #24a148;
+            --keycloak-error: #da1e28;
+            --keycloak-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --keycloak-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--keycloak-background);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--keycloak-text);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--keycloak-content);
+            border-radius: 15px;
+            box-shadow: var(--keycloak-shadow-hover);
+            overflow: hidden;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .header {
+            background: var(--keycloak-primary);
+            padding: 30px;
+            text-align: center;
+            color: var(--keycloak-white);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .config-section {
+            background: var(--keycloak-secondary);
+            padding: 20px;
+            border-bottom: 2px solid var(--keycloak-border);
+        }
+
+        .config-form {
+            background: var(--keycloak-content);
+            border: 1px solid var(--keycloak-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .config-form h4 {
+            color: var(--keycloak-primary);
+            margin-bottom: 15px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--keycloak-text);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--keycloak-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: var(--keycloak-secondary);
+            color: var(--keycloak-text);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--keycloak-primary);
+        }
+
+        .auth-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .status-connected {
+            background: var(--keycloak-success);
+            color: var(--keycloak-white);
+        }
+
+        .status-disconnected {
+            background: var(--keycloak-error);
+            color: var(--keycloak-white);
+        }
+
+        .btn {
+            background: var(--keycloak-primary);
+            color: var(--keycloak-white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: var(--keycloak-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--keycloak-shadow-hover);
+        }
+
+        .btn:disabled {
+            background: var(--keycloak-text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: var(--keycloak-success);
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: var(--keycloak-error);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .api-card {
+            background: var(--keycloak-content);
+            border-radius: 12px;
+            box-shadow: var(--keycloak-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .api-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .api-header {
+            padding: 20px;
+            color: var(--keycloak-white);
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .get { background: var(--keycloak-success); }
+        .post { background: var(--keycloak-primary); }
+        .put { background: #f093fb; }
+        .delete { background: var(--keycloak-error); }
+
+        .api-body {
+            padding: 20px;
+        }
+
+        .response-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--keycloak-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--keycloak-primary);
+        }
+
+        .response-area h4 {
+            margin-bottom: 10px;
+            color: var(--keycloak-text);
+        }
+
+        .response-content {
+            background: var(--keycloak-background);
+            color: var(--keycloak-text);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .user-info {
+            background: var(--keycloak-content);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--keycloak-primary);
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Simple Salesman API</h1>
+            <p>OAuth2 Authentication Flow - Static Version</p>
+        </div>
+
+        <div class="config-section">
+            <div class="config-form">
+                <h4>🔧 Configuration Settings</h4>
+                <div class="config-grid">
+                    <div class="form-group">
+                        <label>API Host</label>
+                        <input type="text" id="apiHost" value="http://localhost:8081" placeholder="API Host URL">
+                    </div>
+                    <div class="form-group">
+                        <label>Keycloak Base URL</label>
+                        <input type="text" id="keycloakBaseUrl" value="http://localhost:8080" placeholder="Keycloak URL">
+                    </div>
+                    <div class="form-group">
+                        <label>Realm</label>
+                        <input type="text" id="realm" value="simple-salesman-backend" placeholder="Keycloak Realm">
+                    </div>
+                    <div class="form-group">
+                        <label>Client ID</label>
+                        <input type="text" id="clientId" value="simple-salesman-backend" placeholder="OAuth Client ID">
+                    </div>
+                </div>
+                <button class="btn" onclick="updateConfiguration()">Update Configuration</button>
+            </div>
+
+            <div class="auth-section">
+                <div class="status-indicator status-disconnected" id="authStatus">🔒 Not Authenticated</div>
+                <button class="btn btn-success" onclick="loginWithKeycloak()" id="loginBtn">🔐 Login with Keycloak</button>
+                <button class="btn btn-danger" onclick="logout()" id="logoutBtn" style="display: none;">🚪 Logout</button>
+                
+                <div class="user-info" id="userInfo">
+                    <h4>👤 User Information</h4>
+                    <div id="userInfoContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-grid">
+            <!-- Address Endpoints -->
+            <div class="api-card">
+                <div class="api-header get">GET /addresses</div>
+                <div class="api-body">
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/addresses', null, 'response-addresses')">
+                        Get All Addresses
+                    </button>
+                    <div class="response-area" id="response-addresses" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-addresses-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div class="api-header get">GET /addresses/:id</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Address ID</label>
+                        <input type="number" id="addressId" value="1">
+                    </div>
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/addresses/' + document.getElementById('addressId').value, null, 'response-address')">
+                        Get Address
+                    </button>
+                    <div class="response-area" id="response-address" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-address-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Note Endpoints -->
+            <div class="api-card">
+                <div class="api-header get">GET /notes/:addressId</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Address ID</label>
+                        <input type="number" id="notesAddressId" value="1">
+                    </div>
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/notes/' + document.getElementById('notesAddressId').value, null, 'response-notes')">
+                        Get Notes
+                    </button>
+                    <div class="response-area" id="response-notes" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-notes-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-card">
+                <div class="api-header post">POST /notes/:addressId</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Address ID</label>
+                        <input type="number" id="postNoteAddressId" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Note Text</label>
+                        <textarea id="noteText" rows="3" placeholder="Enter your note here..." style="width:100%; padding:10px; border:2px solid var(--keycloak-border); border-radius:8px; background:var(--keycloak-secondary); color:var(--keycloak-text); font-family:inherit;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Created By</label>
+                        <input type="email" id="createdBy" value="user@example.com">
+                    </div>
+                    <button class="btn" onclick="createNote()">Create Note</button>
+                    <div class="response-area" id="response-create-note" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-create-note-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Endpoint -->
+            <div class="api-card">
+                <div class="api-header get">GET /weather</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Region</label>
+                        <input type="text" id="weatherRegion" value="Linz">
+                    </div>
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/weather?region=' + encodeURIComponent(document.getElementById('weatherRegion').value), null, 'response-weather')">
+                        Get Weather
+                    </button>
+                    <div class="response-area" id="response-weather" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-weather-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Endpoint -->
+            <div class="api-card">
+                <div class="api-header get">GET /projects</div>
+                <div class="api-body">
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/projects', null, 'response-projects')">
+                        Get All Projects
+                    </button>
+                    <div class="response-area" id="response-projects" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-projects-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration object - now editable via UI
+        let OAUTH_CONFIG = {
+            apiHost: 'http://localhost:8081',
+            keycloakBaseUrl: 'http://localhost:8080',
+            realm: 'simple-salesman-backend',
+            clientId: 'simple-salesman-backend',
+            redirectUri: window.location.origin + window.location.pathname
+        };
+
+        // Runtime state
+        let accessToken = '';
+        let refreshToken = '';
+        let userInfo = {};
+
+        // Update configuration from form inputs
+        function updateConfiguration() {
+            OAUTH_CONFIG.apiHost = document.getElementById('apiHost').value;
+            OAUTH_CONFIG.keycloakBaseUrl = document.getElementById('keycloakBaseUrl').value;
+            OAUTH_CONFIG.realm = document.getElementById('realm').value;
+            OAUTH_CONFIG.clientId = document.getElementById('clientId').value;
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('oauth_config', JSON.stringify(OAUTH_CONFIG));
+            
+            alert('Configuration updated successfully!');
+        }
+
+        // Load configuration from localStorage if available
+        function loadConfiguration() {
+            const savedConfig = localStorage.getItem('oauth_config');
+            if (savedConfig) {
+                OAUTH_CONFIG = JSON.parse(savedConfig);
+                document.getElementById('apiHost').value = OAUTH_CONFIG.apiHost;
+                document.getElementById('keycloakBaseUrl').value = OAUTH_CONFIG.keycloakBaseUrl;
+                document.getElementById('realm').value = OAUTH_CONFIG.realm;
+                document.getElementById('clientId').value = OAUTH_CONFIG.clientId;
+            }
+        }
+
+        // PKCE helper functions
+        function generateCodeVerifier() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return btoa(String.fromCharCode.apply(null, array))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        async function generateCodeChallenge(verifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(verifier);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        // OAuth2 login flow
+        async function loginWithKeycloak() {
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            const state = generateCodeVerifier();
+
+            // Store PKCE values
+            sessionStorage.setItem('code_verifier', codeVerifier);
+            sessionStorage.setItem('oauth_state', state);
+
+            const keycloakAuthUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/auth`;
+            
+            const params = new URLSearchParams({
+                response_type: 'code',
+                client_id: OAUTH_CONFIG.clientId,
+                redirect_uri: OAUTH_CONFIG.redirectUri,
+                scope: 'openid profile email',
+                state: state,
+                code_challenge: codeChallenge,
+                code_challenge_method: 'S256'
+            });
+
+            const authUrl = `${keycloakAuthUrl}?${params.toString()}`;
+            window.location.href = authUrl;
+        }
+
+        // Handle OAuth callback
+        async function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+
+            if (error) {
+                console.error('OAuth Error:', error, urlParams.get('error_description'));
+                alert(`OAuth Error: ${error} - ${urlParams.get('error_description')}`);
+                return;
+            }
+
+            if (!code || !state) {
+                return; // Not an OAuth callback
+            }
+
+            // Verify state
+            const storedState = sessionStorage.getItem('oauth_state');
+            if (state !== storedState) {
+                console.error('OAuth state mismatch');
+                alert('Invalid OAuth state. Possible CSRF attack.');
+                return;
+            }
+
+            const codeVerifier = sessionStorage.getItem('code_verifier');
+            if (!codeVerifier) {
+                console.error('Missing code verifier');
+                alert('Missing code verifier. Please try logging in again.');
+                return;
+            }
+
+            try {
+                const keycloakTokenUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/token`;
+                
+                // Exchange code for tokens
+                const tokenResponse = await fetch(keycloakTokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        grant_type: 'authorization_code',
+                        client_id: OAUTH_CONFIG.clientId,
+                        code: code,
+                        redirect_uri: OAUTH_CONFIG.redirectUri,
+                        code_verifier: codeVerifier
+                    })
+                });
+
+                if (!tokenResponse.ok) {
+                    throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+                }
+
+                const tokens = await tokenResponse.json();
+                accessToken = tokens.access_token;
+                refreshToken = tokens.refresh_token;
+
+                // Decode JWT to get user info
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                userInfo = {
+                    username: payload.preferred_username || payload.sub,
+                    email: payload.email,
+                    name: payload.name,
+                    roles: payload.realm_access?.roles || [],
+                    exp: payload.exp
+                };
+
+                // Clean up
+                sessionStorage.removeItem('code_verifier');
+                sessionStorage.removeItem('oauth_state');
+
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                updateAuthStatus(true);
+                displayUserInfo();
+
+                console.log('✅ OAuth login successful');
+
+            } catch (error) {
+                console.error('Token exchange error:', error);
+                alert(`Authentication failed: ${error.message}`);
+            }
+        }
+
+        function logout() {
+            accessToken = '';
+            refreshToken = '';
+            userInfo = {};
+            updateAuthStatus(false);
+            sessionStorage.clear();
+        }
+
+        function updateAuthStatus(isAuthenticated) {
+            const statusElement = document.getElementById('authStatus');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfoDiv = document.getElementById('userInfo');
+
+            if (isAuthenticated) {
+                statusElement.textContent = '🔓 Authenticated';
+                statusElement.className = 'status-indicator status-connected';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                userInfoDiv.style.display = 'block';
+            } else {
+                statusElement.textContent = '🔒 Not Authenticated';
+                statusElement.className = 'status-indicator status-disconnected';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userInfoDiv.style.display = 'none';
+            }
+        }
+
+        function displayUserInfo() {
+            const userInfoContent = document.getElementById('userInfoContent');
+            userInfoContent.innerHTML = `
+                <div><strong>Username:</strong> ${userInfo.username || 'N/A'}</div>
+                <div><strong>Email:</strong> ${userInfo.email || 'N/A'}</div>
+                <div><strong>Name:</strong> ${userInfo.name || 'N/A'}</div>
+                <div><strong>Roles:</strong> ${userInfo.roles?.join(', ') || 'None'}</div>
+                <div><strong>Token Expires:</strong> ${new Date(userInfo.exp * 1000).toLocaleString()}</div>
+            `;
+        }
+
+        async function makeRequest(method, endpoint, body = null, responseId = null) {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            // Check if token is expired
+            if (userInfo.exp && Date.now() / 1000 > userInfo.exp) {
+                alert('Token expired. Please login again.');
+                logout();
+                return;
+            }
+
+            const url = OAUTH_CONFIG.apiHost + endpoint;
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: headers,
+                    body: body ? JSON.stringify(body) : null
+                });
+
+                const responseText = await response.text();
+                let responseData;
+
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch {
+                    responseData = responseText;
+                }
+
+                const displayData = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: responseData
+                };
+
+                if (responseId) {
+                    showResponse(responseId, displayData);
+                }
+            } catch (error) {
+                const errorData = {
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                };
+
+                if (responseId) {
+                    showResponse(responseId, errorData);
+                }
+            }
+        }
+
+        async function createNote() {
+            const addressId = document.getElementById('postNoteAddressId').value;
+            const text = document.getElementById('noteText').value;
+            const createdBy = document.getElementById('createdBy').value;
+
+            const body = {
+                text: text,
+                createdBy: createdBy
+            };
+
+            await makeRequest('POST', '/api/v1/notes/' + addressId, body, 'response-create-note');
+        }
+
+        function showResponse(responseId, data) {
+            const responseArea = document.getElementById(responseId);
+            const responseContent = document.getElementById(responseId + '-content');
+
+            if (responseArea && responseContent) {
+                responseContent.textContent = JSON.stringify(data, null, 2);
+                responseArea.style.display = 'block';
+                responseArea.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            }
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 SimpleSalesman API GUI Initialized (Static Version)');
+            
+            loadConfiguration();
+            updateAuthStatus(false);
+            handleOAuthCallback();
+        });
+    </script>
+</body>
+</html>

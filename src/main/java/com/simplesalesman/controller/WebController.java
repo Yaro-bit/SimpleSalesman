@@ -1,4 +1,7 @@
 package com.simplesalesman.controller;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * for testing and interacting with the SimpleSalesman REST API.
  * 
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.0.8
  * @since 0.0.6
  */
 @Controller
@@ -201,4 +204,118 @@ public class WebController {
 
         return authentication.getName();
     }
+
+   @GetMapping("/login")
+   public String loginPage(Model model, HttpServletRequest request) {
+       log.debug("Serving login page for request: {}", request.getRequestURI());
+
+       // Check if user is already authenticated
+       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+       boolean isAuthenticated = isUserAuthenticated(authentication);
+       
+       if (isAuthenticated) {
+           // If already authenticated, redirect to GUI
+           return "redirect:/gui.html";  // Redirect to static GUI
+       }
+
+       // Determine base URLs
+       String scheme = request.getScheme();
+       String serverName = request.getServerName();
+       int port = request.getServerPort();
+       String baseUrl = scheme + "://" + serverName + ":" + port;
+       String redirectUri = baseUrl + "/";
+
+       // Add model attributes for Thymeleaf template
+       model.addAttribute("isAuthenticated", false);
+       model.addAttribute("keycloakBaseUrl", keycloakBaseUrl);
+       model.addAttribute("realm", keycloakRealm);
+       model.addAttribute("clientId", keycloakClientId);
+       model.addAttribute("redirectUri", redirectUri);
+
+       log.info("Login page served - Keycloak: {}, Realm: {}, Client: {}", 
+               keycloakBaseUrl, keycloakRealm, keycloakClientId);
+
+       return "login"; // This will render templates/login.html
+   }
+
+   /**
+    * Handles logout functionality.
+    * 
+    * @param request the HTTP request
+    * @param response the HTTP response
+    * @return redirect to login page
+    */
+   @GetMapping("/logout")
+   public String logout(HttpServletRequest request, HttpServletResponse response) {
+       log.debug("Processing logout request");
+
+       try {
+           // Clear server-side session
+           HttpSession session = request.getSession(false);
+           if (session != null) {
+               log.debug("Invalidating session: {}", session.getId());
+               session.invalidate();
+           }
+
+           // Clear authentication context
+           SecurityContextHolder.clearContext();
+
+           // Clear any JWT-related cookies if they exist
+           Cookie[] cookies = request.getCookies();
+           if (cookies != null) {
+               for (Cookie cookie : cookies) {
+                   if (cookie.getName().equals("access_token") || 
+                       cookie.getName().equals("refresh_token") ||
+                       cookie.getName().equals("JSESSIONID")) {
+                       
+                       cookie.setMaxAge(0);
+                       cookie.setPath("/");
+                       cookie.setHttpOnly(true);
+                       response.addCookie(cookie);
+                       log.debug("Cleared cookie: {}", cookie.getName());
+                   }
+               }
+           }
+
+           log.info("User logged out successfully");
+
+           // Redirect to login page with logout parameter
+           return "redirect:/login?logout=true";
+
+       } catch (Exception e) {
+           log.error("Error during logout process", e);
+           return "redirect:/login?error=logout_failed";
+       }
+   }
+
+   /**
+    * Handles logout with Keycloak redirect.
+    * This provides a more comprehensive logout that also logs out from Keycloak.
+    * 
+    * @param request the HTTP request
+    * @param response the HTTP response
+    * @return redirect to Keycloak logout
+    */
+   @GetMapping("/logout/keycloak")
+   public String logoutWithKeycloak(HttpServletRequest request, HttpServletResponse response) {
+       log.debug("Processing Keycloak logout request");
+
+       // First do local logout
+       logout(request, response);
+
+       // Then redirect to Keycloak logout
+       String scheme = request.getScheme();
+       String serverName = request.getServerName();
+       int port = request.getServerPort();
+       String baseUrl = scheme + "://" + serverName + ":" + port;
+       String postLogoutRedirectUri = baseUrl + "/login?logout=true";
+
+       String keycloakLogoutUrl = keycloakBaseUrl + "/realms/" + keycloakRealm + 
+           "/protocol/openid-connect/logout?post_logout_redirect_uri=" + 
+           java.net.URLEncoder.encode(postLogoutRedirectUri, java.nio.charset.StandardCharsets.UTF_8);
+
+       log.info("Redirecting to Keycloak logout: {}", keycloakLogoutUrl);
+
+       return "redirect:" + keycloakLogoutUrl;
+   }
 }
