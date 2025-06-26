@@ -8,15 +8,22 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current:** 0.0.8  
-**Last Update:** 2025-06-21
+**Current:** 0.0.81  
+**Last Update:** 2025-06-26
 
 ## Known Issues:
     Severe performance issues on large imports:
     Importing 70,000 address entries currently takes approximately 10,498,144 ms (≈ 2 hours, 54 minutes, 58 seconds). The same problem occurs when selecting all addresses: the browser attempts to load the entire address dataset at once, resulting in extremely poor performance and a nearly unusable frontend for large datasets.
     Cause: Both import and retrieval routines lack batching, streaming, or pagination, leading to excessive memory and processing requirements.
     Workaround: None at this time; consider limiting import/export size or adding pagination.
-
+	
+	For inquiries from the local area, the error message is coming from your WeatherService when the Nominatim API (OpenStreetMap reverse geocoding) cannot find a location name for those specific coordinates.
+	Error Msg.(e.g. Location for coordinates 48,2673, 14,2180 could not be determined.)
+	Workaround: coordinates are availble on the frontend;
+	
+### Changes in Version 0.0.81
+Weather Implementattion refactoring, documentation on every service. Creation of simple fallback.
+	
 ### Changes in Version 0.0.8
 Interactive API GUI update: Enhanced Thymeleaf templates for browser-based API testing
 Refined and improved design on GUI (visual polish, usability, and responsiveness)

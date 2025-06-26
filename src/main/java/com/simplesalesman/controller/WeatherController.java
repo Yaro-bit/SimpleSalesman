@@ -9,32 +9,40 @@ import org.springframework.web.bind.annotation.*;
 import com.simplesalesman.service.WeatherService;
 
 /**
- * REST Controller for weather-related queries in the SimpleSalesman
- * application.
+ * REST Controller for weather-related queries in the SimpleSalesman application.
  *
  * This controller provides endpoints to retrieve current weather data based on
- * either region names or GPS coordinates using an external API (wttr.in).
+ * either region names or GPS coordinates using external APIs. Enhanced to always
+ * display location names (cities/villages) instead of raw coordinates.
  *
- * Use Cases: - Enables sales representatives to check local weather before
- * door-to-door visits. - Allows mobile browsers to fetch weather using built-in
- * geolocation.
+ * Use Cases:
+ * - Enables sales representatives to check local weather before door-to-door visits
+ * - Allows mobile browsers to fetch weather using built-in geolocation
+ * - Displays village and hamlet names for better user experience
+ * - Provides reliable weather data with location context
  *
- * API Endpoints: - GET /api/v1/weather?region={name} → fetches weather by city
- * or region - GET /api/v1/weather?lat=...&lon=... → fetches weather by GPS
- * coordinates (with reverse geocoding)
+ * API Endpoints:
+ * - GET /api/v1/weather?region={name} → fetches weather by city, town, or village
+ * - GET /api/v1/weather?lat=...&lon=... → fetches weather by GPS coordinates (with reverse geocoding to location names)
  *
- * Security: - Public by default; can be protected via Spring Security
- * configuration.
+ * Security:
+ * - Public by default; can be protected via Spring Security configuration
  *
- * Dependencies: - Delegates logic to WeatherService → WeatherClient → external
- * APIs (wttr.in, nominatim).
+ * Dependencies:
+ * - Delegates logic to WeatherService → WeatherClient → external APIs (wttr.in, nominatim)
  *
- * Examples: - /api/v1/weather?region=Linz → returns "Linz: ☀️ +24°C" -
- * /api/v1/weather?lat=48.3&lon=14.3 → reverse-geocodes to city, then returns
- * weather
- * 
+ * Examples:
+ * - /api/v1/weather?region=Linz → returns "Linz: ☀️ +24°C"
+ * - /api/v1/weather?region=Adlwang → returns "Adlwang: 🌧 +19°C"
+ * - /api/v1/weather?lat=48.27&lon=14.229 → reverse-geocodes to "Adlwang", returns "Adlwang: ☀️ +21°C"
+ *
+ * Response Format:
+ * - Always returns plain text in format: "LocationName: WeatherIcon Temperature"
+ * - Location names are resolved from coordinates using OpenStreetMap Nominatim
+ * - Supports cities, towns, villages, and hamlets
+ *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.0.8
  * @since 0.0.4
  */
 @RestController

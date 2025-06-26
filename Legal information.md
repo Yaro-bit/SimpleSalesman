@@ -1,128 +1,110 @@
+# Legal & Technical Documentation – Simple Salesman
+
 ## Project Overview
 
 **Application Name:**  
-Simple Salesman -  see readme for Version
+Simple Salesman
+
+**Version:**  
+See `README.md` – Current: 0.0.81 (Last Update: 2025-06-26)
 
 **Purpose:**  
-Management of addresses, notes, and project status for door-to-door sales  
+Efficient management and documentation of addresses, notes, and project status in door-to-door sales.
 
-**Responsible:**  
-Yaroslav Vol. (Private individual, Open Source)  
+**Maintainer:**  
+Yaroslav Vol. (Private individual, open source initiative)
 
 **Technology Stack:**  
-Spring Boot, PostgreSQL, Apache POI, Keycloak, HTML/JavaScript  
+Spring Boot · PostgreSQL · Apache POI · Keycloak · HTML/CSS/JavaScript (Thymeleaf)
 
 ---
 
-## Documentation of AI Features According to the EU AI Act
+## AI Feature Documentation (EU AI Act)
 
->Note: The GPT-2-based text editor was considered during planning but has not been implemented yet. No GPT models are present in the code.
+> ℹ️ No GPT models are currently active or embedded. Planned AI is local-only, optional, and fully transparent.
 
-### Actually Implemented Components
+### Implemented
 
 **Weather Service**  
-- Description: REST-based query via wttr.in  
-- Local processing: No (external)  
-- Model version: –  
-- Token usage: No  
-
----
-
-## Purpose of Planned AI Usage (Future)
-
-- Text suggestions while writing notes  
-- No evaluation or automation of decisions  
-- Locally hosted model (planned: GPT-2)  
-- AI option can be disabled (opt-out planned in frontend)  
-
----
-
-## Token-Based Processing (Implemented)
-
-**Keycloak JWT**  
-- Content: Roles, user ID, permissions  
-- Storage duration: Session lifetime  
-- Purpose: Authentication and access control  
-
----
-
-## Data Protection & Security (GDPR)
-
-**DS1 – Logging**  
-Activated via Spring Boot logging  
-
-**DS2 – Encryption**  
-Data encryption (PostgreSQL)  
-
-**DS3 – Access Control**  
-Implemented via Keycloak  
-
-**DS4 – Deletion Function**  
-Partially available, API base structure implemented  
-
-**DS5 – Consent**  
-Frontend integration planned, privacy policy currently manual  
-
----
-
-## EU AI Act Compliance (Current State)
-
-**KI1**  
-No active AI functions present → not required  
-
-**KI2**  
-Frontend opt-out planned → in preparation  
-
-**KI3**  
-No AI data processing → fulfilled  
-
-**KI4**  
-Model documentation prepared but not yet implemented → planned  
-
----
-
-## Used Libraries & Licenses
-
-- Apache POI  (Apache License 2.0): Excel import  
-- Spring Boot  (Apache License 2.0): REST backend  
-- Keycloak   (Apache License 2.0): Authentication  
-- MapStruct  (Apache License 2.0): DTO mapping  
-
----
-
-## Change Log (as of Version 0.6)
-
-- Weather API integrated via wttr.in (`WeatherClient`)  
-- Excel import service implemented using Apache POI  
-- Postman tests for API prepared  
-- Keycloak integration for authentication (JWT)  
-- Notes API implemented  
-
----
-
-## Development Status
-
-### Already Implemented
-
-- REST API (CRUD for addresses and notes)  
-- Excel import via controller  
-- Weather service integration  
-- Keycloak login with token handling in frontend  
-- CI/CD pipeline and GitHub deployment  
+- REST-based service via `wttr.in`  
+- No local model / external processing only  
+- No tokenization, AI, or tracking  
 
 ### Planned
 
-**Frontend:**  
-- Responsive design  
-- Filtering functions  
-- Dark Mode  
-- Data table  
-- Avatar upload  
-- Weather display via geolocation  
+- AI text suggestions for note-taking  
+- No automation or decision-making by AI  
+- Local GPT-2 model (planned)  
+- Optional via frontend toggle (opt-out functionality)
 
-**Backend:**  
-- Local text editor  
-- Local GPT-2 access  
-- Admin area with backup and log functions  
-- Gamification elements (e.g. Easter eggs, progress tracking)  
-- Backup, daily Excel export  
+---
+
+## Token-Based Processing
+
+**Keycloak JWT**  
+- Contains: Roles, User ID, Permissions  
+- Stored: Session duration  
+- Purpose: Auth & access control
+
+---
+
+## Data Protection & GDPR Compliance
+
+| Code | Feature                  | Status                        |
+|------|--------------------------|-------------------------------|
+| DS1  | Logging                  | Enabled (Spring Boot logging) |
+| DS2  | Encryption               | Database-level (PostgreSQL)   |
+| DS3  | Access Control           | Keycloak-based                |
+| DS4  | Deletion Function        | Basic structure implemented   |
+| DS5  | Consent Management       | Manual, planned UI frontend   |
+
+---
+
+## EU AI Act Compliance Status
+
+| Code | Requirement                          | Status         |
+|------|--------------------------------------|----------------|
+| KI1  | No active AI = Exempt                | ✅ Fulfilled    |
+| KI2  | Opt-out mechanism (frontend)         | ⚠️ In planning  |
+| KI3  | No data processing by AI             | ✅ Fulfilled    |
+| KI4  | Documentation for local model        | 📝 Planned      |
+
+---
+
+## Licenses & Libraries
+
+- **Apache POI** – Excel Import (Apache License 2.0)  
+- **Spring Boot** – REST Backend (Apache License 2.0)  
+- **Keycloak** – Authentication (Apache License 2.0)  
+- **MapStruct** – DTO Mapping (Apache License 2.0)  
+
+---
+
+## Changelog Summary (last updated: 0.0.81)
+
+- Weather API refactored (fallback support added)  
+- JWT login + API access flow via Keycloak  
+- Excel Import via Apache POI  
+- Frontend enhancements with Thymeleaf  
+- Full GDPR/AI documentation added  
+- DTOs and error handling refactored and documented  
+
+---
+
+## Development Roadmap
+
+**Implemented:**  
+- REST API for address, note, and project management  
+- Excel import/export  
+- Weather integration  
+- Keycloak JWT Auth  
+- Interactive API GUI (Thymeleaf-based)  
+- GitHub CI/CD  
+
+**Planned:**  
+- AI-based suggestions (optional)  
+- Local GPT-2 note support  
+- Admin UI (logs, backups)  
+- Enhanced UI: avatar upload, dark mode  
+- Daily Excel export  
+- Easter eggs, progress indicators  
