@@ -1,851 +1,634 @@
 <!--
-  SimpleSalesman GUI - Main Application Interface
+SimpleSalesman GUI - Main Application Interface
 
-  This is the primary user interface for the SimpleSalesman application, providing:
-  - Address management with table and navigation views
-  - Notes management with modal interfaces
-  - Project overview and status tracking
-  - Excel file import functionality
-  - Weather information integration
+This is the primary user interface for the SimpleSalesman application, providing:
+- Address management with table and navigation views
+- Notes management with modal interfaces
+- Project overview and status tracking
+- Excel file import functionality
+- Weather information integration
 
-  Key Features:
-  - Dark theme design matching Keycloak styling
-  - Responsive layout with sidebar navigation
-  - Real-time data loading via REST API
-  - Secure authentication with OAuth2/JWT tokens
-  - Advanced table features (sorting, pagination, search)
-  - Modal-based note editing and viewing
+Key Features:
+- Modern Bootstrap 5.3+ framework for consistent UI components
+- Dark theme design matching Keycloak styling
+- Responsive layout with collapsible sidebar navigation for mobile devices
+- Real-time data loading via REST API
+- Secure authentication with OAuth2/JWT tokens
+- Advanced table features (sorting, pagination, search) with Bootstrap styling
+- Modal-based note editing and viewing using Bootstrap modals
+- Bootstrap Icons integration for consistent iconography
+- Drag & drop file upload functionality
+- Clean CSS architecture with CSS variables for easy theming
 
-  Security:
-  - All API calls include JWT Bearer tokens
-  - Proper logout functionality with session cleanup
-  - Input validation on form submissions
-  - CSRF protection through proper logout handling
+UI Components:
+- Bootstrap 5.3.2 CSS and JS framework
+- Bootstrap Icons 1.11.0 for consistent iconography
+- Responsive tables with mobile-friendly display
+- Bootstrap pagination components
+- Bootstrap alerts for user feedback
+- Loading spinners for async operations
+- Form validation with Bootstrap styling
 
-  Browser Compatibility:
-  - Modern browsers with ES6+ support
-  - Responsive design for mobile devices
-  - Geolocation API support for weather features
+Security:
+- All API calls include JWT Bearer tokens
+- Proper logout functionality with session cleanup
+- Input validation on form submissions
+- CSRF protection through proper logout handling
+- XSS protection through proper HTML escaping
 
-  @author SimpleSalesman Team
-  @version 0.0.8
-  @since 0.0.7
-  @requires Bearer token authentication
-  @requires Modern browser with JavaScript enabled
+Browser Compatibility:
+- Modern browsers with ES6+ support
+- Bootstrap 5 compatible browsers (Chrome 60+, Firefox 60+, Safari 12+, Edge 79+)
+- Responsive design for mobile devices with touch support
+- Geolocation API support for weather features
+
+Technical Stack:
+- Bootstrap 5.3.2 (CDN)
+- Bootstrap Icons 1.11.0 (CDN)
+- Vanilla JavaScript (ES6+)
+- No jQuery dependency
+- RESTful API integration
+
+@author SimpleSalesman Team
+@version 0.0.9
+@since 0.0.7
+@updated 2024 - Refactored to Bootstrap 5.3+ framework
+@requires Bearer token authentication
+@requires Modern browser with JavaScript enabled
+@requires Bootstrap 5 compatible browser
+@requires Active internet connection for CDN resources
 -->
- <!DOCTYPE html>
-<html lang="de">
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Simple Salesman GUI</title>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
+	
+	<!-- Bootstrap CSS CDN -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	
+	<!-- Bootstrap Icons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+	
 	<style>
+		/* CLEAN RESET - NO OVERLAPPING */
 		:root {
-			--keycloak-primary: #0066cc;
-			--keycloak-primary-hover: #004499;
-			--keycloak-primary-light: #1a4a7a;
-			--keycloak-secondary: #2a2a2a;
-			--keycloak-background: #1e1e1e;
-			--keycloak-sidebar: #161616;
-			--keycloak-content: #262626;
-			--keycloak-white: #ffffff;
-			--keycloak-text: #f0f0f0;
-			--keycloak-text-secondary: #a0a0a0;
-			--keycloak-text-muted: #6f6f6f;
-			--keycloak-border: #404040;
-			--keycloak-border-light: #333333;
-			--keycloak-success: #24a148;
-			--keycloak-error: #da1e28;
-			--keycloak-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-			--keycloak-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+			--bs-primary: #0066cc;
+			--header-height: 80px;
+			--footer-height: 60px;
+			--sidebar-width: 260px;
 		}
-
+		
+		/* Remove all Bootstrap spacing conflicts */
+		* {
+			box-sizing: border-box;
+		}
+		
 		body {
 			margin: 0;
-			font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-			background: var(--keycloak-background);
-			height: 100vh;
-			display: flex;
-			flex-direction: column;
-			color: var(--keycloak-text);
+			padding: 0;
+			overflow-x: hidden;
 		}
-
-		.header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 16px 24px;
-			background: var(--keycloak-sidebar);
-			color: var(--keycloak-text);
-			font-size: 1.1rem;
-			font-weight: 600;
-			border-bottom: 1px solid var(--keycloak-border);
-			box-shadow: var(--keycloak-shadow);
-		}
-
-		.logout-btn {
-			padding: 6px 12px;
-			margin-left: 8px;
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			background: var(--keycloak-secondary);
-			color: var(--keycloak-text);
-			font-size: 0.9rem;
-			font-weight: 400;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-
-		.logout-btn:hover {
-			background: var(--keycloak-error);
-			color: var(--keycloak-white);
-			border-color: var(--keycloak-error);
-		}
-
-		.sidebar {
-			width: 200px;
-			background: var(--keycloak-sidebar);
-			box-shadow: var(--keycloak-shadow);
-			padding-top: 16px;
+		
+		/* HEADER - Simple and clean */
+		.app-header {
 			position: fixed;
-			top: 217px;
+			top: 0;
 			left: 0;
+			right: 0;
+			height: var(--header-height);
+			background: #1a1a1a;
+			border-bottom: 2px solid var(--bs-primary);
+			z-index: 1000;
 			display: flex;
-			flex-direction: column;
-			gap: 4px;
-			z-index: 1;
-			border-right: 1px solid var(--keycloak-border);
+			align-items: center;
+			padding: 0 1rem;
+			box-shadow: none;
 		}
-
-		.sidebar button {
-			margin: 0 8px 2px 8px;
-			padding: 12px 16px;
-			border: none;
-			border-radius: 4px;
-			background: transparent;
-			color: var(--keycloak-text-secondary);
-			font-weight: 400;
-			cursor: pointer;
-			transition: all 0.2s ease;
-			text-align: left;
+		
+		/* SIDEBAR - Clean positioning */
+		.app-sidebar {
+			position: fixed;
+			top: var(--header-height);
+			left: 0;
+			width: var(--sidebar-width);
+			height: calc(100vh - var(--header-height) - var(--footer-height));
+			background: #2a2a2a;
+			border-right: 2px solid var(--bs-primary);
+			z-index: 900;
+			overflow-y: auto;
+			padding: 1rem;
+			box-shadow: none;
 		}
-
-		.sidebar button:hover {
-			background: var(--keycloak-secondary);
-			color: var(--keycloak-text);
+		
+		/* FOOTER - Simple fixed */
+		.app-footer {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: var(--footer-height);
+			background: #1a1a1a;
+			border-top: 2px solid var(--bs-primary);
+			z-index: 800;
+			display: flex;
+			align-items: center;
+			padding: 0 1rem;
+			box-shadow: none;
 		}
-
-		.sidebar button.active {
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
+		
+		/* MAIN CONTENT - Perfect positioning */
+		.app-main {
+			margin-top: var(--header-height);
+			margin-left: var(--sidebar-width);
+			margin-bottom: var(--footer-height);
+			padding: 1rem;
+			min-height: calc(100vh - var(--header-height) - var(--footer-height));
+			background: #1e1e1e;
 		}
-
-		.main {
-			margin-left: 200px;
-			padding: 24px;
-			flex: 1;
-			background: var(--keycloak-background);
+		
+		/* CONTENT CARDS - Minimal padding */
+		.content-card {
+			background: #262626;
+			border: 1px solid #404040;
+			border-radius: 8px;
+			margin-bottom: 1rem;
+			box-shadow: none;
 		}
-
-		.box {
-			background: var(--keycloak-content);
-			padding: 24px;
-			border-radius: 6px;
-			box-shadow: var(--keycloak-shadow);
-			max-width: 1200px;
-			margin-bottom: 24px;
-			border: 1px solid var(--keycloak-border);
+		
+		.content-card-header {
+			padding: 0.75rem 1rem;
+			background: #2d2d2d;
+			border-bottom: 1px solid #404040;
+			border-radius: 7px 7px 0 0;
 		}
-
-		.section {
+		
+		.content-card-body {
+			padding: 1rem;
+		}
+		
+		/* MOBILE - Clean responsive */
+		@media (max-width: 768px) {
+			.app-sidebar {
+				transform: translateX(-100%);
+				transition: transform 0.3s ease;
+				z-index: 1100;
+				top: 0;
+				height: 100vh;
+				padding-top: calc(var(--header-height) + 1rem);
+			}
+			
+			.app-sidebar.show {
+				transform: translateX(0);
+			}
+			
+			.app-main {
+				margin-left: 0;
+				padding: 0.75rem;
+			}
+			
+			.content-card-body {
+				padding: 0.75rem;
+			}
+		}
+		
+		/* SIDEBAR OVERLAY */
+		.sidebar-overlay {
 			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 1050;
 		}
-
-		.section.active {
+		
+		.sidebar-overlay.show {
 			display: block;
 		}
-
-		.list {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px;
-			margin-bottom: 16px;
-		}
-
-		.list button {
-			padding: 8px 16px;
-			margin-bottom: 8px;
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			background: var(--keycloak-content);
-			color: var(--keycloak-text);
-			font-weight: 400;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-
-		.list button.selected {
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			border-color: var(--keycloak-primary);
-		}
-
-		.list button:hover {
-			background: var(--keycloak-secondary);
-			border-color: var(--keycloak-primary);
-		}
-
-		.list button.selected:hover {
-			background: var(--keycloak-primary-hover);
-		}
-
-		.breadcrumb {
-			background: var(--keycloak-secondary);
-			padding: 12px 16px;
-			border-radius: 4px;
-			margin-bottom: 16px;
-			font-size: 0.9rem;
-			color: var(--keycloak-text-secondary);
-			border: 1px solid var(--keycloak-border);
-		}
-
-		.breadcrumb .current {
-			color: var(--keycloak-primary);
-			font-weight: 600;
-		}
-
-		.back-button {
-			padding: 8px 16px;
-			margin-bottom: 16px;
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			background: var(--keycloak-secondary);
-			color: var(--keycloak-text);
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-
-		.back-button:hover {
-			background: var(--keycloak-border);
-		}
-
-		/* Table Styles */
-		.data-table {
-			width: 100%;
-			border-collapse: collapse;
-			margin: 16px 0;
-			background: var(--keycloak-content);
+		
+		/* NAVIGATION LINKS */
+		.nav-link {
+			color: #a0a0a0;
+			text-decoration: none;
+			padding: 0.5rem 0.75rem;
 			border-radius: 6px;
-			overflow: hidden;
-			box-shadow: var(--keycloak-shadow);
-			border: 1px solid var(--keycloak-border);
+			margin-bottom: 0.25rem;
+			display: flex;
+			align-items: center;
+			transition: all 0.2s ease;
 		}
-
-		.data-table th {
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			padding: 12px 16px;
-			text-align: left;
+		
+		.nav-link:hover {
+			background: rgba(0, 102, 204, 0.1);
+			color: #ffffff;
+		}
+		
+		.nav-link.active {
+			background: var(--bs-primary);
+			color: #ffffff;
+		}
+		
+		/* RESPONSIVE LOGO */
+		.app-logo {
+			height: 40px;
+			width: auto;
+		}
+		
+		@media (min-width: 576px) { .app-logo { height: 45px; } }
+		@media (min-width: 768px) { .app-logo { height: 50px; } }
+		@media (min-width: 992px) { .app-logo { height: 55px; } }
+		
+		/* BUTTONS */
+		.btn {
+			border-radius: 6px;
+			transition: all 0.2s ease;
+		}
+		
+		/* TABLES */
+		.table {
+			margin-bottom: 0;
+		}
+		
+		.table th {
+			border-bottom: 2px solid #404040;
 			cursor: pointer;
 			user-select: none;
-			transition: background 0.2s ease;
-			font-weight: 600;
 		}
-
-		.data-table th:hover {
-			background: var(--keycloak-primary-hover);
-		}
-
-		.data-table th.sorted-asc::after {
+		
+		.table th.sorted-asc::after {
 			content: " ↑";
-			color: var(--keycloak-white);
 		}
-
-		.data-table th.sorted-desc::after {
+		
+		.table th.sorted-desc::after {
 			content: " ↓";
-			color: var(--keycloak-white);
 		}
-
-		.data-table td {
-			padding: 12px 16px;
-			border-bottom: 1px solid var(--keycloak-border);
-			color: var(--keycloak-text);
+		
+		.table td {
+			border-bottom: 1px solid #404040;
 		}
-
-		.data-table tr:hover {
-			background: var(--keycloak-secondary);
+		
+		/* SECTIONS */
+		.app-section {
+			display: none;
 		}
-
-		.data-table tr:last-child td {
-			border-bottom: none;
+		
+		.app-section.active {
+			display: block;
 		}
-
+		
+		/* NO ANIMATIONS to prevent conflicts */
+		* {
+			animation: none !important;
+			transition-duration: 0.2s !important;
+		}
+		
+		/* UTILITY CLASSES */
+		.text-muted { color: #6c757d !important; }
+		.text-primary { color: var(--bs-primary) !important; }
+		.bg-primary { background-color: var(--bs-primary) !important; }
+		.border-primary { border-color: var(--bs-primary) !important; }
+		
+		/* SCROLLBAR */
+		::-webkit-scrollbar { width: 6px; }
+		::-webkit-scrollbar-track { background: #1a1a1a; }
+		::-webkit-scrollbar-thumb { background: var(--bs-primary); border-radius: 3px; }
+		
 		/* Project Tags */
 		.project-tag {
 			display: inline-block;
-			background: var(--keycloak-primary-light);
-			color: var(--keycloak-primary);
-			padding: 4px 8px;
+			background: rgba(0, 102, 204, 0.2);
+			color: var(--bs-primary);
+			padding: 2px 6px;
 			border-radius: 4px;
-			font-size: 0.8rem;
+			font-size: 0.75rem;
 			margin: 2px;
-			border: 1px solid var(--keycloak-primary);
-		}
-
-		/* Pagination */
-		.pagination {
-			display: flex;
-			justify-content: center;
-			gap: 8px;
-			margin: 16px 0;
-		}
-
-		.pagination button {
-			padding: 8px 12px;
-			border: 1px solid var(--keycloak-border);
-			background: var(--keycloak-content);
-			cursor: pointer;
-			border-radius: 4px;
-			transition: all 0.2s ease;
-			color: var(--keycloak-text);
-		}
-
-		.pagination button:hover {
-			background: var(--keycloak-secondary);
-			border-color: var(--keycloak-primary);
-		}
-
-		.pagination button.active {
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			border-color: var(--keycloak-primary);
-		}
-
-		.pagination button:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-			background: var(--keycloak-secondary);
-		}
-
-		/* Search and Filter */
-		.table-controls {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			margin-bottom: 16px;
-			flex-wrap: wrap;
-			gap: 12px;
-		}
-
-		.search-input {
-			padding: 8px 12px;
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			min-width: 200px;
-			font-size: 14px;
-			color: var(--keycloak-text);
-			background: var(--keycloak-content);
-		}
-
-		.search-input:focus {
-			outline: none;
-			border-color: var(--keycloak-primary);
-			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
+			border: 1px solid var(--bs-primary);
 		}
 		
-		/* Modal/Popup Styles */
-		.modal {
-			display: none;
-			position: fixed;
-			z-index: 1000;
-			left: 0;
-			top: 0;
-			width: 100%;
-			height: 100%;
-			background-color: rgba(0, 0, 0, 0.5);
-		}
-
-		.modal-content {
-			background-color: var(--keycloak-content);
-			margin: 5% auto;
-			padding: 24px;
-			border-radius: 6px;
-			width: 90%;
-			max-width: 600px;
-			max-height: 80vh;
-			overflow-y: auto;
-			box-shadow: var(--keycloak-shadow-hover);
-			border: 1px solid var(--keycloak-border);
-		}
-
-		.modal-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			margin-bottom: 16px;
-			padding-bottom: 12px;
-			border-bottom: 1px solid var(--keycloak-border);
-		}
-
-		.modal-header h3 {
-			margin: 0;
-			color: var(--keycloak-text);
-			font-weight: 600;
-		}
-
-		.close {
-			font-size: 24px;
-			font-weight: bold;
-			cursor: pointer;
-			color: var(--keycloak-text-secondary);
-			transition: color 0.2s ease;
-		}
-
-		.close:hover {
-			color: var(--keycloak-primary);
-		}
-
-		.note-list {
-			background: var(--keycloak-secondary);
-			border-radius: 4px;
-			padding: 16px;
-			margin-bottom: 16px;
-			max-height: 200px;
-			overflow-y: auto;
-			border: 1px solid var(--keycloak-border);
-		}
-
+		/* Note items in modal */
 		.note-item {
 			padding: 8px 0;
-			border-bottom: 1px solid var(--keycloak-border);
+			border-bottom: 1px solid #404040;
 			font-size: 0.9rem;
-			color: var(--keycloak-text);
+			color: #f0f0f0;
 		}
-
+		
 		.note-item:last-child { 
 			border-bottom: none; 
 		}
-
+		
 		.note-meta {
 			font-size: 0.8rem;
-			color: var(--keycloak-text-secondary);
+			color: #a0a0a0;
 			margin-top: 4px;
-		}
-
-		.note-form textarea {
-			width: 100%;
-			min-height: 80px;
-			border-radius: 4px;
-			border: 1px solid var(--keycloak-border);
-			padding: 12px;
-			font-size: 1rem;
-			margin-bottom: 12px;
-			resize: vertical;
-			font-family: inherit;
-			color: var(--keycloak-text);
-			background: var(--keycloak-content);
-		}
-
-		.note-form textarea:focus {
-			outline: none;
-			border-color: var(--keycloak-primary);
-			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
-		}
-
-		.note-form button {
-			padding: 10px 20px;
-			border: none;
-			border-radius: 4px;
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			font-weight: 600;
-			cursor: pointer;
-			float: right;
-			transition: background 0.2s ease;
-		}
-
-		.note-form button:hover {
-			background: var(--keycloak-primary-hover);
-		}
-		
-		.import-form {
-			display: flex;
-			flex-direction: column;
-			gap: 16px;
-		}
-
-		.file-input {
-			padding: 24px;
-			border: 2px dashed var(--keycloak-border);
-			border-radius: 4px;
-			text-align: center;
-			cursor: pointer;
-			transition: border-color 0.2s ease;
-			background: var(--keycloak-secondary) !important;
-			color: var(--keycloak-text) !important;
-		}
-
-		.file-input:hover {
-			border-color: var(--keycloak-primary);
-			background: var(--keycloak-border) !important;
-		}
-
-		.file-input p {
-			color: var(--keycloak-text) !important;
-			margin: 0 0 8px 0;
-		}
-
-		.file-input small {
-			color: var(--keycloak-text-secondary) !important;
-		}
-
-		.btn {
-			padding: 10px 20px;
-			border: none;
-			border-radius: 4px;
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			font-weight: 600;
-			cursor: pointer;
-			transition: background 0.2s ease;
-		}
-
-		.btn:hover {
-			background: var(--keycloak-primary-hover);
-		}
-
-		.weather-info {
-			font-size: 1.1rem;
-			padding: 16px;
-			background: var(--keycloak-secondary);
-			border-radius: 4px;
-			margin-bottom: 16px;
-			border: 1px solid var(--keycloak-border-light);
-			color: var(--keycloak-text);
-		}
-
-		.project-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-			gap: 16px;
-		}
-
-		.project-card {
-			background: var(--keycloak-secondary);
-			padding: 20px;
-			border-radius: 4px;
-			border-left: 4px solid var(--keycloak-primary);
-			border: 1px solid var(--keycloak-border-light);
-			color: var(--keycloak-text);
-		}
-
-		.loading {
-			text-align: center;
-			color: var(--keycloak-text-secondary);
-			font-style: italic;
-		}
-
-		#weather { 
-			font-size: 1rem; 
-			color: var(--keycloak-text-secondary);
-		}
-
-		/* Toggle buttons for different views */
-		.view-toggle {
-			margin-bottom: 16px;
-		}
-
-		.view-toggle button {
-			padding: 8px 16px;
-			border: 1px solid var(--keycloak-border);
-			background: var(--keycloak-content);
-			color: var(--keycloak-text);
-			cursor: pointer;
-			margin-right: 4px;
-			border-radius: 4px;
-			transition: all 0.2s ease;
-		}
-
-		.view-toggle button.active {
-			background: var(--keycloak-primary);
-			color: var(--keycloak-white);
-			border-color: var(--keycloak-primary);
-		}
-
-		.view-toggle button:hover {
-			background: var(--keycloak-secondary);
-			border-color: var(--keycloak-primary);
-		}
-
-		.view-toggle button.active:hover {
-			background: var(--keycloak-primary-hover);
-		}
-
-		/* Success and Error Messages */
-		.success-message {
-			color: var(--keycloak-success);
-			background: #1a3a1a;
-			border: 1px solid #2d5a2d;
-			padding: 8px 12px;
-			border-radius: 4px;
-			margin: 8px 0;
-		}
-
-		.error-message {
-			color: var(--keycloak-error);
-			background: #3a1a1a;
-			border: 1px solid #5a2d2d;
-			padding: 8px 12px;
-			border-radius: 4px;
-			margin: 8px 0;
-		}
-
-		/* Form Elements */
-		select {
-			padding: 6px 8px;
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			background: var(--keycloak-content);
-			color: var(--keycloak-text);
-		}
-
-		select:focus {
-			outline: none;
-			border-color: var(--keycloak-primary);
-		}
-
-		input[type="text"] {
-			border: 1px solid var(--keycloak-border);
-			border-radius: 4px;
-			background: var(--keycloak-content);
-			color: var(--keycloak-text);
-		}
-
-		input[type="text"]:focus {
-			outline: none;
-			border-color: var(--keycloak-primary);
-			box-shadow: 0 0 0 2px var(--keycloak-primary-light);
-		}
-
-		/* Headings */
-		h2, h3 {
-			color: var(--keycloak-text);
-			margin-top: 0;
-		}
-
-		@media (max-width: 800px) {
-			.sidebar { display: none; }
-			.main { margin-left: 0; }
-			.modal-content {
-				margin: 10% auto;
-				width: 95%;
-				padding: 16px;
-			}
-			.data-table {
-				font-size: 0.9rem;
-			}
-			.data-table th, .data-table td {
-				padding: 8px 10px;
-			}
-			.table-controls {
-				flex-direction: column;
-				align-items: stretch;
-			}
 		}
 	</style>
 </head>
 <body>
-	<div class="header">
-		<div class="logo-placeholder">
-			<img  width="180px" src="/logo_saleman_original.png" alt="logo">
-		</div>
-		<div>
-			<span id="username">User</span> | 
-			<span id="weather">Wetter wird geladen…</span> |
-			<button onclick="logout()" class="logout-btn">Abmelden</button>
-		</div>
-	</div>
-	<div class="sidebar">
-		<button onclick="showSection('addresses')" class="active" id="btn-addresses">Adressen</button>
-		<button onclick="showSection('notes')" id="btn-notes">Notizen</button>
-		<button onclick="showSection('import')" id="btn-import">Import</button>
-	</div>
-	<div class="main">
-		<!-- Adressen Sektion -->
-		<div class="section active" id="addressesSection">
-			<!-- View Toggle -->
-			<div class="view-toggle">
-				<button onclick="showAddressView('table')" class="active" id="view-table">Tabellenansicht</button>
-				<button onclick="showAddressView('navigation')" id="view-navigation">Navigation</button>
-			</div>
-
-			<!-- Neue Adressen-Tabelle -->
-			<div class="box" id="addressesTableBox">
-				<h2>Alle Adressen</h2>
-				<div class="table-controls">
-					<input type="text" id="addressSearchInput" class="search-input" placeholder="Suche nach Adresse..." onkeyup="filterAddressTable()">
-					<div>
-						<span>Zeige </span>
-						<select id="addressPageSize" onchange="changeAddressPageSize()">
-							<option value="10">10</option>
-							<option value="20" selected>20</option>
-							<option value="50">50</option>
-						</select>
-						<span> Einträge</span>
-					</div>
-				</div>
-				<table id="addressesTable" class="data-table">
-					<thead>
-						<tr>
-							<th onclick="sortAddressTable('plz')">PLZ</th>
-							<th onclick="sortAddressTable('street')">Straße</th>
-							<th onclick="sortAddressTable('number')">Hausnummer</th>
-							<th onclick="sortAddressTable('region')">Region</th>
-							<th>Projekte</th>
-							<th>Aktionen</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr><td colspan="6" class="loading">Adressen werden geladen...</td></tr>
-					</tbody>
-				</table>
-				<div id="addressesPagination" class="pagination"></div>
-			</div>
-
-			<!-- Bestehende PLZ-Navigation (ausblendbar) -->
-			<div class="box" id="addressesNavigationBox" style="display:none;">
-				<h2>Adresse auswählen</h2>
+	<!-- HEADER -->
+	<header class="app-header">
+		<div class="d-flex align-items-center w-100">
+			<button class="btn btn-outline-light btn-sm d-md-none me-3" onclick="toggleSidebar()">
+				<i class="bi bi-list"></i>
+			</button>
+			
+			<img src="/logo_saleman_original.png" alt="SimpleSalesman"
+			     class="me-3 d-block"
+			     loading="lazy"
+			     style="height:120px;width:auto;max-width:100%;">		
+			<div class="ms-auto d-flex align-items-center gap-3">
+				<span class="text-light">
+					<i class="bi bi-person-circle me-1"></i>
+					<span id="username" class="d-none d-sm-inline">User</span>
+				</span>
 				
-				<!-- Breadcrumb Navigation -->
-				<div class="breadcrumb" id="breadcrumb">
-					<span class="current">PLZ auswählen</span>
-				</div>
+				<span class="text-light d-none d-lg-inline">
+					<i class="bi bi-cloud-sun me-1"></i>
+					<span id="weather">Wetter wird geladen…</span>
+				</span>
 				
-				<!-- Back Button (initially hidden) -->
-				<button class="back-button" id="backButton" onclick="goBack()" style="display:none;">
-					← Zurück
+				<button onclick="logout()" class="btn btn-outline-danger btn-sm">
+					<i class="bi bi-box-arrow-right"></i>
+					<span class="d-none d-sm-inline ms-1">Abmelden</span>
 				</button>
-				
-				<!-- PLZ Selection -->
-				<div id="plzSelection">
-					<b>Verfügbare Postleitzahlen:</b>
-					<div class="list" id="plzList">
-						<p class="loading">PLZs werden geladen...</p>
+			</div>
+		</div>
+	</header>
+
+	<!-- SIDEBAR -->
+	<nav class="app-sidebar" id="sidebar">
+		<div class="mb-3">
+			<h6 class="text-light mb-3">Navigation</h6>
+			
+			<a href="#" class="nav-link active" onclick="showSection('addresses')" id="nav-addresses">
+				<i class="bi bi-geo-alt me-2"></i>
+				Adressen
+			</a>
+			
+			<a href="#" class="nav-link" onclick="showSection('notes')" id="nav-notes">
+				<i class="bi bi-journal-text me-2"></i>
+				Notizen
+			</a>
+			
+			<a href="#" class="nav-link" onclick="showSection('import')" id="nav-import">
+				<i class="bi bi-upload me-2"></i>
+				Import
+			</a>
+		</div>
+	</nav>
+
+	<!-- OVERLAY -->
+	<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+	<!-- MAIN CONTENT -->
+	<main class="app-main">
+		<!-- ADDRESSES SECTION -->
+		<div class="app-section active" id="addressesSection">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h2 class="text-light mb-0">Adressen</h2>
+				<div class="btn-group btn-group-sm">
+					<button class="btn btn-primary active" onclick="showAddressView('table')" id="view-table">
+						<i class="bi bi-table me-1"></i>Tabellenansicht
+					</button>
+					<button class="btn btn-outline-primary" onclick="showAddressView('navigation')" id="view-navigation">
+						<i class="bi bi-map me-1"></i>Navigation
+					</button>
+				</div>
+			</div>
+
+			<!-- TABLE VIEW -->
+			<div class="content-card" id="addressesTableBox">
+				<div class="content-card-header">
+					<h5 class="mb-0 text-light">Alle Adressen</h5>
+				</div>
+				<div class="content-card-body">
+					<div class="row g-2 mb-3">
+						<div class="col-md-8">
+							<input type="text" class="form-control form-control-sm" id="addressSearchInput" placeholder="Suche nach Adresse..." onkeyup="filterAddressTable()">
+						</div>
+						<div class="col-md-4">
+							<select class="form-select form-select-sm" id="addressPageSize" onchange="changeAddressPageSize()">
+								<option value="10">10 pro Seite</option>
+								<option value="20" selected>20 pro Seite</option>
+								<option value="50">50 pro Seite</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="table-responsive">
+						<table class="table table-dark table-sm" id="addressesTable">
+							<thead>
+								<tr>
+									<th onclick="sortAddressTable('plz')">PLZ <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortAddressTable('street')">Straße <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortAddressTable('number')">Hausnummer <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortAddressTable('region')">Region <i class="bi bi-arrow-down-up"></i></th>
+									<th>Projekte</th>
+									<th>Aktionen</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="6" class="text-center text-muted">
+										<div class="spinner-border spinner-border-sm me-2"></div>
+										Adressen werden geladen...
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<nav id="addressesPagination" class="d-flex justify-content-center mt-3"></nav>
+				</div>
+			</div>
+
+			<!-- NAVIGATION VIEW -->
+			<div class="content-card" id="addressesNavigationBox" style="display:none;">
+				<div class="content-card-header">
+					<h5 class="mb-0 text-light">Adresse auswählen</h5>
+				</div>
+				<div class="content-card-body">
+					<nav class="mb-3">
+						<ol class="breadcrumb bg-dark" id="breadcrumb">
+							<li class="breadcrumb-item active">PLZ auswählen</li>
+						</ol>
+					</nav>
+					
+					<button class="btn btn-secondary btn-sm mb-3" id="backButton" onclick="goBack()" style="display:none;">
+						<i class="bi bi-arrow-left me-1"></i>Zurück
+					</button>
+					
+					<div id="plzSelection">
+						<h6 class="text-light mb-2">Verfügbare Postleitzahlen:</h6>
+						<div id="plzList" class="d-flex flex-wrap gap-2">
+							<span class="text-muted">PLZs werden geladen...</span>
+						</div>
+					</div>
+					
+					<div id="streetSelection" style="display:none;">
+						<h6 class="text-light mb-2">Straßen:</h6>
+						<div id="streetList" class="d-flex flex-wrap gap-2"></div>
+					</div>
+					
+					<div id="numberSelection" style="display:none;">
+						<h6 class="text-light mb-2">Hausnummern:</h6>
+						<div id="numberList" class="d-flex flex-wrap gap-2"></div>
 					</div>
 				</div>
-				
-				<!-- Street Selection (initially hidden) -->
-				<div id="streetSelection" style="display:none;">
-					<b>Straßen:</b>
-					<div class="list" id="streetList"></div>
+			</div>
+		</div>
+
+		<!-- NOTES SECTION -->
+		<div class="app-section" id="notesSection">
+			<h2 class="text-light mb-3">Notizen</h2>
+			<div class="content-card">
+				<div class="content-card-header">
+					<h5 class="mb-0 text-light">Alle Notizen</h5>
 				</div>
-				
-				<!-- House Number Selection (initially hidden) -->
-				<div id="numberSelection" style="display:none;">
-					<b>Hausnummern:</b>
-					<div class="list" id="numberList"></div>
+				<div class="content-card-body">
+					<div class="row g-2 mb-3">
+						<div class="col-md-8">
+							<input type="text" class="form-control form-control-sm" id="notesSearchInput" placeholder="Suche in Notizen..." onkeyup="filterNotesTable()">
+						</div>
+						<div class="col-md-4">
+							<select class="form-select form-select-sm" id="notesPageSize" onchange="changeNotesPageSize()">
+								<option value="10">10 pro Seite</option>
+								<option value="20" selected>20 pro Seite</option>
+								<option value="50">50 pro Seite</option>
+							</select>
+						</div>
+					</div>
+					
+					<div class="table-responsive">
+						<table class="table table-dark table-sm" id="notesTable">
+							<thead>
+								<tr>
+									<th onclick="sortNotesTable('id')">ID <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortNotesTable('address')">Adresse <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortNotesTable('text')">Notiztext <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortNotesTable('createdBy')">Erstellt von <i class="bi bi-arrow-down-up"></i></th>
+									<th onclick="sortNotesTable('createdAt')">Datum <i class="bi bi-arrow-down-up"></i></th>
+									<th>Aktionen</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="6" class="text-center text-muted">
+										<div class="spinner-border spinner-border-sm me-2"></div>
+										Notizen werden geladen...
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<nav id="notesPagination" class="d-flex justify-content-center mt-3"></nav>
 				</div>
 			</div>
 		</div>
 
-		<!-- Notizen Sektion -->
-		<div class="section" id="notesSection">
-			<div class="box">
-				<h2>Alle Notizen</h2>
-				<div class="table-controls">
-					<input type="text" id="notesSearchInput" class="search-input" placeholder="Suche in Notizen..." onkeyup="filterNotesTable()">
-					<div>
-						<span>Zeige </span>
-						<select id="notesPageSize" onchange="changeNotesPageSize()">
-							<option value="10">10</option>
-							<option value="20" selected>20</option>
-							<option value="50">50</option>
-						</select>
-						<span> Einträge</span>
+		<!-- IMPORT SECTION -->
+		<div class="app-section" id="importSection">
+			<h2 class="text-light mb-3">Import</h2>
+			<div class="content-card">
+				<div class="content-card-header">
+					<h5 class="mb-0 text-light">Excel Import</h5>
+				</div>
+				<div class="content-card-body">
+					<form class="import-form" id="importForm">
+						<div class="border border-2 border-dashed border-primary rounded p-4 text-center mb-3 file-input" onclick="document.getElementById('fileInput').click()" style="cursor:pointer;background:#2a2a2a;">
+							<input type="file" id="fileInput" accept=".xlsx,.xls" class="d-none">
+							<i class="bi bi-cloud-upload display-6 text-primary mb-2"></i>
+							<p class="mb-1 text-light">Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher</p>
+							<small class="text-muted">Unterstützte Formate: .xlsx, .xls</small>
+						</div>
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-upload me-1"></i>Datei importieren
+						</button>
+					</form>
+					<div id="importResult" class="mt-3"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- WEATHER SECTION -->
+		<div class="app-section" id="weatherSection">
+			<h2 class="text-light mb-3">Wetter</h2>
+			<div class="content-card">
+				<div class="content-card-header">
+					<h5 class="mb-0 text-light">Wetter Information</h5>
+				</div>
+				<div class="content-card-body">
+					<div class="alert alert-info" id="weatherInfo">
+						<div class="d-flex align-items-center">
+							<div class="spinner-border spinner-border-sm me-2"></div>
+							Wetter wird geladen...
+						</div>
+					</div>
+					
+					<div class="row g-2 mt-3">
+						<div class="col-md-8">
+							<input type="text" class="form-control" id="regionInput" placeholder="Region eingeben (z.B. Linz)">
+						</div>
+						<div class="col-md-4">
+							<button class="btn btn-primary w-100" onclick="fetchWeatherByRegion()">
+								<i class="bi bi-search me-1"></i>Wetter abrufen
+							</button>
+						</div>
 					</div>
 				</div>
-				<table id="notesTable" class="data-table">
-					<thead>
-						<tr>
-							<th onclick="sortNotesTable('id')">ID</th>
-							<th onclick="sortNotesTable('address')">Adresse</th>
-							<th onclick="sortNotesTable('text')">Notiztext</th>
-							<th onclick="sortNotesTable('createdBy')">Erstellt von</th>
-							<th onclick="sortNotesTable('createdAt')">Datum</th>
-							<th>Aktionen</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr><td colspan="6" class="loading">Notizen werden geladen...</td></tr>
-					</tbody>
-				</table>
-				<div id="notesPagination" class="pagination"></div>
 			</div>
 		</div>
+	</main>
 
-		<!-- Projekte Sektion -->
-		<div class="section" id="projectsSection">
-			<div class="box">
-				<h2>Projekte</h2>
-				<div class="project-grid" id="projectGrid">
-					<p class="loading">Projekte werden geladen...</p>
+	<!-- FOOTER -->
+	<footer class="app-footer">
+		<div class="d-flex align-items-center w-100">
+			<span class="text-light me-3">SimpleSalesman v0.0.8</span>
+			<div class="ms-auto">
+				<small class="text-muted">
+					<i class="bi bi-check-circle-fill text-success me-1"></i>
+					System Online
+				</small>
+			</div>
+		</div>
+	</footer>
+
+	<!-- NOTES MODAL -->
+	<div class="modal fade" id="notesModal" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content bg-dark">
+				<div class="modal-header border-bottom border-secondary">
+					<h5 class="modal-title text-light" id="modalTitle">Notizen für Adresse</h5>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeNotesModal()"></button>
 				</div>
-			</div>
-		</div>
-
-		<!-- Import Sektion -->
-		<div class="section" id="importSection">
-			<div class="box">
-				<h2>Excel Import</h2>
-				<form class="import-form" id="importForm">
-					<div class="file-input" onclick="document.getElementById('fileInput').click()">
-						<input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none;">
-						<p>Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher</p>
-						<small>Unterstützte Formate: .xlsx, .xls</small>
+				<div class="modal-body">
+					<div class="mb-3">
+						<h6 class="text-light">Bestehende Notizen:</h6>
+						<div id="modalNoteList" class="bg-secondary rounded p-3 mb-3" style="max-height:200px;overflow-y:auto;">
+							<p class="text-muted mb-0 loading">Notizen werden geladen...</p>
+						</div>
 					</div>
-					<button type="submit" class="btn">Datei importieren</button>
-				</form>
-				<div id="importResult" style="margin-top: 20px;"></div>
-			</div>
-		</div>
-
-		<!-- Wetter Sektion -->
-		<div class="section" id="weatherSection">
-			<div class="box">
-				<h2>Wetter Information</h2>
-				<div class="weather-info" id="weatherInfo">
-					<p class="loading">Wetter wird geladen...</p>
-				</div>
-				<div>
-					<h3>Wetter für Region abfragen</h3>
-					<input type="text" id="regionInput" placeholder="Region eingeben (z.B. Linz)" style="padding:8px; margin-right:10px;">
-					<button onclick="fetchWeatherByRegion()" class="btn">Wetter abrufen</button>
+					<form class="note-form" id="modalNoteForm">
+						<div class="mb-3">
+							<label for="modalNewNote" class="form-label text-light">Neue Notiz hinzufügen:</label>
+							<textarea class="form-control" id="modalNewNote" rows="3" placeholder="Neue Notiz schreiben..."></textarea>
+						</div>
+						<button type="submit" class="btn btn-primary">
+							<i class="bi bi-save me-1"></i>Notiz speichern
+						</button>
+					</form>
 				</div>
 			</div>
 		</div>
 	</div>
 
-	<!-- Notes Modal -->
-	<div id="notesModal" class="modal">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3 id="modalTitle">Notizen für Adresse</h3>
-				<span class="close" onclick="closeNotesModal()">&times;</span>
-			</div>
-			<div class="modal-body">
-				<div class="note-list" id="modalNoteList">
-					<p class="loading">Notizen werden geladen...</p>
-				</div>
-				<form class="note-form" id="modalNoteForm">
-					<textarea id="modalNewNote" placeholder="Neue Notiz schreiben..."></textarea>
-					<button type="submit">Notiz speichern</button>
-					<div style="clear:both;"></div>
-				</form>
-			</div>
-		</div>
-	</div>
-
+	<!-- Bootstrap JS -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	
 	<script>
 		// ----------- Global Variables -----------
 		let allAddresses = [];
@@ -874,12 +657,13 @@
 			searchTerm: ''
 		};
 
+		// Bootstrap modal instance
+		let notesModalInstance = null;
+
 		// ----------- USERNAME aus Token -----------
 		document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
 
 		// ----------- Logout Function -----------
-		// Replace the existing logout function in your templates/gui.html with this:
-
 		function logout() {
 			// Confirm logout
 			if (confirm('Möchten Sie sich wirklich abmelden?')) {
@@ -916,6 +700,12 @@
 
 		// ----------- Initial Load -----------
 		window.addEventListener('load', function() {
+			// Initialize Bootstrap modal
+			const modalElement = document.getElementById('notesModal');
+			if (modalElement) {
+				notesModalInstance = new bootstrap.Modal(modalElement);
+			}
+
 			const token = sessionStorage.getItem('access_token');
 			if (!token) {
 				console.warn('Kein access_token im sessionStorage gefunden. Versuche ohne Token...');
@@ -939,7 +729,8 @@
 			
 			const debugBtn = document.createElement('button');
 			debugBtn.textContent = 'Debug: Show Data';
-			debugBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:8px 12px;border-radius:4px;cursor:pointer;';
+			debugBtn.className = 'btn btn-sm btn-warning position-fixed';
+			debugBtn.style.cssText = 'top:90px;right:10px;z-index:9999;';
 			debugBtn.onclick = () => {
 				console.log('Addresses:', allAddresses);
 				console.log('Notes:', allNotes);
@@ -947,6 +738,22 @@
 				alert(`${allAddresses.length} Adressen, ${allNotes.length} Notizen geladen.\nAktuelle Ansicht: ${currentAddressView}`);
 			};
 			document.body.appendChild(debugBtn);
+		}
+
+		// ----------- Sidebar Toggle -----------
+		function toggleSidebar() {
+			const sidebar = document.getElementById('sidebar');
+			const overlay = document.getElementById('overlay');
+			
+			if (sidebar.classList.contains('show')) {
+				sidebar.classList.remove('show');
+				overlay.classList.remove('show');
+				document.body.style.overflow = '';
+			} else {
+				sidebar.classList.add('show');
+				overlay.classList.add('show');
+				document.body.style.overflow = 'hidden';
+			}
 		}
 
 		// ----------- Address Loading and Table Management -----------
@@ -971,7 +778,7 @@
 			} catch (error) {
 				console.error('Fehler beim Laden der Adressen:', error);
 				document.querySelector('#addressesTable tbody').innerHTML = 
-					`<tr><td colspan="6" style="color:var(--keycloak-error);">Fehler: ${error.message}</td></tr>`;
+					`<tr><td colspan="6" class="text-center text-danger">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
@@ -1006,7 +813,7 @@
 			} catch (error) {
 				console.error('Fehler beim Laden der Notizen:', error);
 				document.querySelector('#notesTable tbody').innerHTML = 
-					`<tr><td colspan="6" style="color:var(--keycloak-error);">Fehler: ${error.message}</td></tr>`;
+					`<tr><td colspan="6" class="text-center text-danger">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
@@ -1060,7 +867,7 @@
 			tbody.innerHTML = '';
 
 			if (paginatedAddresses.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="6" class="loading">Keine Adressen gefunden</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Keine Adressen gefunden</td></tr>';
 			} else {
 				paginatedAddresses.forEach(addr => {
 					const projects = (addr.projects || []).map(p => 
@@ -1075,8 +882,8 @@
 							<td>${addr.regionName || '-'}</td>
 							<td>${projects || '-'}</td>
 							<td>
-								<button onclick="openNotesModalForAddress(${addr.id})" style="background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">
-									Notizen
+								<button onclick="openNotesModalForAddress(${addr.id})" class="btn btn-sm btn-primary">
+									<i class="bi bi-journal-text me-1"></i>Notizen
 								</button>
 							</td>
 						</tr>
@@ -1100,22 +907,17 @@
 		function renderAddressPagination(totalPages) {
 			const pagination = document.getElementById('addressesPagination');
 			pagination.innerHTML = '';
+			pagination.className = 'pagination pagination-sm justify-content-center mt-3';
 
 			if (totalPages <= 1) return;
 
 			const { currentPage } = addressTableState;
 
 			// Previous button
-			const prevBtn = document.createElement('button');
-			prevBtn.textContent = '‹ Zurück';
-			prevBtn.disabled = currentPage === 1;
-			prevBtn.onclick = () => {
-				if (currentPage > 1) {
-					addressTableState.currentPage--;
-					renderAddressesTable();
-				}
-			};
-			pagination.appendChild(prevBtn);
+			const prevLi = document.createElement('li');
+			prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+			prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage > 1 ? 'addressTableState.currentPage--; renderAddressesTable();' : ''}">‹ Zurück</a>`;
+			pagination.appendChild(prevLi);
 
 			// Page numbers
 			const maxVisiblePages = 5;
@@ -1127,27 +929,17 @@
 			}
 
 			for (let page = startPage; page <= endPage; page++) {
-				const pageBtn = document.createElement('button');
-				pageBtn.textContent = page;
-				pageBtn.className = page === currentPage ? 'active' : '';
-				pageBtn.onclick = () => {
-					addressTableState.currentPage = page;
-					renderAddressesTable();
-				};
-				pagination.appendChild(pageBtn);
+				const pageLi = document.createElement('li');
+				pageLi.className = `page-item ${page === currentPage ? 'active' : ''}`;
+				pageLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); addressTableState.currentPage = ${page}; renderAddressesTable();">${page}</a>`;
+				pagination.appendChild(pageLi);
 			}
 
 			// Next button
-			const nextBtn = document.createElement('button');
-			nextBtn.textContent = 'Weiter ›';
-			nextBtn.disabled = currentPage === totalPages;
-			nextBtn.onclick = () => {
-				if (currentPage < totalPages) {
-					addressTableState.currentPage++;
-					renderAddressesTable();
-				}
-			};
-			pagination.appendChild(nextBtn);
+			const nextLi = document.createElement('li');
+			nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+			nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage < totalPages ? 'addressTableState.currentPage++; renderAddressesTable();' : ''}">Weiter ›</a>`;
+			pagination.appendChild(nextLi);
 		}
 
 		function sortAddressTable(field) {
@@ -1231,7 +1023,7 @@
 			tbody.innerHTML = '';
 
 			if (paginatedNotes.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="6" class="loading">Keine Notizen gefunden</td></tr>';
+				tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Keine Notizen gefunden</td></tr>';
 			} else {
 				paginatedNotes.forEach(note => {
 					const addressStr = getAddressString(note.address);
@@ -1248,8 +1040,8 @@
 							<td>${note.createdBy || '-'}</td>
 							<td>${dateStr}</td>
 							<td>
-								<button onclick="openNotesModalForAddress(${note.address?.id})" style="background:var(--keycloak-primary);color:var(--keycloak-white);border:none;padding:6px 12px;border-radius:4px;cursor:pointer;margin-right:4px;">
-									Anzeigen
+								<button onclick="openNotesModalForAddress(${note.address?.id})" class="btn btn-sm btn-primary">
+									<i class="bi bi-eye me-1"></i>Anzeigen
 								</button>
 							</td>
 						</tr>
@@ -1273,22 +1065,17 @@
 		function renderNotesPagination(totalPages) {
 			const pagination = document.getElementById('notesPagination');
 			pagination.innerHTML = '';
+			pagination.className = 'pagination pagination-sm justify-content-center mt-3';
 
 			if (totalPages <= 1) return;
 
 			const { currentPage } = notesTableState;
 
 			// Previous button
-			const prevBtn = document.createElement('button');
-			prevBtn.textContent = '‹ Zurück';
-			prevBtn.disabled = currentPage === 1;
-			prevBtn.onclick = () => {
-				if (currentPage > 1) {
-					notesTableState.currentPage--;
-					renderNotesTable();
-				}
-			};
-			pagination.appendChild(prevBtn);
+			const prevLi = document.createElement('li');
+			prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+			prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage > 1 ? 'notesTableState.currentPage--; renderNotesTable();' : ''}">‹ Zurück</a>`;
+			pagination.appendChild(prevLi);
 
 			// Page numbers
 			const maxVisiblePages = 5;
@@ -1296,27 +1083,17 @@
 			let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
 			for (let page = startPage; page <= endPage; page++) {
-				const pageBtn = document.createElement('button');
-				pageBtn.textContent = page;
-				pageBtn.className = page === currentPage ? 'active' : '';
-				pageBtn.onclick = () => {
-					notesTableState.currentPage = page;
-					renderNotesTable();
-				};
-				pagination.appendChild(pageBtn);
+				const pageLi = document.createElement('li');
+				pageLi.className = `page-item ${page === currentPage ? 'active' : ''}`;
+				pageLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); notesTableState.currentPage = ${page}; renderNotesTable();">${page}</a>`;
+				pagination.appendChild(pageLi);
 			}
 
 			// Next button
-			const nextBtn = document.createElement('button');
-			nextBtn.textContent = 'Weiter ›';
-			nextBtn.disabled = currentPage === totalPages;
-			nextBtn.onclick = () => {
-				if (currentPage < totalPages) {
-					notesTableState.currentPage++;
-					renderNotesTable();
-				}
-			};
-			pagination.appendChild(nextBtn);
+			const nextLi = document.createElement('li');
+			nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+			nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage < totalPages ? 'notesTableState.currentPage++; renderNotesTable();' : ''}">Weiter ›</a>`;
+			pagination.appendChild(nextLi);
 		}
 
 		function sortNotesTable(field) {
@@ -1380,8 +1157,12 @@
 			currentAddressView = view;
 			
 			// Update toggle buttons
-			document.querySelectorAll('.view-toggle button').forEach(btn => btn.classList.remove('active'));
-			document.getElementById(`view-${view}`).classList.add('active');
+			document.querySelectorAll('#view-table, #view-navigation').forEach(btn => {
+				btn.classList.remove('active', 'btn-primary');
+				btn.classList.add('btn-outline-primary');
+			});
+			document.getElementById(`view-${view}`).classList.add('active', 'btn-primary');
+			document.getElementById(`view-${view}`).classList.remove('btn-outline-primary');
 
 			// Show/hide appropriate boxes
 			if (view === 'table') {
@@ -1399,13 +1180,17 @@
 			const address = allAddresses.find(a => a.id === addressId);
 			if (address) {
 				document.getElementById('modalTitle').textContent = `Notizen für ${getAddressString(address)}`;
-				document.getElementById('notesModal').style.display = 'block';
+				if (notesModalInstance) {
+					notesModalInstance.show();
+				}
 				loadNotesInModal();
 			}
 		}
 
 		function closeNotesModal() {
-			document.getElementById('notesModal').style.display = 'none';
+			if (notesModalInstance) {
+				notesModalInstance.hide();
+			}
 			document.getElementById('modalNewNote').value = '';
 		}
 
@@ -1426,7 +1211,7 @@
 				el.innerHTML = '';
 				
 				if (notes.length === 0) {
-					el.innerHTML = '<p><i>Keine Notizen vorhanden.</i></p>';
+					el.innerHTML = '<p class="text-muted text-center"><i class="bi bi-journal-x me-2"></i>Keine Notizen vorhanden.</p>';
 				} else {
 					notes.forEach(note => {
 						const div = document.createElement('div');
@@ -1446,7 +1231,7 @@
 						}
 						
 						div.innerHTML = `
-							<div>${noteText}</div>
+							<div class="text-light">${noteText}</div>
 							<div class="note-meta">Von: ${creator}${timeString}</div>
 						`;
 						el.appendChild(div);
@@ -1455,7 +1240,7 @@
 			} catch (error) {
 				console.error('Fehler beim Laden der Notizen:', error);
 				document.getElementById('modalNoteList').innerHTML = 
-					`<p style="color:var(--keycloak-error);">Fehler beim Laden der Notizen: ${error.message}</p>`;
+					`<p class="text-danger text-center"><i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Laden der Notizen: ${error.message}</p>`;
 			}
 		}
 
@@ -1494,11 +1279,12 @@
 					await loadNotesInModal();
 					await loadAllNotes(); // Refresh notes table
 					
-					const successMsg = document.createElement('div');
-					successMsg.className = 'success-message';
-					successMsg.textContent = 'Notiz erfolgreich gespeichert!';
-					document.querySelector('.modal-body').appendChild(successMsg);
-					setTimeout(() => successMsg.remove(), 3000);
+					// Show success message
+					const alertDiv = document.createElement('div');
+					alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+					alertDiv.innerHTML = '<i class="bi bi-check-circle me-2"></i>Notiz erfolgreich gespeichert! <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+					document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+					setTimeout(() => alertDiv.remove(), 3000);
 				} else {
 					const errorText = await res.text();
 					console.error('Server response:', res.status, errorText);
@@ -1506,21 +1292,13 @@
 				}
 			} catch (error) {
 				console.error('Fehler beim Speichern der Notiz:', error);
-				const errorMsg = document.createElement('div');
-				errorMsg.className = 'error-message';
-				errorMsg.textContent = `Fehler beim Speichern der Notiz: ${error.message}`;
-				document.querySelector('.modal-body').appendChild(errorMsg);
-				setTimeout(() => errorMsg.remove(), 5000);
+				const alertDiv = document.createElement('div');
+				alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+				alertDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Speichern der Notiz: ${error.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+				setTimeout(() => alertDiv.remove(), 5000);
 			}
 		});
-
-		// Close modal when clicking outside
-		window.onclick = function(event) {
-			const modal = document.getElementById('notesModal');
-			if (event.target === modal) {
-				closeNotesModal();
-			}
-		}
 
 		// ----------- Original Navigation Functions (preserved) -----------
 		function showAllPlzs() {
@@ -1533,12 +1311,13 @@
 			el.innerHTML = '';
 			
 			if (plzs.length === 0) {
-				el.innerHTML = '<p>Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
+				el.innerHTML = '<p class="text-muted">Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
 				return;
 			}
 			
 			plzs.forEach(plz => {
 				const btn = document.createElement('button');
+				btn.className = 'btn btn-sm btn-outline-primary';
 				btn.textContent = plz;
 				btn.onclick = () => selectPlz(plz);
 				el.appendChild(btn);
@@ -1551,8 +1330,12 @@
 			selectedNumber = null;
 			currentStep = 'street';
 			
-			document.getElementById('breadcrumb').innerHTML = 
-				`PLZ: ${plz} > <span class="current">Straße auswählen</span>`;
+			// Update breadcrumb
+			const breadcrumb = document.getElementById('breadcrumb');
+			breadcrumb.innerHTML = `
+				<li class="breadcrumb-item">PLZ: ${plz}</li>
+				<li class="breadcrumb-item active">Straße auswählen</li>
+			`;
 			
 			document.getElementById('backButton').style.display = 'block';
 			document.getElementById('plzSelection').style.display = 'none';
@@ -1574,6 +1357,7 @@
 			
 			streets.forEach(street => {
 				const btn = document.createElement('button');
+				btn.className = 'btn btn-sm btn-outline-primary';
 				btn.textContent = street;
 				btn.onclick = () => selectStreet(street);
 				el.appendChild(btn);
@@ -1585,8 +1369,13 @@
 			selectedNumber = null;
 			currentStep = 'number';
 			
-			document.getElementById('breadcrumb').innerHTML = 
-				`PLZ: ${selectedPlz} > Straße: ${street} > <span class="current">Hausnummer auswählen</span>`;
+			// Update breadcrumb
+			const breadcrumb = document.getElementById('breadcrumb');
+			breadcrumb.innerHTML = `
+				<li class="breadcrumb-item">PLZ: ${selectedPlz}</li>
+				<li class="breadcrumb-item">Straße: ${street}</li>
+				<li class="breadcrumb-item active">Hausnummer auswählen</li>
+			`;
 			
 			document.getElementById('streetSelection').style.display = 'none';
 			document.getElementById('numberSelection').style.display = 'block';
@@ -1617,6 +1406,7 @@
 			
 			numbers.forEach(number => {
 				const btn = document.createElement('button');
+				btn.className = 'btn btn-sm btn-outline-primary';
 				btn.textContent = number;
 				btn.onclick = () => selectNumber(number);
 				el.appendChild(btn);
@@ -1635,7 +1425,7 @@
 			
 			if (address) {
 				selectedAddressId = address.id;
-				openNotesModal();
+				openNotesModalForAddress(address.id);
 			} else {
 				alert('Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.');
 			}
@@ -1645,7 +1435,7 @@
 			if (currentStep === 'street') {
 				currentStep = 'plz';
 				selectedPlz = null;
-				document.getElementById('breadcrumb').innerHTML = '<span class="current">PLZ auswählen</span>';
+				document.getElementById('breadcrumb').innerHTML = '<li class="breadcrumb-item active">PLZ auswählen</li>';
 				document.getElementById('backButton').style.display = 'none';
 				document.getElementById('plzSelection').style.display = 'block';
 				document.getElementById('streetSelection').style.display = 'none';
@@ -1653,18 +1443,13 @@
 			} else if (currentStep === 'number') {
 				currentStep = 'street';
 				selectedStreet = null;
-				document.getElementById('breadcrumb').innerHTML = 
-					`PLZ: ${selectedPlz} > <span class="current">Straße auswählen</span>`;
+				document.getElementById('breadcrumb').innerHTML = `
+					<li class="breadcrumb-item">PLZ: ${selectedPlz}</li>
+					<li class="breadcrumb-item active">Straße auswählen</li>
+				`;
 				document.getElementById('streetSelection').style.display = 'block';
 				document.getElementById('numberSelection').style.display = 'none';
 			}
-		}
-
-		function openNotesModal() {
-			const addressText = `${selectedPlz} ${selectedStreet} ${selectedNumber}`;
-			document.getElementById('modalTitle').textContent = `Notizen für ${addressText}`;
-			document.getElementById('notesModal').style.display = 'block';
-			loadNotesInModal();
 		}
 
 		// ----------- Weather Functions -----------
@@ -1706,73 +1491,41 @@
 				document.getElementById('weatherInfo').innerHTML = `<p><strong>${region}:</strong> ${weatherText}</p>`;
 			} catch (error) {
 				console.error('Fehler beim Laden der Wetterdaten:', error);
-				document.getElementById('weatherInfo').innerHTML = '<p>Fehler beim Laden der Wetterdaten</p>';
+				document.getElementById('weatherInfo').innerHTML = '<p class="text-danger">Fehler beim Laden der Wetterdaten</p>';
 			}
 		}
 
 		// ----------- Section Navigation -----------
 		function showSection(sectionName) {
-			document.querySelectorAll('.section').forEach(section => {
+			// Hide all sections
+			document.querySelectorAll('.app-section').forEach(section => {
 				section.classList.remove('active');
 			});
 			
-			document.querySelectorAll('.sidebar button').forEach(btn => {
-				btn.classList.remove('active');
+			// Remove active from all nav links
+			document.querySelectorAll('.nav-link').forEach(link => {
+				link.classList.remove('active');
 			});
 			
+			// Show selected section
 			document.getElementById(sectionName + 'Section').classList.add('active');
-			document.getElementById('btn-' + sectionName).classList.add('active');
+			document.getElementById('nav-' + sectionName).classList.add('active');
 			
-			if (sectionName === 'projects') {
-				loadProjects();
+			// Close mobile sidebar
+			const sidebar = document.getElementById('sidebar');
+			const overlay = document.getElementById('overlay');
+			if (sidebar.classList.contains('show')) {
+				sidebar.classList.remove('show');
+				overlay.classList.remove('show');
+				document.body.style.overflow = '';
+			}
+			
+			// Load section-specific data if needed
+			if (sectionName === 'notes' && allNotes.length === 0 && allAddresses.length > 0) {
+				loadAllNotes();
 			} else if (sectionName === 'weather') {
 				loadWeatherData();
-			} else if (sectionName === 'notes' && allNotes.length === 0 && allAddresses.length > 0) {
-				loadAllNotes();
 			}
-		}
-
-		// ----------- Project Functions -----------
-		async function loadProjects() {
-			try {
-				const token = sessionStorage.getItem('access_token');
-				const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-				
-				const res = await fetch('/api/v1/projects', { headers });
-				
-				if (res.ok) {
-					const projects = await res.json();
-					displayProjects(projects);
-				} else {
-					document.getElementById('projectGrid').innerHTML = '<p>Fehler beim Laden der Projekte</p>';
-				}
-			} catch (error) {
-				console.error('Fehler beim Laden der Projekte:', error);
-				document.getElementById('projectGrid').innerHTML = '<p>Projekt-Funktionalität wird implementiert...</p>';
-			}
-		}
-
-		function displayProjects(projects) {
-			const grid = document.getElementById('projectGrid');
-			grid.innerHTML = '';
-			
-			if (projects.length === 0) {
-				grid.innerHTML = '<p>Keine Projekte gefunden.</p>';
-				return;
-			}
-			
-			projects.forEach(project => {
-				const card = document.createElement('div');
-				card.className = 'project-card';
-				card.innerHTML = `
-					<h3>Projekt #${project.id}</h3>
-					<p><strong>Status:</strong> ${project.status || 'Unbekannt'}</p>
-					<p><strong>Operator:</strong> ${project.operator || '-'}</p>
-					<p><strong>Anzahl Häuser:</strong> ${project.numberOfHomes || 0}</p>
-					<p><strong>Preis:</strong> ${project.productPrice ? project.productPrice + '€' : '-'}</p>
-				`;
-				grid.appendChild(card);
-			});
 		}
 
 		// ----------- Import Functions -----------
@@ -1782,7 +1535,7 @@
 			const file = fileInput.files[0];
 			
 			if (!file) {
-				document.getElementById('importResult').innerHTML = '<div class="error-message">Bitte wählen Sie eine Datei aus.</div>';
+				document.getElementById('importResult').innerHTML = '<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Bitte wählen Sie eine Datei aus. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
 				return;
 			}
 
@@ -1803,17 +1556,17 @@
 				
 				if (result.success) {
 					document.getElementById('importResult').innerHTML = 
-						`<div class="success-message">Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.</div>`;
+						`<div class="alert alert-success alert-dismissible"><i class="bi bi-check-circle me-2"></i>Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
 					loadAllAddresses();
 					loadAllNotes();
 				} else {
 					document.getElementById('importResult').innerHTML = 
-						`<div class="error-message">Import fehlgeschlagen: ${result.errors.join(', ')}</div>`;
+						`<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Import fehlgeschlagen: ${result.errors.join(', ')} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
 				}
 			} catch (error) {
 				console.error('Import-Fehler:', error);
 				document.getElementById('importResult').innerHTML = 
-					'<div class="error-message">Fehler beim Importieren der Datei.</div>';
+					'<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Importieren der Datei. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
 			}
 		});
 
@@ -1823,17 +1576,17 @@
 
 		fileInputArea.addEventListener('dragover', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = 'var(--keycloak-primary)';
+			fileInputArea.style.borderColor = 'var(--bs-primary)';
 		});
 
 		fileInputArea.addEventListener('dragleave', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = 'var(--keycloak-border)';
+			fileInputArea.style.borderColor = '';
 		});
 
 		fileInputArea.addEventListener('drop', (e) => {
 			e.preventDefault();
-			fileInputArea.style.borderColor = 'var(--keycloak-border)';
+			fileInputArea.style.borderColor = '';
 			const files = e.dataTransfer.files;
 			if (files.length > 0) {
 				fileInput.files = files;

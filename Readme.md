@@ -1,6 +1,6 @@
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.8-blue)
+![version](https://img.shields.io/badge/version-0.0.9-blue)
 
 Backend prototype for a local web application designed for efficient management and documentation of address data, notes, and project status in door-to-door sales. The application is lightweight, fully local, privacy-compliant, and optimized for small teams.
 
@@ -8,8 +8,8 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current:** 0.0.81  
-**Last Update:** 2025-06-26
+**Current:** 0.0.9  
+**Last Update:** 2025-06-30
 
 ## Known Issues:
     Severe performance issues on large imports:
@@ -20,7 +20,12 @@ Backend prototype for a local web application designed for efficient management 
 	For inquiries from the local area, the error message is coming from your WeatherService when the Nominatim API (OpenStreetMap reverse geocoding) cannot find a location name for those specific coordinates.
 	Error Msg.(e.g. Location for coordinates 48,2673, 14,2180 could not be determined.)
 	Workaround: coordinates are availble on the frontend;
-	
+
+
+### Changes in Version 0.0.9
+Gui refactoring with responsive proffesional design,
+
+
 ### Changes in Version 0.0.81
 Weather Implementattion refactoring, documentation on every service. Creation of simple fallback.
 	
