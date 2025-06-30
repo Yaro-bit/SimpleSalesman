@@ -23,7 +23,7 @@ Backend prototype for a local web application designed for efficient management 
 
 
 ### Changes in Version 0.0.9
-Gui refactoring with responsive proffesional design,
+Gui refactoring with responsive proffesional design - full refactoring
 
 
 ### Changes in Version 0.0.81
