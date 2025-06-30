@@ -34,7 +34,7 @@ public class Project {
 
 	private String status;
 
-	private String operator; // z. B. ANO
+	private String operator;
 	private String constructionCompany;
 
 	private LocalDate plannedConstructionEnd;
