@@ -19,10 +19,11 @@ Backend prototype for a local web application designed for efficient management 
 	
 
 
-### Changes in Version 0.0.91
-Gui refactoring with responsive profesional design - full refactoring
-Weather fixes, frontend is able to get weather acc. to browser location
-index.html refactored to match new weather process
+### Changes in Version 0.0.911
+Full GUI refactor with responsive, professional design.
+Weather-related fixes on the frontend, now properly retrieving weather data based on the browser's location.
+Complete refactor of backend weather handling for improved accuracy and performance.
+Refactored `index.html` to align with the updated weather data processing logic.
 
 
 ### Changes in Version 0.0.81
