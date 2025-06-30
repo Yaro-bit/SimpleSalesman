@@ -17,13 +17,12 @@ Backend prototype for a local web application designed for efficient management 
     Cause: Both import and retrieval routines lack batching, streaming, or pagination, leading to excessive memory and processing requirements.
     Workaround: None at this time; consider limiting import/export size or adding pagination.
 	
-	For inquiries from the local area, the error message is coming from your WeatherService when the Nominatim API (OpenStreetMap reverse geocoding) cannot find a location name for those specific coordinates.
-	Error Msg.(e.g. Location for coordinates 48,2673, 14,2180 could not be determined.)
-	Workaround: coordinates are availble on the frontend;
 
 
-### Changes in Version 0.0.9
-Gui refactoring with responsive proffesional design - full refactoring
+### Changes in Version 0.0.91
+Gui refactoring with responsive profesional design - full refactoring
+Weather fixes, frontend is able to get weather acc. to browser location
+index.html refactored to match new weather process
 
 
 ### Changes in Version 0.0.81

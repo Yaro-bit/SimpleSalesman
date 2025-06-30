@@ -2,110 +2,69 @@ package com.simplesalesman.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 import com.simplesalesman.service.WeatherService;
-
 /**
- * REST Controller for weather-related queries in the SimpleSalesman application.
+ * REST Controller for weather retrieval using GPS coordinates.
  *
- * This controller provides endpoints to retrieve current weather data based on
- * either region names or GPS coordinates using external APIs. Enhanced to always
- * display location names (cities/villages) instead of raw coordinates.
+ * This controller accepts latitude and longitude as query parameters and returns
+ * a formatted weather string (e.g., "Vienna: ☀️ +24°C"). The response always uses
+ * coordinates and optionally resolves the city name using reverse geocoding.
  *
- * Use Cases:
- * - Enables sales representatives to check local weather before door-to-door visits
- * - Allows mobile browsers to fetch weather using built-in geolocation
- * - Displays village and hamlet names for better user experience
- * - Provides reliable weather data with location context
+ * Supported endpoint:
+ * - GET /api/v1/weather?lat={latitude}&lon={longitude}
  *
- * API Endpoints:
- * - GET /api/v1/weather?region={name} → fetches weather by city, town, or village
- * - GET /api/v1/weather?lat=...&lon=... → fetches weather by GPS coordinates (with reverse geocoding to location names)
+ * Example:
+ * - GET /api/v1/weather?lat=48.2082&lon=16.3738 → "Vienna: ☀️ +24°C"
  *
- * Security:
- * - Public by default; can be protected via Spring Security configuration
+ * Input validation:
+ * - Latitude must be in range [-90.0, 90.0]
+ * - Longitude must be in range [-180.0, 180.0]
+ * - Coordinates must be valid decimal numbers
  *
- * Dependencies:
- * - Delegates logic to WeatherService → WeatherClient → external APIs (wttr.in, nominatim)
+ * Error Handling:
+ * - 400 Bad Request for invalid coordinates
+ * - 503 Service Unavailable if weather service fails
  *
- * Examples:
- * - /api/v1/weather?region=Linz → returns "Linz: ☀️ +24°C"
- * - /api/v1/weather?region=Adlwang → returns "Adlwang: 🌧 +19°C"
- * - /api/v1/weather?lat=48.27&lon=14.229 → reverse-geocodes to "Adlwang", returns "Adlwang: ☀️ +21°C"
- *
- * Response Format:
- * - Always returns plain text in format: "LocationName: WeatherIcon Temperature"
- * - Location names are resolved from coordinates using OpenStreetMap Nominatim
- * - Supports cities, towns, villages, and hamlets
- *
- * @author SimpleSalesman Team
- * @version 0.0.8
- * @since 0.0.4
+ * @version 0.0.9
+ * @since 0.0.9
  */
 @RestController
 @RequestMapping("/api/v1/weather")
 public class WeatherController {
 
-	private static final Logger logger = LoggerFactory.getLogger(WeatherController.class);
-	private final WeatherService weatherService;
+    private static final Logger logger = LoggerFactory.getLogger(WeatherController.class);
+    private final WeatherService weatherService;
 
-	/**
-	 * Constructor for WeatherController.
-	 *
-	 * @param weatherService Service component for weather data retrieval
-	 */
-	public WeatherController(WeatherService weatherService) {
-		this.weatherService = weatherService;
-		logger.info("WeatherController initialized");
-	}
+    public WeatherController(WeatherService weatherService) {
+        this.weatherService = weatherService;
+        logger.info("WeatherController initialized");
+    }
 
-	/**
-	 * Retrieves weather information for a given region.
-	 *
-	 * @param region the name of the target region (e.g., "Vienna", "Graz")
-	 * @return HTTP 200 OK with formatted weather info string
-	 */
-	@GetMapping(params = "region")
-	public ResponseEntity<String> getWeatherByRegion(@RequestParam String region) {
-		logger.info("GET /weather called for region '{}'", region);
+    @GetMapping
+    public ResponseEntity<String> getWeatherByCoordinates(@RequestParam String lat, @RequestParam String lon) {
+        logger.info("GET /weather called for lat={}, lon={}", lat, lon);
 
-		if (region == null || region.trim().isEmpty()) {
-			logger.warn("Empty or missing region parameter");
-			return ResponseEntity.badRequest().body("Region parameter is required.");
-		}
+        try {
+            double parsedLat = Double.parseDouble(lat.replace(",", "."));
+            double parsedLon = Double.parseDouble(lon.replace(",", "."));
 
-		try {
-			String weatherInfo = weatherService.getWeatherForRegion(region);
-			logger.debug("Weather info for region '{}': {}", region, weatherInfo);
-			return ResponseEntity.ok(weatherInfo);
-		} catch (Exception ex) {
-			logger.error("Error fetching weather for region '{}': {}", region, ex.getMessage());
-			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("Weather service failed.");
-		}
-	}
+            if (parsedLat < -90.0 || parsedLat > 90.0 || parsedLon < -180.0 || parsedLon > 180.0) {
+                logger.warn("Invalid coordinates: lat={}, lon={}", parsedLat, parsedLon);
+                return ResponseEntity.badRequest().body("Coordinates are out of valid range.");
+            }
 
-	/**
-	 * Retrieves weather information for given GPS coordinates (latitude &
-	 * longitude).
-	 *
-	 * @param lat Latitude (e.g., 48.3)
-	 * @param lon Longitude (e.g., 14.3)
-	 * @return HTTP 200 OK with formatted weather info string
-	 */
-	@GetMapping(params = { "lat", "lon" })
-	public ResponseEntity<String> getWeatherByCoordinates(@RequestParam double lat, @RequestParam double lon) {
-		logger.info("GET /weather called for coordinates lat={}, lon={}", lat, lon);
+            String weatherInfo = weatherService.getWeatherForCoordinates(parsedLat, parsedLon);
+            return ResponseEntity.ok(weatherInfo);
 
-		try {
-			String weatherInfo = weatherService.getWeatherForCoordinates(lat, lon);
-			logger.debug("Weather info for coordinates [{}, {}]: {}", lat, lon, weatherInfo);
-			return ResponseEntity.ok(weatherInfo);
-		} catch (Exception ex) {
-			logger.error("Error fetching weather for coordinates [{}, {}]: {}", lat, lon, ex.getMessage());
-			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("Weather service failed.");
-		}
-	}
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid coordinate format: lat='{}', lon='{}'", lat, lon);
+            return ResponseEntity.badRequest().body("Coordinates must be decimal numbers.");
+        } catch (Exception e) {
+            logger.error("Error retrieving weather for lat={}, lon={}: {}", lat, lon, e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Weather service unavailable.");
+        }
+    }
 }

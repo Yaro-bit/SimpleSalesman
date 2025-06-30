@@ -530,23 +530,51 @@
                 </div>
             </div>
 
-            <!-- Weather Endpoint -->
-            <div class="api-card">
-                <div class="api-header get">GET /weather</div>
-                <div class="api-body">
-                    <div class="form-group">
-                        <label>Region</label>
-                        <input type="text" id="weatherRegion" value="Linz">
-                    </div>
-                    <button class="btn" onclick="makeRequest('GET', '/api/v1/weather?region=' + encodeURIComponent(document.getElementById('weatherRegion').value), null, 'response-weather')">
-                        Get Weather
-                    </button>
-                    <div class="response-area" id="response-weather" style="display: none;">
-                        <h4>Response:</h4>
-                        <div class="response-content" id="response-weather-content"></div>
-                    </div>
-                </div>
-            </div>
+			<!-- Weather Endpoint -->
+			<div class="api-card">
+			    <div class="api-header get">GET /weather</div>
+			    <div class="api-body">
+			        <div class="form-group">
+			            <label for="weatherLocation">Location (City or Leave Empty for Current Location)</label>
+			            <input type="text" id="weatherLocation" placeholder="Enter city or leave empty for current location" />
+			        </div>
+			        <button class="btn" id="getWeatherBtn">
+			            Get Weather
+			        </button>
+			        <div class="response-area" id="response-weather" style="display: none;">
+			            <h4>Response:</h4>
+			            <div class="response-content" id="response-weather-content"></div>
+			        </div>
+			    </div>
+			</div>
+
+			<script>
+			    // Event listener for the Get Weather button
+			    document.getElementById('getWeatherBtn').addEventListener('click', function () {
+			        const location = document.getElementById('weatherLocation').value.trim();
+
+			        // If a location (city or town) is provided
+			        if (location) {
+			            const url = '/api/v1/weather?region=' + encodeURIComponent(location);
+			            makeRequest('GET', url, null, 'response-weather');
+			        } 
+			        // If no location is provided, fallback to geolocation
+			        else if (navigator.geolocation) {
+			            navigator.geolocation.getCurrentPosition(function (position) {
+			                const lat = position.coords.latitude.toFixed(4);
+			                const lon = position.coords.longitude.toFixed(4);
+			                const url = `/api/v1/weather?lat=${lat}&lon=${lon}`;
+			                makeRequest('GET', url, null, 'response-weather');
+			            }, function (error) {
+			                document.getElementById('response-weather').innerText = 'Standort konnte nicht ermittelt werden.';
+			                document.getElementById('response-weather').style.display = 'block';
+			            });
+			        } else {
+			            document.getElementById('response-weather').innerText = 'Geolocation wird von diesem Browser nicht unterstützt.';
+			            document.getElementById('response-weather').style.display = 'block';
+			        }
+			    });
+			</script>
 
             <!-- Projects Endpoint -->
             <div class="api-card">
