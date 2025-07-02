@@ -1,0 +1,1708 @@
+<!--
+SimpleSalesman GUI - Main Application Interface
+
+This is the primary user interface for the SimpleSalesman application, providing:
+- Address management with table and navigation views
+- Notes management with modal interfaces
+- Project overview and status tracking
+- Excel file import functionality
+- Weather information integration
+
+Key Features:
+- Modern Bootstrap 5.3+ framework for consistent UI components
+- Dark theme design matching Keycloak styling
+- Responsive layout with collapsible sidebar navigation for mobile devices
+- Real-time data loading via REST API
+- Secure authentication with OAuth2/JWT tokens
+- Advanced table features (sorting, pagination, search) with Bootstrap styling
+- Modal-based note editing and viewing using Bootstrap modals
+- Bootstrap Icons integration for consistent iconography
+- Drag & drop file upload functionality
+- Clean CSS architecture with CSS variables for easy theming
+
+UI Components:
+- Bootstrap 5.3.2 CSS and JS framework
+- Bootstrap Icons 1.11.0 for consistent iconography
+- Responsive tables with mobile-friendly display
+- Bootstrap pagination components
+- Bootstrap alerts for user feedback
+- Loading spinners for async operations
+- Form validation with Bootstrap styling
+
+Security:
+- All API calls include JWT Bearer tokens
+- Proper logout functionality with session cleanup
+- Input validation on form submissions
+- CSRF protection through proper logout handling
+- XSS protection through proper HTML escaping
+
+Browser Compatibility:
+- Modern browsers with ES6+ support
+- Bootstrap 5 compatible browsers (Chrome 60+, Firefox 60+, Safari 12+, Edge 79+)
+- Responsive design for mobile devices with touch support
+- Geolocation API support for weather features
+
+Technical Stack:
+- Bootstrap 5.3.2 (CDN)
+- Bootstrap Icons 1.11.0 (CDN)
+- Vanilla JavaScript (ES6+)
+- No jQuery dependency
+- RESTful API integration
+
+@author SimpleSalesman Team
+@version 0.0.9
+@since 0.0.9
+@updated 2024 - Refactored to Bootstrap 5.3+ framework
+@requires Bearer token authentication
+@requires Modern browser with JavaScript enabled
+@requires Bootstrap 5 compatible browser
+@requires Active internet connection for CDN resources
+-->
+<!DOCTYPE html>
+<html lang="de" data-bs-theme="dark">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Simple Salesman GUI</title>
+
+	<!-- Bootstrap CSS CDN -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+	<!-- Bootstrap Icons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+	<style>
+		/* CLEAN RESET - NO OVERLAPPING */
+		:root {
+			--bs-primary: #0066cc;
+			--header-height: 80px;
+			--footer-height: 60px;
+			--sidebar-width: 260px;
+		}
+
+		/* Remove all Bootstrap spacing conflicts */
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			padding: 0;
+			overflow-x: hidden;
+		}
+
+		/* HEADER - Simple and clean */
+		.app-header {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: var(--header-height);
+			background: #1a1a1a;
+			border-bottom: 2px solid var(--bs-primary);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			padding: 0 1rem;
+			box-shadow: none;
+		}
+
+		/* SIDEBAR - Clean positioning */
+		.app-sidebar {
+			position: fixed;
+			top: var(--header-height);
+			left: 0;
+			width: var(--sidebar-width);
+			height: calc(100vh - var(--header-height) - var(--footer-height));
+			background: #2a2a2a;
+			border-right: 2px solid var(--bs-primary);
+			z-index: 900;
+			overflow-y: auto;
+			padding: 1rem;
+			box-shadow: none;
+		}
+
+		/* FOOTER - Simple fixed */
+		.app-footer {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			height: var(--footer-height);
+			background: #1a1a1a;
+			border-top: 2px solid var(--bs-primary);
+			z-index: 800;
+			display: flex;
+			align-items: center;
+			padding: 0 1rem;
+			box-shadow: none;
+		}
+
+		/* MAIN CONTENT - Perfect positioning */
+		.app-main {
+			margin-top: var(--header-height);
+			margin-left: var(--sidebar-width);
+			margin-bottom: var(--footer-height);
+			padding: 1rem;
+			min-height: calc(100vh - var(--header-height) - var(--footer-height));
+			background: #1e1e1e;
+		}
+
+		/* CONTENT CARDS - Minimal padding */
+		.content-card {
+			background: #262626;
+			border: 1px solid #404040;
+			border-radius: 8px;
+			margin-bottom: 1rem;
+			box-shadow: none;
+		}
+
+		.content-card-header {
+			padding: 0.75rem 1rem;
+			background: #2d2d2d;
+			border-bottom: 1px solid #404040;
+			border-radius: 7px 7px 0 0;
+		}
+
+		.content-card-body {
+			padding: 1rem;
+		}
+
+		/* MOBILE - Clean responsive */
+		@media (max-width: 768px) {
+			.app-sidebar {
+				transform: translateX(-100%);
+				transition: transform 0.3s ease;
+				z-index: 1100;
+				top: 0;
+				height: 100vh;
+				padding-top: calc(var(--header-height) + 1rem);
+			}
+
+			.app-sidebar.show {
+				transform: translateX(0);
+			}
+
+			.app-main {
+				margin-left: 0;
+				padding: 0.75rem;
+			}
+
+			.content-card-body {
+				padding: 0.75rem;
+			}
+		}
+
+		/* SIDEBAR OVERLAY */
+		.sidebar-overlay {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 1050;
+		}
+
+		.sidebar-overlay.show {
+			display: block;
+		}
+
+		/* NAVIGATION LINKS */
+		.nav-link {
+			color: #a0a0a0;
+			text-decoration: none;
+			padding: 0.5rem 0.75rem;
+			border-radius: 6px;
+			margin-bottom: 0.25rem;
+			display: flex;
+			align-items: center;
+			transition: all 0.2s ease;
+		}
+
+		.nav-link:hover {
+			background: rgba(0, 102, 204, 0.1);
+			color: #ffffff;
+		}
+
+		.nav-link.active {
+			background: var(--bs-primary);
+			color: #ffffff;
+		}
+
+		/* RESPONSIVE LOGO */
+		.app-logo {
+			height: 40px;
+			width: auto;
+		}
+
+		@media (min-width: 576px) {
+			.app-logo {
+				height: 45px;
+			}
+		}
+
+		@media (min-width: 768px) {
+			.app-logo {
+				height: 50px;
+			}
+		}
+
+		@media (min-width: 992px) {
+			.app-logo {
+				height: 55px;
+			}
+		}
+
+		/* BUTTONS */
+		.btn {
+			border-radius: 6px;
+			transition: all 0.2s ease;
+		}
+
+		/* TABLES */
+		.table {
+			margin-bottom: 0;
+		}
+
+		.table th {
+			border-bottom: 2px solid #404040;
+			cursor: pointer;
+			user-select: none;
+		}
+
+		.table th.sorted-asc::after {
+			content: " ↑";
+		}
+
+		.table th.sorted-desc::after {
+			content: " ↓";
+		}
+
+		.table td {
+			border-bottom: 1px solid #404040;
+		}
+
+		/* SECTIONS */
+		.app-section {
+			display: none;
+		}
+
+		.app-section.active {
+			display: block;
+		}
+
+		/* NO ANIMATIONS to prevent conflicts */
+		* {
+			animation: none !important;
+			transition-duration: 0.2s !important;
+		}
+
+		/* UTILITY CLASSES */
+		.text-muted {
+			color: #6c757d !important;
+		}
+
+		.text-primary {
+			color: var(--bs-primary) !important;
+		}
+
+		.bg-primary {
+			background-color: var(--bs-primary) !important;
+		}
+
+		.border-primary {
+			border-color: var(--bs-primary) !important;
+		}
+
+		/* SCROLLBAR */
+		::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: #1a1a1a;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: var(--bs-primary);
+			border-radius: 3px;
+		}
+
+		/* Project Tags */
+		.project-tag {
+			display: inline-block;
+			background: rgba(0, 102, 204, 0.2);
+			color: var(--bs-primary);
+			padding: 2px 6px;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			margin: 2px;
+			border: 1px solid var(--bs-primary);
+		}
+
+		/* Note items in modal */
+		.note-item {
+			padding: 8px 0;
+			border-bottom: 1px solid #404040;
+			font-size: 0.9rem;
+			color: #f0f0f0;
+		}
+
+		.note-item:last-child {
+			border-bottom: none;
+		}
+
+		.note-meta {
+			font-size: 0.8rem;
+			color: #a0a0a0;
+			margin-top: 4px;
+		}
+	</style>
+</head>
+
+<body>
+	<!-- HEADER -->
+	<header class="app-header">
+		<div class="d-flex align-items-center w-100">
+			<button class="btn btn-outline-light btn-sm d-md-none me-3" onclick="toggleSidebar()">
+				<i class="bi bi-list"></i>
+			</button>
+
+			<img src="/logo_saleman_original.png" alt="SimpleSalesman" class="me-3 d-block" loading="lazy"
+				style="height:120px;width:auto;max-width:100%;">
+			<div class="ms-auto d-flex align-items-center gap-3">
+				<span class="text-light">
+					<i class="bi bi-person-circle me-1"></i>
+					<span id="username" class="d-none d-sm-inline">User</span>
+				</span>
+
+				<!-- Weather display -->
+				<!-- Weather display -->
+				<span class="text-light d-none d-lg-inline d-flex align-items-center">
+				    <i class="bi bi-cloud-sun-fill me-2 fs-6"></i>
+				    <span id="weather" class="d-inline-block fw-semibold fs-6">Wetter wird geladen…</span>
+				</span>
+
+				<!-- Logout button -->
+				<button onclick="logout()" class="btn btn-outline-danger btn-sm">
+					<i class="bi bi-box-arrow-right"></i>
+					<span class="d-none d-sm-inline ms-1">Abmelden</span>
+				</button>
+			</div>
+		</div>
+	</header>
+</body>
+
+<!-- SIDEBAR -->
+<nav class="app-sidebar" id="sidebar">
+	<div class="mb-3">
+		<h6 class="text-light mb-3">Navigation</h6>
+
+		<a href="#" class="nav-link active" onclick="showSection('addresses')" id="nav-addresses">
+			<i class="bi bi-geo-alt me-2"></i>
+			Adressen
+		</a>
+
+		<a href="#" class="nav-link" onclick="showSection('notes')" id="nav-notes">
+			<i class="bi bi-journal-text me-2"></i>
+			Notizen
+		</a>
+
+		<a href="#" class="nav-link" onclick="showSection('import')" id="nav-import">
+			<i class="bi bi-upload me-2"></i>
+			Import
+		</a>
+	</div>
+</nav>
+
+<!-- OVERLAY -->
+<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- MAIN CONTENT -->
+<main class="app-main">
+	<!-- ADDRESSES SECTION -->
+	<div class="app-section active" id="addressesSection">
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h2 class="text-light mb-0">Adressen</h2>
+			<div class="btn-group btn-group-sm">
+				<button class="btn btn-primary active" onclick="showAddressView('table')" id="view-table">
+					<i class="bi bi-table me-1"></i>Tabellenansicht
+				</button>
+				<button class="btn btn-outline-primary" onclick="showAddressView('navigation')" id="view-navigation">
+					<i class="bi bi-map me-1"></i>Navigation
+				</button>
+			</div>
+		</div>
+
+		<!-- TABLE VIEW -->
+		<div class="content-card" id="addressesTableBox">
+			<div class="content-card-header">
+				<h5 class="mb-0 text-light">Alle Adressen</h5>
+			</div>
+			<div class="content-card-body">
+				<div class="row g-2 mb-3">
+					<div class="col-md-8">
+						<input type="text" class="form-control form-control-sm" id="addressSearchInput"
+							placeholder="Suche nach Adresse..." onkeyup="filterAddressTable()">
+					</div>
+					<div class="col-md-4">
+						<select class="form-select form-select-sm" id="addressPageSize"
+							onchange="changeAddressPageSize()">
+							<option value="10">10 pro Seite</option>
+							<option value="20" selected>20 pro Seite</option>
+							<option value="50">50 pro Seite</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table class="table table-dark table-sm" id="addressesTable">
+						<thead>
+							<tr>
+								<th onclick="sortAddressTable('plz')">PLZ <i class="bi bi-arrow-down-up"></i></th>
+								<th onclick="sortAddressTable('street')">Straße <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th onclick="sortAddressTable('number')">Hausnummer <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th onclick="sortAddressTable('region')">Region <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th>Projekte</th>
+								<th>Aktionen</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="6" class="text-center text-muted">
+									<div class="spinner-border spinner-border-sm me-2"></div>
+									Adressen werden geladen...
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<nav id="addressesPagination" class="d-flex justify-content-center mt-3"></nav>
+			</div>
+		</div>
+
+		<!-- NAVIGATION VIEW -->
+		<div class="content-card" id="addressesNavigationBox" style="display:none;">
+			<div class="content-card-header">
+				<h5 class="mb-0 text-light">Adresse auswählen</h5>
+			</div>
+			<div class="content-card-body">
+				<nav class="mb-3">
+					<ol class="breadcrumb bg-dark" id="breadcrumb">
+						<li class="breadcrumb-item active">PLZ auswählen</li>
+					</ol>
+				</nav>
+
+				<button class="btn btn-secondary btn-sm mb-3" id="backButton" onclick="goBack()" style="display:none;">
+					<i class="bi bi-arrow-left me-1"></i>Zurück
+				</button>
+
+				<div id="plzSelection">
+					<h6 class="text-light mb-2">Verfügbare Postleitzahlen:</h6>
+					<div id="plzList" class="d-flex flex-wrap gap-2">
+						<span class="text-muted">PLZs werden geladen...</span>
+					</div>
+				</div>
+
+				<div id="streetSelection" style="display:none;">
+					<h6 class="text-light mb-2">Straßen:</h6>
+					<div id="streetList" class="d-flex flex-wrap gap-2"></div>
+				</div>
+
+				<div id="numberSelection" style="display:none;">
+					<h6 class="text-light mb-2">Hausnummern:</h6>
+					<div id="numberList" class="d-flex flex-wrap gap-2"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- NOTES SECTION -->
+	<div class="app-section" id="notesSection">
+		<h2 class="text-light mb-3">Notizen</h2>
+		<div class="content-card">
+			<div class="content-card-header">
+				<h5 class="mb-0 text-light">Alle Notizen</h5>
+			</div>
+			<div class="content-card-body">
+				<div class="row g-2 mb-3">
+					<div class="col-md-8">
+						<input type="text" class="form-control form-control-sm" id="notesSearchInput"
+							placeholder="Suche in Notizen..." onkeyup="filterNotesTable()">
+					</div>
+					<div class="col-md-4">
+						<select class="form-select form-select-sm" id="notesPageSize" onchange="changeNotesPageSize()">
+							<option value="10">10 pro Seite</option>
+							<option value="20" selected>20 pro Seite</option>
+							<option value="50">50 pro Seite</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="table-responsive">
+					<table class="table table-dark table-sm" id="notesTable">
+						<thead>
+							<tr>
+								<th onclick="sortNotesTable('id')">ID <i class="bi bi-arrow-down-up"></i></th>
+								<th onclick="sortNotesTable('address')">Adresse <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th onclick="sortNotesTable('text')">Notiztext <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th onclick="sortNotesTable('createdBy')">Erstellt von <i
+										class="bi bi-arrow-down-up"></i></th>
+								<th onclick="sortNotesTable('createdAt')">Datum <i class="bi bi-arrow-down-up"></i>
+								</th>
+								<th>Aktionen</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td colspan="6" class="text-center text-muted">
+									<div class="spinner-border spinner-border-sm me-2"></div>
+									Notizen werden geladen...
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<nav id="notesPagination" class="d-flex justify-content-center mt-3"></nav>
+			</div>
+		</div>
+	</div>
+
+	<!-- IMPORT SECTION -->
+	<div class="app-section" id="importSection">
+		<h2 class="text-light mb-3">Import</h2>
+		<div class="content-card">
+			<div class="content-card-header">
+				<h5 class="mb-0 text-light">Excel Import</h5>
+			</div>
+			<div class="content-card-body">
+				<form class="import-form" id="importForm">
+					<div class="border border-2 border-dashed border-primary rounded p-4 text-center mb-3 file-input"
+						onclick="document.getElementById('fileInput').click()"
+						style="cursor:pointer;background:#2a2a2a;">
+						<input type="file" id="fileInput" accept=".xlsx,.xls" class="d-none">
+						<i class="bi bi-cloud-upload display-6 text-primary mb-2"></i>
+						<p class="mb-1 text-light">Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher</p>
+						<small class="text-muted">Unterstützte Formate: .xlsx, .xls</small>
+					</div>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-upload me-1"></i>Datei importieren
+					</button>
+				</form>
+				<div id="importResult" class="mt-3"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- WEATHER SECTION -->
+	<div class="app-section" id="weatherSection">
+		<h2 class="text-light mb-3">Wetter</h2>
+		<div class="content-card">
+			<div class="content-card-header">
+				<h5 class="mb-0 text-light">Wetter Information</h5>
+			</div>
+			<div class="content-card-body">
+				<div class="alert alert-info" id="weatherInfo">
+					<div class="d-flex align-items-center">
+						<div class="spinner-border spinner-border-sm me-2"></div>
+						Wetter wird geladen...
+					</div>
+				</div>
+
+				<div class="row g-2 mt-3">
+					<div class="col-md-8">
+						<input type="text" class="form-control" id="regionInput"
+							placeholder="Region eingeben (z.B. Linz)">
+					</div>
+					<div class="col-md-4">
+						<button class="btn btn-primary w-100" onclick="fetchWeatherByRegion()">
+							<i class="bi bi-search me-1"></i>Wetter abrufen
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</main>
+
+<!-- FOOTER -->
+<footer class="app-footer">
+	<div class="d-flex align-items-center w-100">
+		<span class="text-light me-3">SimpleSalesman v0.0.9</span>
+		<div class="ms-auto">
+			<small class="text-muted">
+				<i class="bi bi-check-circle-fill text-success me-1"></i>
+				System Online <!-- REPLACE WITH REAL API -->
+			</small>
+		</div>
+	</div>
+</footer>
+
+<!-- NOTES MODAL -->
+<div class="modal fade" id="notesModal" tabindex="-1">
+	<div class="modal-dialog">
+		<div class="modal-content bg-dark">
+			<div class="modal-header border-bottom border-secondary">
+				<h5 class="modal-title text-light" id="modalTitle">Notizen für Adresse</h5>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+					onclick="closeNotesModal()"></button>
+			</div>
+			<div class="modal-body">
+				<div class="mb-3">
+					<h6 class="text-light">Bestehende Notizen:</h6>
+					<div id="modalNoteList" class="bg-secondary rounded p-3 mb-3"
+						style="max-height:200px;overflow-y:auto;">
+						<p class="text-muted mb-0 loading">Notizen werden geladen...</p>
+					</div>
+				</div>
+				<form class="note-form" id="modalNoteForm">
+					<div class="mb-3">
+						<label for="modalNewNote" class="form-label text-light">Neue Notiz hinzufügen:</label>
+						<textarea class="form-control" id="modalNewNote" rows="3"
+							placeholder="Neue Notiz schreiben..."></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary">
+						<i class="bi bi-save me-1"></i>Notiz speichern
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+	// ----------- Global Variables -----------
+	let allAddresses = [];
+	let allNotes = [];
+	let allProjects = [];
+	let currentStep = 'plz'; // 'plz', 'street', 'number'
+	let selectedPlz = null;
+	let selectedStreet = null;
+	let selectedNumber = null;
+	let selectedAddressId = null;
+
+	// Table state
+	let currentAddressView = 'table';
+	let addressTableState = {
+		currentPage: 1,
+		pageSize: 20,
+		sortField: 'plz',
+		sortOrder: 'asc',
+		searchTerm: ''
+	};
+	let notesTableState = {
+		currentPage: 1,
+		pageSize: 20,
+		sortField: 'id',
+		sortOrder: 'desc',
+		searchTerm: ''
+	};
+
+	// Bootstrap modal instance
+	let notesModalInstance = null;
+
+	// ----------- USERNAME aus Token -----------
+	document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
+
+	// ----------- Logout Function -----------
+	function logout() {
+		// Confirm logout
+		if (confirm('Möchten Sie sich wirklich abmelden?')) {
+			try {
+				// Clear all session storage
+				sessionStorage.removeItem('access_token');
+				sessionStorage.removeItem('username');
+				sessionStorage.removeItem('refresh_token');
+				sessionStorage.removeItem('user_id');
+
+				// Clear all local storage
+				localStorage.removeItem('access_token');
+				localStorage.removeItem('username');
+				localStorage.removeItem('refresh_token');
+				localStorage.removeItem('user_id');
+
+				// Set logout indicator for the login page
+				sessionStorage.setItem('just_logged_out', 'true');
+
+				// Reset global variables
+				allAddresses = [];
+				allNotes = [];
+				allProjects = [];
+
+				// Redirect to controller logout endpoint (NOT login.html)
+				window.location.href = '/logout';
+
+			} catch (error) {
+				console.error('Fehler beim Abmelden:', error);
+				alert('Fehler beim Abmelden. Bitte versuchen Sie es erneut.');
+			}
+		}
+	}
+
+	// ----------- Initial Load -----------
+	window.addEventListener('load', function () {
+		// Initialize Bootstrap modal
+		const modalElement = document.getElementById('notesModal');
+		if (modalElement) {
+			notesModalInstance = new bootstrap.Modal(modalElement);
+		}
+
+		const token = sessionStorage.getItem('access_token');
+		if (!token) {
+			console.warn('Kein access_token im sessionStorage gefunden. Versuche ohne Token...');
+		}
+
+		loadAllAddresses();
+		loadWeatherData();
+
+		if (window.location.search.includes('debug=true')) {
+			showDebugInfo();
+		}
+	});
+
+	function showDebugInfo() {
+		console.log('=== SimpleSalesman Debug Info ===');
+		console.log('Token im sessionStorage:', !!sessionStorage.getItem('access_token'));
+		console.log('Username:', sessionStorage.getItem('username'));
+		console.log('Backend URL:', window.location.origin);
+		console.log('All addresses loaded:', allAddresses.length);
+		console.log('All notes loaded:', allNotes.length);
+
+		const debugBtn = document.createElement('button');
+		debugBtn.textContent = 'Debug: Show Data';
+		debugBtn.className = 'btn btn-sm btn-warning position-fixed';
+		debugBtn.style.cssText = 'top:90px;right:10px;z-index:9999;';
+		debugBtn.onclick = () => {
+			console.log('Addresses:', allAddresses);
+			console.log('Notes:', allNotes);
+			console.log('Current view:', currentAddressView);
+			alert(`${allAddresses.length} Adressen, ${allNotes.length} Notizen geladen.\nAktuelle Ansicht: ${currentAddressView}`);
+		};
+		document.body.appendChild(debugBtn);
+	}
+
+	// ----------- Sidebar Toggle -----------
+	function toggleSidebar() {
+		const sidebar = document.getElementById('sidebar');
+		const overlay = document.getElementById('overlay');
+
+		if (sidebar.classList.contains('show')) {
+			sidebar.classList.remove('show');
+			overlay.classList.remove('show');
+			document.body.style.overflow = '';
+		} else {
+			sidebar.classList.add('show');
+			overlay.classList.add('show');
+			document.body.style.overflow = 'hidden';
+		}
+	}
+
+	// ----------- Address Loading and Table Management -----------
+	async function loadAllAddresses() {
+		try {
+			const token = sessionStorage.getItem('access_token');
+			const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+			const res = await fetch('/api/v1/addresses', {headers});
+
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+			}
+
+			allAddresses = await res.json();
+			console.log('Loaded addresses:', allAddresses.length);
+			renderAddressesTable();
+			showAllPlzs(); // For navigation view
+
+			// Load notes after addresses are loaded
+			loadAllNotes();
+		} catch (error) {
+			console.error('Fehler beim Laden der Adressen:', error);
+			document.querySelector('#addressesTable tbody').innerHTML =
+				`<tr><td colspan="6" class="text-center text-danger">Fehler: ${error.message}</td></tr>`;
+		}
+	}
+
+	async function loadAllNotes() {
+		try {
+			if (allAddresses.length === 0) {
+				console.log('No addresses loaded yet, skipping notes load');
+				return;
+			}
+
+			const token = sessionStorage.getItem('access_token');
+			const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+			// Load all notes by getting notes for each address
+			allNotes = [];
+			for (const address of allAddresses) {
+				try {
+					const res = await fetch(`/api/v1/notes/${address.id}`, {headers});
+					if (res.ok) {
+						const notes = await res.json();
+						notes.forEach(note => {
+							note.address = address; // Add address reference
+						});
+						allNotes.push(...notes);
+					}
+				} catch (noteError) {
+					console.warn(`Error loading notes for address ${address.id}:`, noteError);
+				}
+			}
+			console.log('Loaded notes:', allNotes.length);
+			renderNotesTable();
+		} catch (error) {
+			console.error('Fehler beim Laden der Notizen:', error);
+			document.querySelector('#notesTable tbody').innerHTML =
+				`<tr><td colspan="6" class="text-center text-danger">Fehler: ${error.message}</td></tr>`;
+		}
+	}
+
+	// ----------- Address Table Functions -----------
+	function renderAddressesTable() {
+		const {currentPage, pageSize, sortField, sortOrder, searchTerm} = addressTableState;
+
+		// Filter addresses
+		let filteredAddresses = allAddresses.filter(addr => {
+			if (!searchTerm) return true;
+			const searchString = `${extractPlz(addr)} ${extractStreet(addr)} ${extractNumber(addr)} ${addr.regionName || ''}`.toLowerCase();
+			return searchString.includes(searchTerm.toLowerCase());
+		});
+
+		// Sort addresses
+		filteredAddresses.sort((a, b) => {
+			let aVal, bVal;
+			switch (sortField) {
+				case 'plz':
+					aVal = extractPlz(a) || '';
+					bVal = extractPlz(b) || '';
+					break;
+				case 'street':
+					aVal = extractStreet(a) || '';
+					bVal = extractStreet(b) || '';
+					break;
+				case 'number':
+					aVal = extractNumber(a) || '';
+					bVal = extractNumber(b) || '';
+					break;
+				case 'region':
+					aVal = a.regionName || '';
+					bVal = b.regionName || '';
+					break;
+				default:
+					aVal = a.addressText || '';
+					bVal = b.addressText || '';
+			}
+
+			const comparison = aVal.toString().localeCompare(bVal.toString(), 'de', {numeric: true});
+			return sortOrder === 'asc' ? comparison : -comparison;
+		});
+
+		// Paginate
+		const totalPages = Math.ceil(filteredAddresses.length / pageSize);
+		const startIndex = (currentPage - 1) * pageSize;
+		const paginatedAddresses = filteredAddresses.slice(startIndex, startIndex + pageSize);
+
+		// Render table
+		const tbody = document.querySelector('#addressesTable tbody');
+		tbody.innerHTML = '';
+
+		if (paginatedAddresses.length === 0) {
+			tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Keine Adressen gefunden</td></tr>';
+		} else {
+			paginatedAddresses.forEach(addr => {
+				const projects = (addr.projects || []).map(p =>
+					`<span class="project-tag">${p.status || 'Unbekannt'}</span>`
+				).join('');
+
+				tbody.innerHTML += `
+						<tr>
+							<td>${extractPlz(addr) || '-'}</td>
+							<td>${extractStreet(addr) || '-'}</td>
+							<td>${extractNumber(addr) || '-'}</td>
+							<td>${addr.regionName || '-'}</td>
+							<td>${projects || '-'}</td>
+							<td>
+								<button onclick="openNotesModalForAddress(${addr.id})" class="btn btn-sm btn-primary">
+									<i class="bi bi-journal-text me-1"></i>Notizen
+								</button>
+							</td>
+						</tr>
+					`;
+			});
+		}
+
+		// Update sort indicators
+		document.querySelectorAll('#addressesTable th').forEach(th => {
+			th.classList.remove('sorted-asc', 'sorted-desc');
+		});
+		const sortedTh = document.querySelector(`#addressesTable th[onclick="sortAddressTable('${sortField}')"]`);
+		if (sortedTh) {
+			sortedTh.classList.add(`sorted-${sortOrder}`);
+		}
+
+		// Render pagination
+		renderAddressPagination(totalPages);
+	}
+
+	function renderAddressPagination(totalPages) {
+		const pagination = document.getElementById('addressesPagination');
+		pagination.innerHTML = '';
+		pagination.className = 'pagination pagination-sm justify-content-center mt-3';
+
+		if (totalPages <= 1) return;
+
+		const {currentPage} = addressTableState;
+
+		// Previous button
+		const prevLi = document.createElement('li');
+		prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+		prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage > 1 ? 'addressTableState.currentPage--; renderAddressesTable();' : ''}">‹ Zurück</a>`;
+		pagination.appendChild(prevLi);
+
+		// Page numbers
+		const maxVisiblePages = 5;
+		let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+		let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+		if (endPage - startPage + 1 < maxVisiblePages) {
+			startPage = Math.max(1, endPage - maxVisiblePages + 1);
+		}
+
+		for (let page = startPage; page <= endPage; page++) {
+			const pageLi = document.createElement('li');
+			pageLi.className = `page-item ${page === currentPage ? 'active' : ''}`;
+			pageLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); addressTableState.currentPage = ${page}; renderAddressesTable();">${page}</a>`;
+			pagination.appendChild(pageLi);
+		}
+
+		// Next button
+		const nextLi = document.createElement('li');
+		nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+		nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage < totalPages ? 'addressTableState.currentPage++; renderAddressesTable();' : ''}">Weiter ›</a>`;
+		pagination.appendChild(nextLi);
+	}
+
+	function sortAddressTable(field) {
+		if (addressTableState.sortField === field) {
+			addressTableState.sortOrder = addressTableState.sortOrder === 'asc' ? 'desc' : 'asc';
+		} else {
+			addressTableState.sortField = field;
+			addressTableState.sortOrder = 'asc';
+		}
+		addressTableState.currentPage = 1;
+		renderAddressesTable();
+	}
+
+	function filterAddressTable() {
+		addressTableState.searchTerm = document.getElementById('addressSearchInput').value;
+		addressTableState.currentPage = 1;
+		renderAddressesTable();
+	}
+
+	function changeAddressPageSize() {
+		addressTableState.pageSize = parseInt(document.getElementById('addressPageSize').value);
+		addressTableState.currentPage = 1;
+		renderAddressesTable();
+	}
+
+	// ----------- Notes Table Functions -----------
+	function renderNotesTable() {
+		const {currentPage, pageSize, sortField, sortOrder, searchTerm} = notesTableState;
+
+		// Filter notes
+		let filteredNotes = allNotes.filter(note => {
+			if (!searchTerm) return true;
+			const searchString = `${note.text || ''} ${note.createdBy || ''} ${getAddressString(note.address)}`.toLowerCase();
+			return searchString.includes(searchTerm.toLowerCase());
+		});
+
+		// Sort notes
+		filteredNotes.sort((a, b) => {
+			let aVal, bVal;
+			switch (sortField) {
+				case 'id':
+					aVal = a.id || 0;
+					bVal = b.id || 0;
+					break;
+				case 'address':
+					aVal = getAddressString(a.address);
+					bVal = getAddressString(b.address);
+					break;
+				case 'text':
+					aVal = a.text || '';
+					bVal = b.text || '';
+					break;
+				case 'createdBy':
+					aVal = a.createdBy || '';
+					bVal = b.createdBy || '';
+					break;
+				case 'createdAt':
+					aVal = new Date(a.createdAt || 0);
+					bVal = new Date(b.createdAt || 0);
+					break;
+				default:
+					aVal = a.id || 0;
+					bVal = b.id || 0;
+			}
+
+			if (sortField === 'createdAt' || sortField === 'id') {
+				return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+			} else {
+				const comparison = aVal.toString().localeCompare(bVal.toString(), 'de');
+				return sortOrder === 'asc' ? comparison : -comparison;
+			}
+		});
+
+		// Paginate
+		const totalPages = Math.ceil(filteredNotes.length / pageSize);
+		const startIndex = (currentPage - 1) * pageSize;
+		const paginatedNotes = filteredNotes.slice(startIndex, startIndex + pageSize);
+
+		// Render table
+		const tbody = document.querySelector('#notesTable tbody');
+		tbody.innerHTML = '';
+
+		if (paginatedNotes.length === 0) {
+			tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Keine Notizen gefunden</td></tr>';
+		} else {
+			paginatedNotes.forEach(note => {
+				const addressStr = getAddressString(note.address);
+				const dateStr = note.createdAt ? new Date(note.createdAt).toLocaleString('de-DE') : '-';
+				const textPreview = (note.text || '').length > 100 ?
+					(note.text || '').substring(0, 100) + '...' :
+					(note.text || '');
+
+				tbody.innerHTML += `
+						<tr>
+							<td>${note.id || '-'}</td>
+							<td>${addressStr}</td>
+							<td title="${note.text || ''}">${textPreview}</td>
+							<td>${note.createdBy || '-'}</td>
+							<td>${dateStr}</td>
+							<td>
+								<button onclick="openNotesModalForAddress(${note.address?.id})" class="btn btn-sm btn-primary">
+									<i class="bi bi-eye me-1"></i>Anzeigen
+								</button>
+							</td>
+						</tr>
+					`;
+			});
+		}
+
+		// Update sort indicators
+		document.querySelectorAll('#notesTable th').forEach(th => {
+			th.classList.remove('sorted-asc', 'sorted-desc');
+		});
+		const sortedTh = document.querySelector(`#notesTable th[onclick="sortNotesTable('${sortField}')"]`);
+		if (sortedTh) {
+			sortedTh.classList.add(`sorted-${sortOrder}`);
+		}
+
+		// Render pagination
+		renderNotesPagination(totalPages);
+	}
+
+	function renderNotesPagination(totalPages) {
+		const pagination = document.getElementById('notesPagination');
+		pagination.innerHTML = '';
+		pagination.className = 'pagination pagination-sm justify-content-center mt-3';
+
+		if (totalPages <= 1) return;
+
+		const {currentPage} = notesTableState;
+
+		// Previous button
+		const prevLi = document.createElement('li');
+		prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+		prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage > 1 ? 'notesTableState.currentPage--; renderNotesTable();' : ''}">‹ Zurück</a>`;
+		pagination.appendChild(prevLi);
+
+		// Page numbers
+		const maxVisiblePages = 5;
+		let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+		let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+		for (let page = startPage; page <= endPage; page++) {
+			const pageLi = document.createElement('li');
+			pageLi.className = `page-item ${page === currentPage ? 'active' : ''}`;
+			pageLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); notesTableState.currentPage = ${page}; renderNotesTable();">${page}</a>`;
+			pagination.appendChild(pageLi);
+		}
+
+		// Next button
+		const nextLi = document.createElement('li');
+		nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+		nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${currentPage < totalPages ? 'notesTableState.currentPage++; renderNotesTable();' : ''}">Weiter ›</a>`;
+		pagination.appendChild(nextLi);
+	}
+
+	function sortNotesTable(field) {
+		if (notesTableState.sortField === field) {
+			notesTableState.sortOrder = notesTableState.sortOrder === 'asc' ? 'desc' : 'asc';
+		} else {
+			notesTableState.sortField = field;
+			notesTableState.sortOrder = field === 'createdAt' || field === 'id' ? 'desc' : 'asc';
+		}
+		notesTableState.currentPage = 1;
+		renderNotesTable();
+	}
+
+	function filterNotesTable() {
+		notesTableState.searchTerm = document.getElementById('notesSearchInput').value;
+		notesTableState.currentPage = 1;
+		renderNotesTable();
+	}
+
+	function changeNotesPageSize() {
+		notesTableState.pageSize = parseInt(document.getElementById('notesPageSize').value);
+		notesTableState.currentPage = 1;
+		renderNotesTable();
+	}
+
+	// ----------- Helper Functions -----------
+	function extractPlz(address) {
+		return address.postalCode || address.plz || extractFromAddressText(address.addressText, /\b\d{4,5}\b/);
+	}
+
+	function extractStreet(address) {
+		if (address.street) return address.street;
+		if (address.addressText) {
+			// Try to extract street name before house number
+			const match = address.addressText.match(/^([^,\d]+)/);
+			return match ? match[1].trim() : address.addressText.split(',')[0].trim();
+		}
+		return '';
+	}
+
+	function extractNumber(address) {
+		return address.houseNumber || extractFromAddressText(address.addressText, /\d+[a-zA-Z]*/);
+	}
+
+	function extractFromAddressText(addressText, regex) {
+		if (!addressText) return '';
+		const match = addressText.match(regex);
+		return match ? match[0] : '';
+	}
+
+	function getAddressString(address) {
+		if (!address) return '-';
+		const plz = extractPlz(address);
+		const street = extractStreet(address);
+		const number = extractNumber(address);
+		return `${plz} ${street} ${number}`.trim();
+	}
+
+	// ----------- View Toggle Functions -----------
+	function showAddressView(view) {
+		currentAddressView = view;
+
+		// Update toggle buttons
+		document.querySelectorAll('#view-table, #view-navigation').forEach(btn => {
+			btn.classList.remove('active', 'btn-primary');
+			btn.classList.add('btn-outline-primary');
+		});
+		document.getElementById(`view-${view}`).classList.add('active', 'btn-primary');
+		document.getElementById(`view-${view}`).classList.remove('btn-outline-primary');
+
+		// Show/hide appropriate boxes
+		if (view === 'table') {
+			document.getElementById('addressesTableBox').style.display = 'block';
+			document.getElementById('addressesNavigationBox').style.display = 'none';
+		} else {
+			document.getElementById('addressesTableBox').style.display = 'none';
+			document.getElementById('addressesNavigationBox').style.display = 'block';
+		}
+	}
+
+	// ----------- Modal Functions -----------
+	function openNotesModalForAddress(addressId) {
+		selectedAddressId = addressId;
+		const address = allAddresses.find(a => a.id === addressId);
+		if (address) {
+			document.getElementById('modalTitle').textContent = `Notizen für ${getAddressString(address)}`;
+			if (notesModalInstance) {
+				notesModalInstance.show();
+			}
+			loadNotesInModal();
+		}
+	}
+
+	function closeNotesModal() {
+		if (notesModalInstance) {
+			notesModalInstance.hide();
+		}
+		document.getElementById('modalNewNote').value = '';
+	}
+
+	async function loadNotesInModal() {
+		try {
+			const token = sessionStorage.getItem('access_token');
+			const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+			const res = await fetch(`/api/v1/notes/${selectedAddressId}`, {headers});
+
+			if (!res.ok) {
+				throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+			}
+
+			const notes = await res.json();
+
+			const el = document.getElementById('modalNoteList');
+			el.innerHTML = '';
+
+			if (notes.length === 0) {
+				el.innerHTML = '<p class="text-muted text-center"><i class="bi bi-journal-x me-2"></i>Keine Notizen vorhanden.</p>';
+			} else {
+				notes.forEach(note => {
+					const div = document.createElement('div');
+					div.className = 'note-item';
+
+					const noteText = note.text || note.content || note.description || 'Notiz ohne Text';
+					const creator = note.createdBy || note.author || note.user || 'Unbekannt';
+					const timestamp = note.createdAt || note.timestamp || note.created;
+
+					let timeString = '';
+					if (timestamp) {
+						try {
+							timeString = ' | ' + new Date(timestamp).toLocaleString('de-DE');
+						} catch (e) {
+							timeString = ` | ${timestamp}`;
+						}
+					}
+
+					div.innerHTML = `
+							<div class="text-light">${noteText}</div>
+							<div class="note-meta">Von: ${creator}${timeString}</div>
+						`;
+					el.appendChild(div);
+				});
+			}
+		} catch (error) {
+			console.error('Fehler beim Laden der Notizen:', error);
+			document.getElementById('modalNoteList').innerHTML =
+				`<p class="text-danger text-center"><i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Laden der Notizen: ${error.message}</p>`;
+		}
+	}
+
+	// Modal form submission
+	document.getElementById('modalNoteForm').addEventListener('submit', async function (e) {
+		e.preventDefault();
+		const text = document.getElementById('modalNewNote').value.trim();
+		if (!text || !selectedAddressId) {
+			alert('Bitte geben Sie einen Notiztext ein.');
+			return;
+		}
+
+		try {
+			const token = sessionStorage.getItem('access_token');
+			const headers = {
+				'Content-Type': 'application/json'
+			};
+
+			if (token) {
+				headers['Authorization'] = 'Bearer ' + token;
+			}
+
+			const requestBody = {
+				text: text,
+				createdBy: sessionStorage.getItem('username') || 'Unbekannt'
+			};
+
+			const res = await fetch(`/api/v1/notes/${selectedAddressId}`, {
+				method: 'POST',
+				headers: headers,
+				body: JSON.stringify(requestBody)
+			});
+
+			if (res.ok) {
+				document.getElementById('modalNewNote').value = '';
+				await loadNotesInModal();
+				await loadAllNotes(); // Refresh notes table
+
+				// Show success message
+				const alertDiv = document.createElement('div');
+				alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+				alertDiv.innerHTML = '<i class="bi bi-check-circle me-2"></i>Notiz erfolgreich gespeichert! <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+				setTimeout(() => alertDiv.remove(), 3000);
+			} else {
+				const errorText = await res.text();
+				console.error('Server response:', res.status, errorText);
+				throw new Error(`HTTP ${res.status}: ${errorText || res.statusText}`);
+			}
+		} catch (error) {
+			console.error('Fehler beim Speichern der Notiz:', error);
+			const alertDiv = document.createElement('div');
+			alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+			alertDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Speichern der Notiz: ${error.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+			document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+			setTimeout(() => alertDiv.remove(), 5000);
+		}
+	});
+
+	// ----------- Original Navigation Functions (preserved) -----------
+	function showAllPlzs() {
+		const plzs = [...new Set(allAddresses
+			.map(a => extractPlz(a))
+			.filter(plz => plz)
+		)].sort();
+
+		const el = document.getElementById('plzList');
+		el.innerHTML = '';
+
+		if (plzs.length === 0) {
+			el.innerHTML = '<p class="text-muted">Keine PLZs verfügbar. Laden Sie zuerst Daten über den Import.</p>';
+			return;
+		}
+
+		plzs.forEach(plz => {
+			const btn = document.createElement('button');
+			btn.className = 'btn btn-sm btn-outline-primary';
+			btn.textContent = plz;
+			btn.onclick = () => selectPlz(plz);
+			el.appendChild(btn);
+		});
+	}
+
+	function selectPlz(plz) {
+		selectedPlz = plz;
+		selectedStreet = null;
+		selectedNumber = null;
+		currentStep = 'street';
+
+		// Update breadcrumb
+		const breadcrumb = document.getElementById('breadcrumb');
+		breadcrumb.innerHTML = `
+				<li class="breadcrumb-item">PLZ: ${plz}</li>
+				<li class="breadcrumb-item active">Straße auswählen</li>
+			`;
+
+		document.getElementById('backButton').style.display = 'block';
+		document.getElementById('plzSelection').style.display = 'none';
+		document.getElementById('streetSelection').style.display = 'block';
+		document.getElementById('numberSelection').style.display = 'none';
+
+		const streets = [...new Set(allAddresses
+			.filter(a => extractPlz(a) == plz)
+			.map(a => extractStreet(a))
+			.filter(street => street)
+		)].sort();
+
+		showStreets(streets);
+	}
+
+	function showStreets(streets) {
+		const el = document.getElementById('streetList');
+		el.innerHTML = '';
+
+		streets.forEach(street => {
+			const btn = document.createElement('button');
+			btn.className = 'btn btn-sm btn-outline-primary';
+			btn.textContent = street;
+			btn.onclick = () => selectStreet(street);
+			el.appendChild(btn);
+		});
+	}
+
+	function selectStreet(street) {
+		selectedStreet = street;
+		selectedNumber = null;
+		currentStep = 'number';
+
+		// Update breadcrumb
+		const breadcrumb = document.getElementById('breadcrumb');
+		breadcrumb.innerHTML = `
+				<li class="breadcrumb-item">PLZ: ${selectedPlz}</li>
+				<li class="breadcrumb-item">Straße: ${street}</li>
+				<li class="breadcrumb-item active">Hausnummer auswählen</li>
+			`;
+
+		document.getElementById('streetSelection').style.display = 'none';
+		document.getElementById('numberSelection').style.display = 'block';
+
+		const numbers = allAddresses
+			.filter(a => {
+				const plzMatch = extractPlz(a) == selectedPlz;
+				const streetMatch = extractStreet(a) === street;
+				return plzMatch && streetMatch;
+			})
+			.map(a => extractNumber(a))
+			.filter(number => number)
+			.sort((a, b) => {
+				const numA = parseInt(a);
+				const numB = parseInt(b);
+				if (!isNaN(numA) && !isNaN(numB)) {
+					return numA - numB;
+				}
+				return a.localeCompare(b);
+			});
+
+		showNumbers(numbers);
+	}
+
+	function showNumbers(numbers) {
+		const el = document.getElementById('numberList');
+		el.innerHTML = '';
+
+		numbers.forEach(number => {
+			const btn = document.createElement('button');
+			btn.className = 'btn btn-sm btn-outline-primary';
+			btn.textContent = number;
+			btn.onclick = () => selectNumber(number);
+			el.appendChild(btn);
+		});
+	}
+
+	function selectNumber(number) {
+		selectedNumber = number;
+
+		const address = allAddresses.find(a => {
+			const plzMatch = extractPlz(a) == selectedPlz;
+			const streetMatch = extractStreet(a) === selectedStreet;
+			const numberMatch = extractNumber(a) === number;
+			return plzMatch && streetMatch && numberMatch;
+		});
+
+		if (address) {
+			selectedAddressId = address.id;
+			openNotesModalForAddress(address.id);
+		} else {
+			alert('Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.');
+		}
+	}
+
+	function goBack() {
+		if (currentStep === 'street') {
+			currentStep = 'plz';
+			selectedPlz = null;
+			document.getElementById('breadcrumb').innerHTML = '<li class="breadcrumb-item active">PLZ auswählen</li>';
+			document.getElementById('backButton').style.display = 'none';
+			document.getElementById('plzSelection').style.display = 'block';
+			document.getElementById('streetSelection').style.display = 'none';
+			document.getElementById('numberSelection').style.display = 'none';
+		} else if (currentStep === 'number') {
+			currentStep = 'street';
+			selectedStreet = null;
+			document.getElementById('breadcrumb').innerHTML = `
+					<li class="breadcrumb-item">PLZ: ${selectedPlz}</li>
+					<li class="breadcrumb-item active">Straße auswählen</li>
+				`;
+			document.getElementById('streetSelection').style.display = 'block';
+			document.getElementById('numberSelection').style.display = 'none';
+		}
+	}
+
+	// ----------- Weather Functions -----------
+	async function loadWeatherData() {
+		const weatherElement = document.getElementById('weather');
+		const weatherInfoElement = document.getElementById('weatherInfo');
+
+		// Show loading spinner while waiting for the location
+		weatherElement.textContent = 'Wetter wird geladen...';
+		weatherInfoElement.innerHTML = `
+		        <div class="d-flex align-items-center">
+		            <div class="spinner-border spinner-border-sm me-2"></div>
+		            Geolocation wird geladen...
+		        </div>`;
+
+		// Check if geolocation is supported by the browser
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(async (pos) => {
+				const lat = pos.coords.latitude;
+				const lon = pos.coords.longitude;
+
+				try {
+					const token = sessionStorage.getItem('access_token');
+					const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+					// Fetch weather data using coordinates
+					const res = await fetch(`/api/v1/weather?lat=${lat}&lon=${lon}`, {headers});
+
+					if (!res.ok) {
+						throw new Error(`Fehler beim Abrufen der Wetterdaten: ${res.statusText}`);
+					}
+
+					const weatherText = await res.text();
+
+					// Display the weather information
+					weatherElement.textContent = weatherText;
+					weatherInfoElement.innerHTML = `<p><strong>Aktueller Standort:</strong> ${weatherText}</p>`;
+				} catch (error) {
+					console.error('Fehler beim Laden der Wetterdaten:', error);
+					weatherElement.textContent = 'Wetter nicht verfügbar';
+					weatherInfoElement.innerHTML = `<p class="text-danger">Fehler: ${error.message}</p>`;
+				}
+			}, (error) => {
+				console.error('Geolocation Fehler:', error);
+				weatherElement.textContent = 'Standort nicht verfügbar';
+				weatherInfoElement.innerHTML = `<p class="text-danger">Fehler bei der Standortabfrage.</p>`;
+			});
+		} else {
+			weatherElement.textContent = 'Geolocation nicht unterstützt';
+			weatherInfoElement.innerHTML = `<p class="text-danger">Geolocation wird nicht unterstützt.</p>`;
+		}
+	}
+
+	async function fetchWeatherByRegion() {
+		const region = document.getElementById('regionInput').value.trim();
+		const weatherInfoElement = document.getElementById('weatherInfo');
+
+		if (!region) {
+			weatherInfoElement.innerHTML = '<p class="text-warning">Bitte eine Region eingeben.</p>';
+			return;
+		}
+
+		// Show loading state
+		weatherInfoElement.innerHTML = `
+		        <div class="d-flex align-items-center">
+		            <div class="spinner-border spinner-border-sm me-2"></div>
+		            Wetter wird geladen...
+		        </div>`;
+
+		try {
+			const token = sessionStorage.getItem('access_token');
+			const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+			// Fetch weather data for a given region
+			const res = await fetch(`/api/v1/weather?region=${encodeURIComponent(region)}`, {headers});
+
+			if (!res.ok) {
+				throw new Error(`Fehler beim Abrufen der Wetterdaten: ${res.statusText}`);
+			}
+
+			const weatherText = await res.text();
+
+			// Display the weather information
+			weatherInfoElement.innerHTML = `<p><strong>${region}:</strong> ${weatherText}</p>`;
+		} catch (error) {
+			console.error('Fehler beim Laden der Wetterdaten:', error);
+			weatherInfoElement.innerHTML = `<p class="text-danger">Fehler: ${error.message}</p>`;
+		}
+	}
+
+
+
+
+
+	// ----------- Section Navigation -----------
+	function showSection(sectionName) {
+		// Hide all sections
+		document.querySelectorAll('.app-section').forEach(section => {
+			section.classList.remove('active');
+		});
+
+		// Remove active from all nav links
+		document.querySelectorAll('.nav-link').forEach(link => {
+			link.classList.remove('active');
+		});
+
+		// Show selected section
+		document.getElementById(sectionName + 'Section').classList.add('active');
+		document.getElementById('nav-' + sectionName).classList.add('active');
+
+		// Close mobile sidebar
+		const sidebar = document.getElementById('sidebar');
+		const overlay = document.getElementById('overlay');
+		if (sidebar.classList.contains('show')) {
+			sidebar.classList.remove('show');
+			overlay.classList.remove('show');
+			document.body.style.overflow = '';
+		}
+
+		// Load section-specific data if needed
+		if (sectionName === 'notes' && allNotes.length === 0 && allAddresses.length > 0) {
+			loadAllNotes();
+		} else if (sectionName === 'weather') {
+			loadWeatherData();
+		}
+	}
+
+	// ----------- Import Functions -----------
+	document.getElementById('importForm').addEventListener('submit', async function (e) {
+		e.preventDefault();
+		const fileInput = document.getElementById('fileInput');
+		const file = fileInput.files[0];
+
+		if (!file) {
+			document.getElementById('importResult').innerHTML = '<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Bitte wählen Sie eine Datei aus. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+			return;
+		}
+
+		const formData = new FormData();
+		formData.append('file', file);
+
+		try {
+			const token = sessionStorage.getItem('access_token');
+			const headers = token ? {'Authorization': 'Bearer ' + token} : {};
+
+			const res = await fetch('/api/v1/import', {
+				method: 'POST',
+				headers: headers,
+				body: formData
+			});
+
+			const result = await res.json();
+
+			if (result.success) {
+				document.getElementById('importResult').innerHTML =
+					`<div class="alert alert-success alert-dismissible"><i class="bi bi-check-circle me-2"></i>Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+				loadAllAddresses();
+				loadAllNotes();
+			} else {
+				document.getElementById('importResult').innerHTML =
+					`<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Import fehlgeschlagen: ${result.errors.join(', ')} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+			}
+		} catch (error) {
+			console.error('Import-Fehler:', error);
+			document.getElementById('importResult').innerHTML =
+				'<div class="alert alert-danger alert-dismissible"><i class="bi bi-exclamation-triangle me-2"></i>Fehler beim Importieren der Datei. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+		}
+	});
+
+	// Drag & Drop für Datei-Upload
+	const fileInput = document.getElementById('fileInput');
+	const fileInputArea = document.querySelector('.file-input');
+
+	fileInputArea.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		fileInputArea.style.borderColor = 'var(--bs-primary)';
+	});
+
+	fileInputArea.addEventListener('dragleave', (e) => {
+		e.preventDefault();
+		fileInputArea.style.borderColor = '';
+	});
+
+	fileInputArea.addEventListener('drop', (e) => {
+		e.preventDefault();
+		fileInputArea.style.borderColor = '';
+		const files = e.dataTransfer.files;
+		if (files.length > 0) {
+			fileInput.files = files;
+			fileInputArea.querySelector('p').textContent = `Datei ausgewählt: ${files[0].name}`;
+		}
+	});
+
+	fileInput.addEventListener('change', (e) => {
+		if (e.target.files.length > 0) {
+			fileInputArea.querySelector('p').textContent = `Datei ausgewählt: ${e.target.files[0].name}`;
+		}
+	});
+</script>
+</body>
+
+</html>

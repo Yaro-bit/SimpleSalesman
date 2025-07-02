@@ -1,0 +1,424 @@
+<!--
+  SimpleSalesman Login Page - Secure Authentication Interface
+
+  This page provides the secure login interface for the SimpleSalesman application. Key features include:
+  - Modern Keycloak/OAuth2 login flow with PKCE (Authorization Code Flow)
+  - Automatic session management, including logout handling
+  - Bootstrap 5.3+ framework for modern UI components
+  - Responsive design with dark mode, visually aligned with Keycloak themes
+  - Accessible error handling for failed login attempts
+  - Dynamic hints and success messages for user experience
+  - Thymeleaf integration for server-side rendering
+
+  Security:
+  - All authentication is handled through OAuth2 Authorization Code Flow with PKCE
+  - Bearer tokens are securely exchanged and stored in browser session storage
+  - State and code_verifier are managed per session for CSRF protection
+  - Logout ensures complete session cleanup
+
+  Browser Compatibility:
+  - Requires modern browser with ES6+ and JavaScript enabled
+  - Bootstrap 5 compatible browsers (Chrome 60+, Firefox 60+, Safari 12+, Edge 79+)
+  - Responsive design for mobile devices
+  - Relies on WebCrypto API for PKCE implementation
+
+  Technical Stack:
+  - Bootstrap 5.3.2 (CDN)
+  - Bootstrap Icons 1.11.0 (CDN)
+  - Thymeleaf for server-side rendering
+  - Vanilla JavaScript (ES6+)
+  - OAuth2 with PKCE
+
+  @author SimpleSalesman Team
+  @version 0.0.9
+  @since 0.0.7
+  @updated 2025 - Refactored to Bootstrap 5.3+ framework
+  @requires Bearer token authentication
+  @requires Modern browser with JavaScript enabled
+  @requires Active internet connection for CDN resources
+-->
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org" data-bs-theme="dark">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login | Simple Salesman</title>
+	
+	<!-- Bootstrap CSS CDN -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+	
+	<!-- Bootstrap Icons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+	
+	<style>
+		:root {
+			--bs-primary: #0066cc;
+			--bs-primary-rgb: 0, 102, 204;
+			--bs-success: #24a148;
+			--bs-danger: #da1e28;
+			--bs-dark: #1e1e1e;
+			--bs-body-bg: #1e1e1e;
+			--bs-body-color: #f0f0f0;
+			--bs-border-color: #404040;
+		}
+		
+		body {
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: linear-gradient(135deg, #1e1e1e 0%, #2a2a2a 100%);
+		}
+		
+		.login-container {
+			background: #262626;
+			border: 1px solid var(--bs-border-color);
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+			max-width: 400px;
+			width: 90%;
+		}
+		
+		.logo-container {
+			background: #2a2a2a;
+			border-bottom: 2px solid var(--bs-primary);
+			padding: 2rem;
+		}
+		
+		.logo-image {
+			max-width: 180px;
+			height: auto;
+			filter: brightness(1.1);
+		}
+		
+		.login-body {
+			padding: 2rem;
+		}
+		
+		.btn-keycloak {
+			background: var(--bs-primary);
+			border: none;
+			padding: 0.75rem 1.5rem;
+			font-size: 1.1rem;
+			font-weight: 600;
+			transition: all 0.2s ease;
+			box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+		}
+		
+		.btn-keycloak:hover {
+			background: #004499;
+			transform: translateY(-1px);
+			box-shadow: 0 4px 16px rgba(0, 102, 204, 0.4);
+		}
+		
+		.login-footer {
+			background: #1a1a1a;
+			border-top: 1px solid var(--bs-border-color);
+			padding: 1rem;
+		}
+		
+		/* Custom scrollbar */
+		::-webkit-scrollbar {
+			width: 6px;
+		}
+		
+		::-webkit-scrollbar-track {
+			background: #1a1a1a;
+		}
+		
+		::-webkit-scrollbar-thumb {
+			background: var(--bs-primary);
+			border-radius: 3px;
+		}
+		
+		/* Loading spinner */
+		.spinner-border-sm {
+			width: 1rem;
+			height: 1rem;
+			border-width: 0.15em;
+		}
+		
+		/* Responsive adjustments */
+		@media (max-width: 576px) {
+			.login-container {
+				margin: 1rem;
+				width: calc(100% - 2rem);
+			}
+			
+			.login-body {
+				padding: 1.5rem;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="row justify-content-center">
+			<div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+				<div class="card login-container rounded-3 overflow-hidden">
+					<!-- Logo Section -->
+					<div class="logo-container text-center">
+						<img src="/logo_saleman_original.png" alt="SimpleSalesman Logo" class="logo-image mb-3">
+						<h1 class="h3 text-primary mb-2">Anmeldung</h1>
+						<p class="text-secondary mb-0">Vertriebsmanagement System</p>
+					</div>
+					
+					<!-- Login Body -->
+					<div class="login-body">
+						<!-- Logout Success Message -->
+						<div class="alert alert-success alert-dismissible fade d-none" role="alert" id="logoutSuccess">
+							<i class="bi bi-check-circle-fill me-2"></i>
+							Sie haben sich erfolgreich abgemeldet
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+						</div>
+						
+						<!-- Error Message -->
+						<div class="alert alert-danger alert-dismissible fade d-none" role="alert" id="errorMessage">
+							<i class="bi bi-exclamation-triangle-fill me-2"></i>
+							<span id="errorText"></span>
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+						</div>
+						
+						<!-- Login Hint -->
+						<div class="text-center mb-4">
+							<p class="text-secondary mb-0">
+								<i class="bi bi-shield-lock me-2"></i>
+								Melden Sie sich mit Ihrem Unternehmenskonto an
+							</p>
+						</div>
+						
+						<!-- Login Button -->
+						<div class="d-grid">
+							<button class="btn btn-primary btn-lg btn-keycloak" onclick="loginWithKeycloak()" id="loginButton">
+								<i class="bi bi-key-fill me-2"></i>
+								Mit Keycloak anmelden
+							</button>
+						</div>
+						
+						<!-- Additional Info -->
+						<div class="mt-4 text-center">
+							<small class="text-muted">
+								<i class="bi bi-info-circle me-1"></i>
+								Sichere Authentifizierung über OAuth2 mit PKCE
+							</small>
+						</div>
+					</div>
+					
+					<!-- Footer -->
+					<div class="login-footer text-center">
+						<small class="text-muted">
+							&copy; 2025 SimpleSalesman System
+							<span class="mx-2">|</span>
+							Version 0.0.9
+						</small>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap JS Bundle -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	
+	<!-- Authentication Script -->
+	<script th:inline="javascript">
+		// Thymeleaf variables
+		const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
+		const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080';
+		const REALM = /*[[${realm}]]*/ 'simple-salesman-backend';
+		const CLIENT_ID = /*[[${clientId}]]*/ 'frontend-app';
+		const REDIRECT_URI = /*[[${redirectUri}]]*/ window.location.origin + '/';
+
+		// Check if user was redirected after logout
+		window.addEventListener('load', function() {
+			// Check if already authenticated
+			if (IS_AUTHENTICATED) {
+				window.location.replace("gui.html");
+				return;
+			}
+
+			// Check URL parameters or storage for logout indication
+			const urlParams = new URLSearchParams(window.location.search);
+			const wasLoggedOut = urlParams.get('logout') === 'true' || 
+							   sessionStorage.getItem('just_logged_out') === 'true';
+			
+			if (wasLoggedOut) {
+				const logoutAlert = document.getElementById('logoutSuccess');
+				logoutAlert.classList.remove('d-none');
+				logoutAlert.classList.add('show');
+				
+				// Clear the logout indication
+				sessionStorage.removeItem('just_logged_out');
+				
+				// Remove logout parameter from URL without page reload
+				if (urlParams.has('logout')) {
+					const newUrl = window.location.pathname;
+					window.history.replaceState({}, '', newUrl);
+				}
+			}
+		});
+
+		// --- PKCE Flow Implementation ---
+		function generateCodeVerifier() {
+			const array = new Uint8Array(32);
+			window.crypto.getRandomValues(array);
+			return btoa(String.fromCharCode.apply(null, array))
+				.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+
+		async function generateCodeChallenge(verifier) {
+			const encoder = new TextEncoder();
+			const data = encoder.encode(verifier);
+			const digest = await window.crypto.subtle.digest('SHA-256', data);
+			const hashArray = Array.from(new Uint8Array(digest));
+			let base64 = btoa(String.fromCharCode.apply(null, hashArray));
+			return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		}
+
+		async function loginWithKeycloak() {
+			const loginButton = document.getElementById('loginButton');
+			
+			try {
+				// Show loading state
+				loginButton.disabled = true;
+				loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Anmeldung läuft...';
+				
+				const codeVerifier = generateCodeVerifier();
+				const codeChallenge = await generateCodeChallenge(codeVerifier);
+				const state = generateCodeVerifier();
+
+				sessionStorage.setItem('code_verifier', codeVerifier);
+				sessionStorage.setItem('oauth_state', state);
+
+				const params = new URLSearchParams({
+					response_type: 'code',
+					client_id: CLIENT_ID,
+					redirect_uri: REDIRECT_URI,
+					scope: 'openid profile email',
+					state: state,
+					code_challenge: codeChallenge,
+					code_challenge_method: 'S256'
+				});
+				
+				const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
+				window.location.href = authUrl;
+			} catch (error) {
+				console.error('Fehler beim Keycloak-Login:', error);
+				showError('Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.');
+				
+				// Reset button state
+				loginButton.disabled = false;
+				loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+			}
+		}
+
+		function showError(message) {
+			const errorAlert = document.getElementById('errorMessage');
+			const errorText = document.getElementById('errorText');
+			
+			errorText.textContent = message;
+			errorAlert.classList.remove('d-none');
+			errorAlert.classList.add('show');
+			
+			// Auto-hide after 10 seconds
+			setTimeout(() => {
+				const alert = bootstrap.Alert.getOrCreateInstance(errorAlert);
+				alert.close();
+			}, 10000);
+		}
+
+		// --- Handle OAuth2 Callback: Token exchange and redirect to GUI ---
+		document.addEventListener("DOMContentLoaded", async function () {
+			const urlParams = new URLSearchParams(window.location.search);
+			const code = urlParams.get('code');
+			const state = urlParams.get('state');
+			const error = urlParams.get('error');
+			const errorDescription = urlParams.get('error_description');
+			
+			// Handle OAuth errors
+			if (error) {
+				console.error('OAuth Error:', error, errorDescription);
+				showError(errorDescription || 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+				return;
+			}
+			
+			// Handle authorization code
+			if (code && state) {
+				const codeVerifier = sessionStorage.getItem('code_verifier');
+				const storedState = sessionStorage.getItem('oauth_state');
+				
+				// Validate state parameter
+				if (state !== storedState) {
+					showError('Ungültiger State-Parameter! Bitte erneut anmelden.');
+					return;
+				}
+				
+				// Show loading state
+				const loginButton = document.getElementById('loginButton');
+				loginButton.disabled = true;
+				loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Token wird abgerufen...';
+				
+				try {
+					const tokenResponse = await fetch(
+						`${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/token`,
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body: new URLSearchParams({
+								grant_type: "authorization_code",
+								code: code,
+								redirect_uri: REDIRECT_URI,
+								client_id: CLIENT_ID,
+								code_verifier: codeVerifier
+							}),
+						}
+					);
+					
+					if (tokenResponse.ok) {
+						const tokens = await tokenResponse.json();
+						
+						// Store tokens in session storage
+						sessionStorage.setItem('access_token', tokens.access_token);
+						if (tokens.refresh_token) {
+							sessionStorage.setItem('refresh_token', tokens.refresh_token);
+						}
+						
+						// Extract user information from JWT
+						try {
+							const payload = JSON.parse(atob(tokens.access_token.split('.')[1]));
+							sessionStorage.setItem('username', payload.preferred_username || payload.email || 'User');
+							sessionStorage.setItem('user_id', payload.sub || '');
+						} catch (e) {
+							console.error('Error parsing JWT:', e);
+						}
+						
+						// Clean up OAuth state
+						sessionStorage.removeItem('code_verifier');
+						sessionStorage.removeItem('oauth_state');
+						
+						// Clear URL parameters
+						window.history.replaceState({}, document.title, window.location.pathname);
+						
+						// Redirect to GUI
+						window.location.href = "gui.html";
+					} else {
+						const errorData = await tokenResponse.text();
+						console.error('Token exchange failed:', tokenResponse.status, errorData);
+						showError('Fehler beim Abrufen des Tokens. Bitte erneut anmelden.');
+						
+						// Reset button
+						loginButton.disabled = false;
+						loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+					}
+				} catch (error) {
+					console.error('Token exchange error:', error);
+					showError('Netzwerkfehler beim Token-Austausch. Bitte versuchen Sie es erneut.');
+					
+					// Reset button
+					loginButton.disabled = false;
+					loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+				}
+			}
+		});
+	</script>
+</body>
+</html>

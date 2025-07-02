@@ -133,8 +133,8 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 - Spring Boot   (Apache License 2.0): 	REST backend  
 - Keycloak   	(Apache License 2.0): 	Authentication  
 - MapStruct  	(Apache License 2.0): 	DTO mapping  
-- Bootstrap  	(MIT License):			Icons and Frontendtools
-
+- Bootstrap  	(MIT License):		Icons and Frontendtools
+---
 
 ## Getting Started (Backend Only)
 
