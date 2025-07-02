@@ -129,11 +129,11 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 
 ## Used Libraries & Licenses
 
-- Apache POI  (Apache License 2.0): Excel import  
-- Spring Boot  (Apache License 2.0): REST backend  
-- Keycloak   (Apache License 2.0): Authentication  
-- MapStruct  (Apache License 2.0): DTO mapping  
-
+- Apache POI  	(Apache License 2.0): 	Excel import  
+- Spring Boot   (Apache License 2.0): 	REST backend  
+- Keycloak   	(Apache License 2.0): 	Authentication  
+- MapStruct  	(Apache License 2.0): 	DTO mapping  
+- Bootstrap  	(MIT License):		Icons and Frontendtools
 ---
 
 ## Getting Started (Backend Only)
