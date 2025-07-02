@@ -13,7 +13,7 @@
 
 	<groupId>com.simplesalesman</groupId>
 	<artifactId>simple-salesman</artifactId>
-	<version>0.0.5-Pre-Alpha</version>
+	<version>0.0.911-Pre-Alpha</version>
 	<name>SimpleSalesman</name>
 	<description>Simple Salesman – D2D Vertriebs-App</description>
 	<url>https://github.com/your-repo/simple-salesman</url>
@@ -37,7 +37,7 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 		
-		<!-- ✅ NEU: Thymeleaf Template Engine -->
+		<!-- Thymeleaf Template Engine -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -96,19 +96,19 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- ✅ NEU: Thymeleaf Layout Dialect für bessere Template-Organisation -->
+		<!-- Thymeleaf Layout Dialect für bessere Template-Organisation -->
 		<dependency>
 			<groupId>nz.net.ultraq.thymeleaf</groupId>
 			<artifactId>thymeleaf-layout-dialect</artifactId>
 		</dependency>
 
-		<!-- ✅ NEU: Thymeleaf Spring Security Integration -->
+		<!-- Thymeleaf Spring Security Integration -->
 		<dependency>
 			<groupId>org.thymeleaf.extras</groupId>
 			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
 		</dependency>
 
-		<!-- ✅ NEU: Bootstrap WebJars für einfaches CSS -->
+		<!-- Bootstrap WebJars für einfaches CSS -->
 		<dependency>
 			<groupId>org.webjars</groupId>
 			<artifactId>bootstrap</artifactId>
@@ -161,7 +161,6 @@
 		</dependency>
 	</dependencies>
 
-	<!-- 🔧 FIXED: Build-Sektion war fälschlicherweise in dependencies! -->
 	<build>
 		<plugins>
 			<!-- Java Compiler -->
