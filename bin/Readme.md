@@ -13,7 +13,8 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Known Issues:
     Severe performance issues on large imports:
-    Importing 70,000 address entries currently takes approximately 10,498,144 ms (≈ 2 hours, 54 minutes, 58 seconds). The same problem occurs when selecting all addresses: the browser attempts to load the entire address dataset at once, resulting in extremely poor performance and a nearly unusable frontend for large datasets.
+    Importing 70,000 address entries currently takes approximately 10,498,144 ms (≈ 2 hours, 54 minutes, 58 seconds). 
+    The same problem occurs when selecting all addresses: the browser attempts to load the entire address dataset at once, resulting in extremely poor performance and a nearly unusable frontend for large datasets.
     Cause: Both import and retrieval routines lack batching, streaming, or pagination, leading to excessive memory and processing requirements.
     Workaround: None at this time; consider limiting import/export size or adding pagination.
 	
@@ -125,7 +126,7 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 - Keycloak is technically integrated but not yet in production
 - GDPR tools (logging, audit trails, permission management) are still missing
 - AI features and automatic text suggestions are planned but not yet implemented
-- Performance upgrade
+- Performance upgrade needed
 
 ## Used Libraries & Licenses
 
@@ -133,10 +134,24 @@ Production Ready: Thymeleaf integration for deployment flexibility across enviro
 - Spring Boot   (Apache License 2.0): 	REST backend  
 - Keycloak   	(Apache License 2.0): 	Authentication  
 - MapStruct  	(Apache License 2.0): 	DTO mapping  
-- Bootstrap  	(MIT License):		Icons and Frontendtools
----
+- Bootstrap  	(MIT License):			Icons and Frontendtools
 
-## Getting Started (Backend Only)
+
+## Design Patterns
+
+| **Pattern**            | **Type**      | **Used in**                          |
+|------------------------|---------------|--------------------------------------|
+| **MVC**                | Architecture  | Spring Controller, Thymeleaf, DTOs   |
+| **DTO**                | Structure     | NoteDto, AddressDto, etc.            |
+| **Service Layer**      | Architecture  | All *Service classes                 |
+| **Repository**         | Structure     | All *Repository interfaces           |
+| **Mapper / Adapter**   | Structure     | *Mapper classes                      |
+| **Singleton**          | Creation      | Spring Beans                         |
+| **Factory**            | Creation      | Spring Bean creation                 |
+| **Builder**            | Creation      | DTO/Entity creation                  |
+| **Strategy (optional)**| Behavior      | Potential for Excel, weather strat.  |
+| **Observer (JS)**      | Behavior      | Event-based UI logic                 |
+| **(Thymeleaf)**        | Behavior      | layout.html Template layout          |
 
 ### Prerequisites
 

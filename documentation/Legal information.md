@@ -1,36 +1,36 @@
-**# Legal & Technical Documentation – Simple Salesman**
+# Legal & Technical Documentation – Simple Salesman
 
-**## Project Overview**
+## Project Overview
 
-**Application Name:**
+**Application Name:**  
 Simple Salesman
 
-**Version:**
-See `README.md` – Current: 0.0.9 (Last Update: 2025-06-30)
+**Version:**  
+See `README.md` – Current: 0.0.9 (Last Update: 2025-07-02)
 
-**Purpose:**
+**Purpose:**  
 Efficient management and documentation of addresses, notes, and project status in door-to-door sales.
 
-**Maintainer:**
+**Maintainer:**  
 Yaroslav Vol. (Private individual, open source initiative)
 
-**Technology Stack:**
+**Technology Stack:**  
 Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CSS/JavaScript (Thymeleaf)
 
 ---
 
-**## AI Feature Documentation (EU AI Act)**
+## AI Feature Documentation (EU AI Act)
 
 > ℹ️ No GPT models are currently active or embedded. Planned AI is local-only, optional, and fully transparent.
 
-**### Implemented**
+### Implemented
 
 **Weather Service**
 - REST-based service via `wttr.in`
 - No local model / external processing only
 - No tokenization, AI, or tracking
 
-**### Planned**
+### Planned
 
 - AI text suggestions for note-taking
 - No automation or decision-making by AI
@@ -39,39 +39,39 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 
 ---
 
-**## Token-Based Processing**
+## Token-Based Processing
 
 **Keycloak JWT**
-- Contains: Roles, User ID, Permissions
-- Stored: Session duration
-- Purpose: Auth & access control
+- **Contains:** Roles, User ID, Permissions
+- **Stored:** Session duration
+- **Purpose:** Auth & access control
 
 ---
 
-**## Data Protection & GDPR Compliance**
+## Data Protection & GDPR Compliance
 
-| Code 	| Feature 			    | Status 						            |
-|------	|-------------------|-------------------------------|
-| DS1 	| Logging 			    | Enabled (Spring Boot logging)	|
-| DS2 	| Encryption 		    | Database-level (PostgreSQL) 	|
-| DS3 	| Access Control 	  | Keycloak-based 				        |
-| DS4 	| Deletion Function | Basic structure implemented 	|
-| DS5 	| Consent Management| Manual, planned UI frontend 	|
-
----
-
-**## EU AI Act Compliance Status**
-
-| Code 	| Requirement 					        | Status 			    |
-|------	|-------------------------------|----------------	|
-| KI1 	| No active AI = Exempt 		    | ✅ Fulfilled 		|
-| KI2 	| Opt-out mechanism (frontend) 	| ⚠️ In planning 	|
-| KI3 	| No data processing by AI 		  | ✅ Fulfilled 		|
-| KI4 	| Documentation for local model | 📝 Planned 		  |
+| Code  | Feature               | Status                           |
+|-------|-----------------------|----------------------------------|
+| DS1   | Logging               | Enabled (Spring Boot logging)    |
+| DS2   | Encryption            | Database-level (PostgreSQL)      |
+| DS3   | Access Control        | Keycloak-based                   |
+| DS4   | Deletion Function     | Basic structure implemented      |
+| DS5   | Consent Management    | Manual, planned UI frontend      |
 
 ---
 
-**## Licenses & Libraries**
+## EU AI Act Compliance Status
+
+| Code  | Requirement                       | Status          |
+|-------|------------------------------------|-----------------|
+| KI1   | No active AI = Exempt             | ✅ Fulfilled    |
+| KI2   | Opt-out mechanism (frontend)      | ⚠️ In planning  |
+| KI3   | No data processing by AI          | ✅ Fulfilled    |
+| KI4   | Documentation for local model     | 📝 Planned      |
+
+---
+
+## Licenses & Libraries
 
 - **Apache POI** – Excel Import (Apache License 2.0)
 - **Spring Boot** – REST Backend (Apache License 2.0)
@@ -82,7 +82,7 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 
 ---
 
-**## Changelog Summary (last updated: 0.0.9)**
+## Changelog Summary (last updated: 0.0.9)
 
 - **[0.0.9]** UI completely refactored to Bootstrap 5.3+ framework
   - Replaced custom CSS with Bootstrap components
@@ -101,19 +101,19 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 
 ---
 
-**## UI Framework Documentation**
+## UI Framework Documentation
 
 **Bootstrap Integration (v0.0.9+)**
-- Framework: Bootstrap 5.3.2 (CDN-based)
-- Icons: Bootstrap Icons 1.11.0
-- No jQuery dependency
-- CDN Requirements: Active internet connection required for Bootstrap resources
-- Browser Compatibility: Chrome 60+, Firefox 60+, Safari 12+, Edge 79+
-- Accessibility: WCAG 2.1 AA compliant through Bootstrap components
+- **Framework:** Bootstrap 5.3.2 (CDN-based)
+- **Icons:** Bootstrap Icons 1.11.0
+- **No jQuery dependency**
+- **CDN Requirements:** Active internet connection required for Bootstrap resources
+- **Browser Compatibility:** Chrome 60+, Firefox 60+, Safari 12+, Edge 79+
+- **Accessibility:** WCAG 2.1 AA compliant through Bootstrap components
 
 ---
 
-**## Development Roadmap**
+## Development Roadmap
 
 **Implemented:**
 - REST API for address, note, and project management
@@ -122,14 +122,15 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 - Keycloak JWT Auth
 - Interactive API GUI (Thymeleaf-based)
 - GitHub CI/CD
-- **Bootstrap 5.3+ UI framework (v0.0.9)**
+- **Bootstrap 5.3+ UI framework**
 - **Responsive mobile design with collapsible navigation**
 
 **Planned:**
-- Documentation refactorin
+- Documentation refactoring
 - Performance updates
 - AI-based suggestions (optional)
 - Local GPT-2 note support
 - Admin UI (logs, backups)
-- Enhanced UI: avatar upload, ~~dark mode~~ 
+- Enhanced UI: avatar upload, ~~dark mode~~
 - Easter eggs, progress indicators
+
