@@ -50,11 +50,11 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 
 **## Data Protection & GDPR Compliance**
 
-| Code 	| Feature 			| Status 						|
+| Code 	| Feature 			    | Status 						            |
 |------	|-------------------|-------------------------------|
-| DS1 	| Logging 			| Enabled (Spring Boot logging)	|
-| DS2 	| Encryption 		| Database-level (PostgreSQL) 	|
-| DS3 	| Access Control 	| Keycloak-based 				|
+| DS1 	| Logging 			    | Enabled (Spring Boot logging)	|
+| DS2 	| Encryption 		    | Database-level (PostgreSQL) 	|
+| DS3 	| Access Control 	  | Keycloak-based 				        |
 | DS4 	| Deletion Function | Basic structure implemented 	|
 | DS5 	| Consent Management| Manual, planned UI frontend 	|
 
@@ -62,12 +62,12 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 
 **## EU AI Act Compliance Status**
 
-| Code 	| Requirement 					| Status 			|
+| Code 	| Requirement 					        | Status 			    |
 |------	|-------------------------------|----------------	|
-| KI1 	| No active AI = Exempt 		| ✅ Fulfilled 		|
+| KI1 	| No active AI = Exempt 		    | ✅ Fulfilled 		|
 | KI2 	| Opt-out mechanism (frontend) 	| ⚠️ In planning 	|
-| KI3 	| No data processing by AI 		| ✅ Fulfilled 		|
-| KI4 	| Documentation for local model | 📝 Planned 		|
+| KI3 	| No data processing by AI 		  | ✅ Fulfilled 		|
+| KI4 	| Documentation for local model | 📝 Planned 		  |
 
 ---
 
@@ -126,9 +126,10 @@ Spring Boot · PostgreSQL · Apache POI · Keycloak · Bootstrap 5.3+ · HTML/CS
 - **Responsive mobile design with collapsible navigation**
 
 **Planned:**
+- Documentation refactorin
+- Performance updates
 - AI-based suggestions (optional)
 - Local GPT-2 note support
 - Admin UI (logs, backups)
-- Enhanced UI: avatar upload, ~~dark mode~~ ✅ (implemented in v0.0.9)
-- Daily Excel export
+- Enhanced UI: avatar upload, ~~dark mode~~ 
 - Easter eggs, progress indicators
