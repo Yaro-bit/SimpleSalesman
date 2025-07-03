@@ -21,7 +21,7 @@ import org.springframework.core.env.Environment;
  * @version 0.0.6
  * @since 0.0.1
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.simplesalesman"})
 public class SimpleSalesmanApplication {
 
 	/**
