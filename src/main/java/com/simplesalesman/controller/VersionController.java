@@ -23,8 +23,8 @@ import java.util.Optional;
  * but without service layer complexity.
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
- * @since 0.0.6
+ * @version 0.0.9
+ * @since 0.0.9
  */
 @RestController
 @RequestMapping("/api/v1/versions")
