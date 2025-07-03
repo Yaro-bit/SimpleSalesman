@@ -1,0 +1,320 @@
+{
+	"info": {
+		"_postman_id": "4c9b58f8-777a-4702-a548-478fc1f0e11f",
+		"name": "Excel Export - Test Collection",
+		"description": "Postman collection for testing Excel export functionality in SimpleSalesman application.\n\n## Single Package Export:\n- All classes in package: com.simplesalesman.exam.export\n- Simple in-memory filtering for region exports\n- No repository changes needed\n\n## Quick Start:\n1. Set your password in the 'password' variable\n2. Run 'Get Token' to authenticate\n3. Test export operations\n4. Files will download automatically\n\n## Export Endpoints:\n- GET /api/v1/export/excel - Export all projects\n- GET /api/v1/export/excel/region/{id} - Export projects by region\n\n## Variables to Configure:\n- password: YOUR_ACTUAL_PASSWORD\n- region_id: ID of region to test (default: 1)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "32255878",
+		"_collection_link": "https://ass999-2334.postman.co/workspace/test~120e7578-9e18-40f9-ad34-ab485a986412/collection/32255878-4c9b58f8-777a-4702-a548-478fc1f0e11f?action=share&source=collection_link&creator=32255878"
+	},
+	"item": [
+		{
+			"name": "1. Get Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Extract and save JWT token",
+							"if (pm.response.code === 200) {",
+							"    try {",
+							"        const responseJson = pm.response.json();",
+							"        const accessToken = responseJson.access_token;",
+							"        ",
+							"        if (accessToken) {",
+							"            pm.environment.set('jwt_token', accessToken);",
+							"            console.log('✅ JWT token saved successfully');",
+							"            console.log('Token expires in:', responseJson.expires_in, 'seconds');",
+							"        } else {",
+							"            console.log('❌ No access_token found');",
+							"            console.log('Response:', JSON.stringify(responseJson, null, 2));",
+							"        }",
+							"    } catch (e) {",
+							"        console.log('❌ Error parsing response:', e.message);",
+							"        console.log('Raw response:', pm.response.text());",
+							"    }",
+							"} else {",
+							"    console.log('❌ Authentication failed:', pm.response.code);",
+							"    console.log('Response:', pm.response.text());",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{keycloak_client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": "{{keycloak_base_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+				"description": "Get JWT token for authentication before testing export endpoints"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Export All Projects",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test export functionality",
+							"pm.test('Status code is 200', function () {",
+							"    pm.expect(pm.response.code).to.eql(200);",
+							"});",
+							"",
+							"pm.test('Content-Type is Excel', function () {",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');",
+							"});",
+							"",
+							"pm.test('Content-Disposition header present', function () {",
+							"    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+							"    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('filename');",
+							"});",
+							"",
+							"pm.test('Response has content', function () {",
+							"    pm.expect(pm.response.responseSize).to.be.above(0);",
+							"});",
+							"",
+							"console.log('✅ Excel export test completed');",
+							"console.log('File size:', pm.response.responseSize, 'bytes');",
+							"console.log('Filename from header:', pm.response.headers.get('Content-Disposition'));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/export/excel",
+				"description": "Export all projects to Excel file. File will download automatically with timestamp."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Export Projects by Region",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test region-specific export",
+							"pm.test('Status code is 200', function () {",
+							"    pm.expect(pm.response.code).to.eql(200);",
+							"});",
+							"",
+							"pm.test('Content-Type is Excel', function () {",
+							"    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');",
+							"});",
+							"",
+							"pm.test('Filename contains region ID', function () {",
+							"    const disposition = pm.response.headers.get('Content-Disposition');",
+							"    pm.expect(disposition).to.include('Region_' + pm.variables.get('region_id'));",
+							"});",
+							"",
+							"console.log('✅ Region export test completed');",
+							"console.log('Region ID:', pm.variables.get('region_id'));",
+							"console.log('File size:', pm.response.responseSize, 'bytes');"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/export/excel/region/{{region_id}}",
+				"description": "Export projects filtered by region ID. Uses in-memory filtering for simplicity."
+			},
+			"response": []
+		},
+		{
+			"name": "4. Test Different Region",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/export/excel/region/2",
+				"description": "Test export with a different region ID (hardcoded to 2)"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Test Invalid Region",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test export with invalid region",
+							"pm.test('Request completes successfully', function () {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+							"});",
+							"",
+							"if (pm.response.code === 200) {",
+							"    console.log('✅ Export completed - might be empty file');",
+							"    console.log('File size:', pm.response.responseSize, 'bytes');",
+							"} else {",
+							"    console.log('ℹ️ No data found for region 999 (expected)');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/export/excel/region/999",
+				"description": "Test export with non-existent region ID to verify error handling"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script for export testing",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"",
+					"if (!isTokenRequest) {",
+					"    const jwtToken = pm.environment.get('jwt_token');",
+					"    if (!jwtToken) {",
+					"        console.log('⚠️  No JWT token found. Run \"Get Token\" first.');",
+					"    } else {",
+					"        console.log('✅ Using saved JWT token for export request');",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script for export endpoints",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"const isExportRequest = pm.request.url.path.includes('export');",
+					"",
+					"if (!isTokenRequest) {",
+					"    pm.test('Response time is reasonable', function () {",
+					"        pm.expect(pm.response.responseTime).to.be.below(10000);",
+					"    });",
+					"}",
+					"",
+					"if (isExportRequest && pm.response.code === 200) {",
+					"    console.log('📁 Export completed successfully');",
+					"    console.log('📊 Response time:', pm.response.responseTime + 'ms');",
+					"    console.log('📦 File size:', pm.response.responseSize, 'bytes');",
+					"}",
+					"",
+					"// Handle authentication errors",
+					"if (pm.response.code === 401) {",
+					"    console.log('❌ Unauthorized: Run \"Get Token\" first');",
+					"} else if (pm.response.code === 500) {",
+					"    console.log('❌ Server Error: Check export implementation');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_realm",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_client_id",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin@admin.ad",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "YOUR_PASSWORD_HERE",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "region_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
