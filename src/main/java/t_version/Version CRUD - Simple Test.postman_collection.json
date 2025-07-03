@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "8ce4fe1c-fe67-4f6e-8d4c-86117eab7738",
+		"name": "Version CRUD - Simple Test",
+		"description": "Simple Postman collection to test Version CRUD operations with authentication.\n\n## Quick Start:\n1. Set your password in the 'password' variable\n2. Run 'Get Token' to authenticate\n3. Test Version CRUD operations\n\n## Variables to Configure:\n- password: YOUR_ACTUAL_PASSWORD\n- version_id: ID of version to test (default: 1)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "32255878",
+		"_collection_link": "https://ass999-2334.postman.co/workspace/test~120e7578-9e18-40f9-ad34-ab485a986412/collection/32255878-8ce4fe1c-fe67-4f6e-8d4c-86117eab7738?action=share&source=collection_link&creator=32255878"
+	},
+	"item": [
+		{
+			"name": "1. Get Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Extract and save JWT token",
+							"if (pm.response.code === 200) {",
+							"    try {",
+							"        const responseJson = pm.response.json();",
+							"        const accessToken = responseJson.access_token;",
+							"        ",
+							"        if (accessToken) {",
+							"            pm.environment.set('jwt_token', accessToken);",
+							"            console.log('✅ JWT token saved successfully');",
+							"            console.log('Token expires in:', responseJson.expires_in, 'seconds');",
+							"        } else {",
+							"            console.log('❌ No access_token found');",
+							"            console.log('Response:', JSON.stringify(responseJson, null, 2));",
+							"        }",
+							"    } catch (e) {",
+							"        console.log('❌ Error parsing response:', e.message);",
+							"        console.log('Raw response:', pm.response.text());",
+							"    }",
+							"} else {",
+							"    console.log('❌ Authentication failed:', pm.response.code);",
+							"    console.log('Response:', pm.response.text());",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{keycloak_client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": "{{keycloak_base_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+				"description": "Get JWT token for authentication"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get All Versions",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/versions",
+				"description": "Retrieve all versions from t_version table"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Version",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"version\": \"1.0.0\"\n}"
+				},
+				"url": "{{base_url}}/api/v1/versions",
+				"description": "Create a new version entry"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Version by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/versions/{{version_id}}",
+				"description": "Get a specific version by ID"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Update Version",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"version\": \"1.0.1\"\n}"
+				},
+				"url": "{{base_url}}/api/v1/versions/{{version_id}}",
+				"description": "Update an existing version"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Delete Version",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": "{{base_url}}/api/v1/versions/{{version_id}}",
+				"description": "Delete a version by ID"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Check if JWT token exists for authenticated requests",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"",
+					"if (!isTokenRequest) {",
+					"    const jwtToken = pm.environment.get('jwt_token');",
+					"    if (!jwtToken) {",
+					"        console.log('⚠️  No JWT token found. Run \"Get Token\" first.');",
+					"    } else {",
+					"        console.log('✅ Using saved JWT token');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_realm",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_client_id",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin@admin.ad",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "YOUR_PASSWORD_HERE",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "version_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
