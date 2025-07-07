@@ -23,7 +23,8 @@ import org.springframework.core.env.Environment;
  */
 @SpringBootApplication(scanBasePackages = {
 	    "com.simplesalesman",  // Main package für Weather etc.
-	    "exam.API"            // Package für Joke API
+	    "exam.API",// Package für Joke API
+	    "exam.EXP"// Package für EXP API
 	})
 public class SimpleSalesmanApplication {
 

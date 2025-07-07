@@ -1,4 +1,4 @@
-package exam.API;
+package com.simplesalesman.exam.externalapi;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

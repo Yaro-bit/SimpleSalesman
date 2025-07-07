@@ -1,11 +1,11 @@
-package exam.API;
+package com.simplesalesman.exam.externalapi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
-import exam.API.JokeService;
+import com.simplesalesman.exam.externalapi.JokeService;
 
 /**
  * REST Controller for joke retrieval from JokeAPI.

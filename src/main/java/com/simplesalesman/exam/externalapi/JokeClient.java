@@ -1,4 +1,4 @@
-package exam.API;
+package com.simplesalesman.exam.externalapi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -2,7 +2,8 @@ package com.simplesalesman.repository;
 
 import com.simplesalesman.entity.Note;
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 /**
  * Repository interface for managing {@link Note} entities in the SimpleSalesman
  * application.
@@ -23,5 +24,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * @version 0.0.6
  * @since 0.0.3
  */
+
+
+import java.util.List;
+
 public interface NoteRepository extends JpaRepository<Note, Long> {
+
+    @Query("SELECT n FROM Note n WHERE n.address.id IN :addressIds")
+    List<Note> findByAddressIds(@Param("addressIds") List<Long> addressIds);
 }
+

@@ -1,9 +1,10 @@
-package exam.API;
+package com.simplesalesman.exam.externalapi;
 
-import exam.API.JokeClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import com.simplesalesman.exam.externalapi.JokeClient;
 
 /**
  * Service component for handling joke requests from JokeAPI.
