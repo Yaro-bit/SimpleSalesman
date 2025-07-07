@@ -1,0 +1,1056 @@
+<!--
+  SimpleSalesman Joke API GUI
+  
+  Professional OAuth2/PKCE-based authentication interface for the Joke API
+  Following the same pattern as the main SimpleSalesman API GUI
+
+  Features:
+  - OAuth2 Authorization Code Flow with PKCE
+  - Redirect-based Keycloak authentication
+  - Token management and expiry handling
+  - User information display
+  - Configurable endpoints
+
+  @author Yaroslav Volokhodko
+  @version exam
+  @since 0.0.9
+  @requires Bearer token authentication
+  @requires Modern browser with JavaScript enabled
+-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleSalesman - Joke API GUI</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
+    <style>
+        :root {
+            --keycloak-primary: #0066cc;
+            --keycloak-primary-hover: #004499;
+            --keycloak-primary-light: #1a4a7a;
+            --keycloak-secondary: #2a2a2a;
+            --keycloak-background: #1e1e1e;
+            --keycloak-sidebar: #161616;
+            --keycloak-content: #262626;
+            --keycloak-white: #ffffff;
+            --keycloak-text: #f0f0f0;
+            --keycloak-text-secondary: #a0a0a0;
+            --keycloak-text-muted: #6f6f6f;
+            --keycloak-border: #404040;
+            --keycloak-border-light: #333333;
+            --keycloak-success: #24a148;
+            --keycloak-error: #da1e28;
+            --keycloak-warning: #f1c21b;
+            --keycloak-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --keycloak-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--keycloak-background);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--keycloak-text);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--keycloak-content);
+            border-radius: 15px;
+            box-shadow: var(--keycloak-shadow-hover);
+            overflow: hidden;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .header {
+            background: var(--keycloak-primary);
+            padding: 30px;
+            text-align: center;
+            color: var(--keycloak-white);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .config-section {
+            background: var(--keycloak-secondary);
+            padding: 20px;
+            border-bottom: 2px solid var(--keycloak-border);
+        }
+
+        .config-form {
+            background: var(--keycloak-content);
+            border: 1px solid var(--keycloak-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .config-form h4 {
+            color: var(--keycloak-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--keycloak-text);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--keycloak-border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: var(--keycloak-secondary);
+            color: var(--keycloak-text);
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--keycloak-primary);
+        }
+
+        .auth-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .status-indicator {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+
+        .status-connected {
+            background: var(--keycloak-success);
+            color: var(--keycloak-white);
+        }
+
+        .status-disconnected {
+            background: var(--keycloak-error);
+            color: var(--keycloak-white);
+        }
+
+        .btn {
+            background: var(--keycloak-primary);
+            color: var(--keycloak-white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: var(--keycloak-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--keycloak-shadow-hover);
+        }
+
+        .btn:disabled {
+            background: var(--keycloak-text-muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: var(--keycloak-success);
+        }
+
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+
+        .btn-danger {
+            background: var(--keycloak-error);
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-warning {
+            background: var(--keycloak-warning);
+            color: var(--keycloak-background);
+        }
+
+        .btn-warning:hover {
+            background: #d39e00;
+        }
+
+        .user-info {
+            background: var(--keycloak-content);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px auto;
+            border-left: 4px solid var(--keycloak-primary);
+            display: none;
+            max-width: 500px;
+        }
+
+        .user-info h4 {
+            color: var(--keycloak-primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-info-content {
+            display: grid;
+            gap: 8px;
+        }
+
+        .user-info-content div {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--keycloak-border-light);
+        }
+
+        .joke-section {
+            padding: 30px;
+        }
+
+        .joke-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .joke-display {
+            background: var(--keycloak-secondary);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-left: 5px solid var(--keycloak-primary);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .joke-display:hover {
+            box-shadow: var(--keycloak-shadow);
+        }
+
+        .joke-display.loading {
+            border-left-color: var(--keycloak-warning);
+        }
+
+        .joke-display.error {
+            border-left-color: var(--keycloak-error);
+            background: rgba(218, 30, 40, 0.1);
+        }
+
+        .joke-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--keycloak-text);
+            white-space: pre-line;
+            text-align: center;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .joke-text.loading {
+            color: var(--keycloak-text-secondary);
+            font-style: italic;
+        }
+
+        .joke-text.error {
+            color: var(--keycloak-error);
+        }
+
+        .joke-stats {
+            background: var(--keycloak-content);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .joke-stats h4 {
+            color: var(--keycloak-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: var(--keycloak-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--keycloak-border-light);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--keycloak-primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--keycloak-text-secondary);
+            margin-top: 5px;
+        }
+
+        .api-test {
+            background: var(--keycloak-content);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .api-test h4 {
+            color: var(--keycloak-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .response-area {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--keycloak-secondary);
+            border-radius: 8px;
+            border-left: 4px solid var(--keycloak-primary);
+            display: none;
+        }
+
+        .response-content {
+            background: var(--keycloak-background);
+            color: var(--keycloak-text);
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--keycloak-border);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: var(--keycloak-white);
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 350px;
+            box-shadow: var(--keycloak-shadow-hover);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: var(--keycloak-success);
+        }
+
+        .toast.error {
+            background: var(--keycloak-error);
+        }
+
+        .toast.warning {
+            background: var(--keycloak-warning);
+            color: var(--keycloak-background);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .joke-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 SimpleSalesman Joke Generator</h1>
+            <p class="subtitle">OAuth2 Authentication Flow</p>
+        </div>
+
+        <div class="config-section">
+            <div class="config-form">
+                <h4>🔧 Configuration Settings</h4>
+                <div class="config-grid">
+                    <div class="form-group">
+                        <label>API Host</label>
+                        <input type="text" id="apiHost" value="http://localhost:8081" placeholder="API Host URL">
+                    </div>
+                    <div class="form-group">
+                        <label>Keycloak Base URL</label>
+                        <input type="text" id="keycloakBaseUrl" value="http://localhost:8080" placeholder="Keycloak URL">
+                    </div>
+                    <div class="form-group">
+                        <label>Realm</label>
+                        <input type="text" id="realm" value="simple-salesman-backend" placeholder="Keycloak Realm">
+                    </div>
+                    <div class="form-group">
+                        <label>Client ID</label>
+                        <input type="text" id="clientId" value="simple-salesman-backend" placeholder="OAuth Client ID">
+                    </div>
+                </div>
+                <button class="btn" onclick="updateConfiguration()">📝 Update Configuration</button>
+            </div>
+
+            <div class="auth-section">
+                <div class="status-indicator status-disconnected" id="authStatus">🔒 Not Authenticated</div>
+                <button class="btn btn-success" onclick="loginWithKeycloak()" id="loginBtn">🔐 Login with Keycloak</button>
+                <button class="btn btn-danger" onclick="logout()" id="logoutBtn" style="display: none;">🚪 Logout</button>
+                
+                <div class="user-info" id="userInfo">
+                    <h4>👤 User Information</h4>
+                    <div class="user-info-content" id="userInfoContent"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="joke-section">
+            <div class="joke-controls">
+                <button class="btn btn-success" id="newJokeBtn" onclick="fetchNewJoke()" disabled>
+                    🎲 Neuer Witz
+                </button>
+                <button class="btn btn-warning" onclick="clearJoke()">
+                    🗑️ Löschen
+                </button>
+                <button class="btn" onclick="testApiHealth()" disabled id="healthBtn">
+                    🏥 Health Check
+                </button>
+            </div>
+            
+            <div class="joke-display" id="jokeDisplay">
+                <div class="joke-text" id="jokeText">
+                    🔐 Bitte melden Sie sich mit Keycloak an, um Witze zu erhalten.
+                </div>
+            </div>
+
+            <div class="joke-stats">
+                <h4>📊 Session Statistics</h4>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="statJokesCount">0</div>
+                        <div class="stat-label">Witze geladen</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="statAvgTime">0ms</div>
+                        <div class="stat-label">Ø Response Time</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="statLastUpdate">-</div>
+                        <div class="stat-label">Letzter Witz</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="statTokenExpiry">-</div>
+                        <div class="stat-label">Token läuft ab</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-test">
+                <h4>🧪 API Testing</h4>
+                <button class="btn" onclick="testDirectApiCall()" disabled id="directTestBtn">
+                    🔗 Direct API Test
+                </button>
+                <button class="btn" onclick="showTokenInfo()" disabled id="tokenInfoBtn">
+                    🎫 Show Token Info
+                </button>
+                
+                <div class="response-area" id="testResponse">
+                    <h4>Test Response:</h4>
+                    <div class="response-content" id="testResponseContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration object - editable via UI
+        let OAUTH_CONFIG = {
+            apiHost: 'http://localhost:8081',
+            keycloakBaseUrl: 'http://localhost:8080',
+            realm: 'simple-salesman-backend',
+            clientId: 'simple-salesman-backend',
+            redirectUri: window.location.origin + window.location.pathname
+        };
+
+        // Runtime state
+        let accessToken = '';
+        let refreshToken = '';
+        let userInfo = {};
+        let sessionStats = {
+            jokesCount: 0,
+            responseTimes: [],
+            sessionStart: Date.now()
+        };
+
+        // Update configuration from form inputs
+        function updateConfiguration() {
+            OAUTH_CONFIG.apiHost = document.getElementById('apiHost').value;
+            OAUTH_CONFIG.keycloakBaseUrl = document.getElementById('keycloakBaseUrl').value;
+            OAUTH_CONFIG.realm = document.getElementById('realm').value;
+            OAUTH_CONFIG.clientId = document.getElementById('clientId').value;
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('joke_oauth_config', JSON.stringify(OAUTH_CONFIG));
+            
+            showToast('Configuration updated successfully!', 'success');
+        }
+
+        // Load configuration from localStorage if available
+        function loadConfiguration() {
+            const savedConfig = localStorage.getItem('joke_oauth_config');
+            if (savedConfig) {
+                OAUTH_CONFIG = JSON.parse(savedConfig);
+                document.getElementById('apiHost').value = OAUTH_CONFIG.apiHost;
+                document.getElementById('keycloakBaseUrl').value = OAUTH_CONFIG.keycloakBaseUrl;
+                document.getElementById('realm').value = OAUTH_CONFIG.realm;
+                document.getElementById('clientId').value = OAUTH_CONFIG.clientId;
+            }
+        }
+
+        // PKCE helper functions
+        function generateCodeVerifier() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return btoa(String.fromCharCode.apply(null, array))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        async function generateCodeChallenge(verifier) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(verifier);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return btoa(String.fromCharCode.apply(null, new Uint8Array(digest)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '');
+        }
+
+        // OAuth2 login flow
+        async function loginWithKeycloak() {
+            const codeVerifier = generateCodeVerifier();
+            const codeChallenge = await generateCodeChallenge(codeVerifier);
+            const state = generateCodeVerifier();
+
+            sessionStorage.setItem('code_verifier', codeVerifier);
+            sessionStorage.setItem('oauth_state', state);
+
+            const keycloakAuthUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/auth`;
+            
+            const params = new URLSearchParams({
+                response_type: 'code',
+                client_id: OAUTH_CONFIG.clientId,
+                redirect_uri: OAUTH_CONFIG.redirectUri,
+                scope: 'openid profile email',
+                state: state,
+                code_challenge: codeChallenge,
+                code_challenge_method: 'S256'
+            });
+
+            const authUrl = `${keycloakAuthUrl}?${params.toString()}`;
+            window.location.href = authUrl;
+        }
+
+        // Handle OAuth callback
+        async function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+
+            if (error) {
+                console.error('OAuth Error:', error, urlParams.get('error_description'));
+                showToast(`OAuth Error: ${error}`, 'error');
+                return;
+            }
+
+            if (!code || !state) {
+                return;
+            }
+
+            const storedState = sessionStorage.getItem('oauth_state');
+            if (state !== storedState) {
+                console.error('OAuth state mismatch');
+                showToast('Invalid OAuth state. Possible CSRF attack.', 'error');
+                return;
+            }
+
+            const codeVerifier = sessionStorage.getItem('code_verifier');
+            if (!codeVerifier) {
+                console.error('Missing code verifier');
+                showToast('Missing code verifier. Please try logging in again.', 'error');
+                return;
+            }
+
+            try {
+                const keycloakTokenUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/token`;
+                
+                const tokenResponse = await fetch(keycloakTokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        grant_type: 'authorization_code',
+                        client_id: OAUTH_CONFIG.clientId,
+                        code: code,
+                        redirect_uri: OAUTH_CONFIG.redirectUri,
+                        code_verifier: codeVerifier
+                    })
+                });
+
+                if (!tokenResponse.ok) {
+                    throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+                }
+
+                const tokens = await tokenResponse.json();
+                accessToken = tokens.access_token;
+                refreshToken = tokens.refresh_token;
+
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                userInfo = {
+                    username: payload.preferred_username || payload.sub,
+                    email: payload.email,
+                    name: payload.name,
+                    roles: payload.realm_access?.roles || [],
+                    exp: payload.exp
+                };
+
+                sessionStorage.removeItem('code_verifier');
+                sessionStorage.removeItem('oauth_state');
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                updateAuthStatus(true);
+                displayUserInfo();
+                updateStats();
+
+                showToast('🎉 Successfully authenticated!', 'success');
+                console.log('✅ OAuth login successful');
+
+            } catch (error) {
+                console.error('Token exchange error:', error);
+                showToast(`Authentication failed: ${error.message}`, 'error');
+            }
+        }
+
+        function logout() {
+            accessToken = '';
+            refreshToken = '';
+            userInfo = {};
+            sessionStats = {
+                jokesCount: 0,
+                responseTimes: [],
+                sessionStart: Date.now()
+            };
+            updateAuthStatus(false);
+            updateStats();
+            clearJoke();
+            sessionStorage.clear();
+            showToast('Logged out successfully', 'warning');
+        }
+
+        function updateAuthStatus(isAuthenticated) {
+            const statusElement = document.getElementById('authStatus');
+            const loginBtn = document.getElementById('loginBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const userInfoDiv = document.getElementById('userInfo');
+            const newJokeBtn = document.getElementById('newJokeBtn');
+            const healthBtn = document.getElementById('healthBtn');
+            const directTestBtn = document.getElementById('directTestBtn');
+            const tokenInfoBtn = document.getElementById('tokenInfoBtn');
+
+            if (isAuthenticated) {
+                statusElement.textContent = '🔓 Authenticated';
+                statusElement.className = 'status-indicator status-connected';
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+                userInfoDiv.style.display = 'block';
+                newJokeBtn.disabled = false;
+                healthBtn.disabled = false;
+                directTestBtn.disabled = false;
+                tokenInfoBtn.disabled = false;
+            } else {
+                statusElement.textContent = '🔒 Not Authenticated';
+                statusElement.className = 'status-indicator status-disconnected';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+                userInfoDiv.style.display = 'none';
+                newJokeBtn.disabled = true;
+                healthBtn.disabled = true;
+                directTestBtn.disabled = true;
+                tokenInfoBtn.disabled = true;
+            }
+        }
+
+        function displayUserInfo() {
+            const userInfoContent = document.getElementById('userInfoContent');
+            userInfoContent.innerHTML = `
+                <div><strong>Username:</strong> <span>${userInfo.username || 'N/A'}</span></div>
+                <div><strong>Email:</strong> <span>${userInfo.email || 'N/A'}</span></div>
+                <div><strong>Name:</strong> <span>${userInfo.name || 'N/A'}</span></div>
+                <div><strong>Roles:</strong> <span>${userInfo.roles?.join(', ') || 'None'}</span></div>
+                <div><strong>Token Expires:</strong> <span>${new Date(userInfo.exp * 1000).toLocaleString()}</span></div>
+            `;
+        }
+
+        function updateStats() {
+            document.getElementById('statJokesCount').textContent = sessionStats.jokesCount;
+            
+            if (sessionStats.responseTimes.length > 0) {
+                const avgTime = Math.round(sessionStats.responseTimes.reduce((a, b) => a + b, 0) / sessionStats.responseTimes.length);
+                document.getElementById('statAvgTime').textContent = avgTime + 'ms';
+            }
+            
+            if (sessionStats.jokesCount > 0) {
+                document.getElementById('statLastUpdate').textContent = new Date().toLocaleTimeString();
+            }
+            
+            if (userInfo.exp) {
+                const expiry = new Date(userInfo.exp * 1000);
+                const now = new Date();
+                const minutesLeft = Math.floor((expiry - now) / (1000 * 60));
+                document.getElementById('statTokenExpiry').textContent = minutesLeft > 0 ? `${minutesLeft}min` : 'Expired';
+            }
+        }
+
+        // Joke functionality
+        async function fetchNewJoke() {
+            if (!isTokenValid()) {
+                showToast('Token expired. Please login again.', 'error');
+                logout();
+                return;
+            }
+
+            const jokeDisplay = document.getElementById('jokeDisplay');
+            const jokeText = document.getElementById('jokeText');
+            const newJokeBtn = document.getElementById('newJokeBtn');
+
+            newJokeBtn.disabled = true;
+            jokeDisplay.className = 'joke-display loading';
+            jokeText.className = 'joke-text loading';
+            jokeText.textContent = '🎲 Lade einen neuen Witz...';
+
+            const startTime = Date.now();
+
+            try {
+                const response = await fetch(`${OAUTH_CONFIG.apiHost}/api/v1/jokes`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Accept': 'text/plain'
+                    }
+                });
+
+                const responseTime = Date.now() - startTime;
+                sessionStats.responseTimes.push(responseTime);
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed. Please login again.');
+                    }
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const joke = await response.text();
+
+                jokeDisplay.className = 'joke-display';
+                jokeText.className = 'joke-text';
+                jokeText.textContent = joke;
+
+                sessionStats.jokesCount++;
+                updateStats();
+
+                showToast('✅ Neuer Witz geladen!', 'success');
+
+            } catch (error) {
+                console.error('Error fetching joke:', error);
+
+                if (error.message.includes('Authentication')) {
+                    logout();
+                    return;
+                }
+
+                jokeDisplay.className = 'joke-display error';
+                jokeText.className = 'joke-text error';
+                jokeText.textContent = '❌ Fehler beim Laden des Witzes. Bitte versuchen Sie es erneut.';
+
+                showToast(`Fehler: ${error.message}`, 'error');
+            } finally {
+                newJokeBtn.disabled = false;
+            }
+        }
+
+        function clearJoke() {
+            const jokeDisplay = document.getElementById('jokeDisplay');
+            const jokeText = document.getElementById('jokeText');
+
+            jokeDisplay.className = 'joke-display';
+            jokeText.className = 'joke-text';
+
+            if (accessToken) {
+                jokeText.textContent = '🎭 Klicken Sie auf "Neuer Witz" um einen zufälligen Witz zu erhalten!';
+            } else {
+                jokeText.textContent = '🔐 Bitte melden Sie sich mit Keycloak an, um Witze zu erhalten.';
+            }
+
+            const testResponse = document.getElementById('testResponse');
+            testResponse.style.display = 'none';
+        }
+
+        async function testApiHealth() {
+            if (!isTokenValid()) {
+                showToast('Token expired. Please login again.', 'error');
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${OAUTH_CONFIG.apiHost}/api/v1/jokes/health`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Accept': 'text/plain'
+                    }
+                });
+
+                const result = await response.text();
+                
+                if (response.ok) {
+                    showToast('✅ API Health Check: OK', 'success');
+                    showTestResponse({
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: result,
+                        timestamp: new Date().toISOString()
+                    });
+                } else {
+                    throw new Error(`Health check failed: ${response.status}`);
+                }
+            } catch (error) {
+                showToast(`❌ Health Check Failed: ${error.message}`, 'error');
+                showTestResponse({
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        async function testDirectApiCall() {
+            if (!isTokenValid()) {
+                showToast('Token expired. Please login again.', 'error');
+                logout();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${OAUTH_CONFIG.apiHost}/api/v1/jokes`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Accept': 'text/plain'
+                    }
+                });
+
+                const result = await response.text();
+                
+                showTestResponse({
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
+                    data: result,
+                    timestamp: new Date().toISOString()
+                });
+
+            } catch (error) {
+                showTestResponse({
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        function showTokenInfo() {
+            if (!accessToken) {
+                showToast('No token available', 'error');
+                return;
+            }
+
+            try {
+                const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                showTestResponse({
+                    tokenPayload: payload,
+                    expiresAt: new Date(payload.exp * 1000).toISOString(),
+                    issuedAt: new Date(payload.iat * 1000).toISOString(),
+                    timeUntilExpiry: Math.floor((payload.exp * 1000 - Date.now()) / 1000) + ' seconds'
+                });
+            } catch (error) {
+                showTestResponse({
+                    error: 'Failed to decode token: ' + error.message
+                });
+            }
+        }
+
+        function showTestResponse(data) {
+            const responseArea = document.getElementById('testResponse');
+            const responseContent = document.getElementById('testResponseContent');
+
+            responseContent.textContent = JSON.stringify(data, null, 2);
+            responseArea.style.display = 'block';
+            responseArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function isTokenValid() {
+            return accessToken && userInfo.exp && Date.now() / 1000 < userInfo.exp;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) {
+                if (accessToken) {
+                    event.preventDefault();
+                    fetchNewJoke();
+                }
+            } else if (event.key === 'Escape') {
+                clearJoke();
+            } else if (event.key === 'h' && event.ctrlKey) {
+                event.preventDefault();
+                testApiHealth();
+            }
+        });
+
+        // Token expiry monitoring
+        setInterval(() => {
+            if (accessToken && userInfo.exp) {
+                const timeLeft = userInfo.exp * 1000 - Date.now();
+                
+                if (timeLeft <= 0) {
+                    showToast('🕒 Token expired. Please login again.', 'error');
+                    logout();
+                } else if (timeLeft <= 300000) { // 5 minutes warning
+                    const minutesLeft = Math.floor(timeLeft / (1000 * 60));
+                    showToast(`⚠️ Token expires in ${minutesLeft} minutes`, 'warning');
+                }
+                
+                updateStats();
+            }
+        }, 30000); // Check every 30 seconds
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎭 SimpleSalesman Joke API GUI Initialized');
+            console.log('🔧 OAuth2/PKCE Authentication Flow Active');
+            
+            loadConfiguration();
+            updateAuthStatus(false);
+            updateStats();
+            handleOAuthCallback();
+            
+            showToast('🚀 Joke API GUI loaded', 'success');
+        });
+    </script>
+</body>
+</html>
