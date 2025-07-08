@@ -17,11 +17,15 @@ import org.springframework.core.env.Environment;
  * - @EnableAutoConfiguration: Enables Spring Boot's auto-configuration 
  * - @ComponentScan: Enables component scanning in the current package and sub-packages
  * 
- * @author SimpleSalesman Team
- * @version 0.0.6
+ * @author Yaroslav Volokhodko
+ * @version exam
  * @since 0.0.1
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {
+	    "com.simplesalesman",  // Main package für Weather etc.
+	    "exam.API",// Package für Joke API
+	    "exam.EXP"// Package für EXP API
+	})
 public class SimpleSalesmanApplication {
 
 	/**

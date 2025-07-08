@@ -1,31 +1,20 @@
 <!--
-  SimpleSalesman API GUI - Static Version with Excel Import
+  SimpleSalesman API GUI - Extended Version with New Entities
 
-  This static HTML page provides an interactive GUI for testing and managing the SimpleSalesman API, with a focus on local configuration and OAuth2 authentication via Keycloak. Now includes Excel import functionality with non-blocking progress tracking.
+  This extended HTML page includes all original functionality plus new entities:
+  - Excel Export functionality (all projects, by region)
+  - Sample CRUD operations
+  - Enhanced testing capabilities
 
-  Key Features:
-  - Editable configuration for API endpoint, Keycloak URL, realm, and client ID (with localStorage persistence)
-  - OAuth2 Authorization Code Flow with PKCE for secure login
-  - JWT token management and user info display
-  - Live testing for address, note, project, and weather endpoints (GET/POST/other as defined)
-  - Excel import with non-blocking progress bar
-  - All requests secured with Bearer tokens (JWT)
-  - Responsive, modern UI styled to match Keycloak
-  - No backend logic; all state and authentication handled client-side in the browser
-
-  Security:
-  - Authentication flow uses OAuth2 Authorization Code with PKCE (RFC 7636)
-  - Tokens are only stored in session and memory (never persisted)
-  - State and code_verifier stored in sessionStorage per OAuth2 best practice
-  - Logout clears all authentication state
-
-  Usage:
-  - Requires a modern browser with ES6+ and JavaScript enabled
-  - Designed for local testing, development, or as an admin/testing utility
+  New Features:
+  - Export endpoints with file download
+  - Sample entity CRUD operations
+  - Improved error handling and user feedback
+  - Enhanced progress tracking
 
   @author SimpleSalesman Team
-  @version 0.0.9
-  @since 0.0.6
+  @version 0.1.0
+  @since 0.0.9
   @requires Bearer token authentication
   @requires Modern browser with JavaScript enabled
 -->
@@ -34,7 +23,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Salesman API GUI - Static</title>
+    <title>Simple Salesman API GUI - Extended</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:400,700&display=swap">
     <style>
         :root {
@@ -73,7 +62,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: var(--keycloak-content);
             border-radius: 15px;
@@ -245,6 +234,7 @@
         .put { background: #f093fb; }
         .delete { background: var(--keycloak-error); }
         .upload { background: var(--keycloak-warning); }
+        .export { background: #6f42c1; }
 
         .api-body {
             padding: 20px;
@@ -321,7 +311,7 @@
         }
 
         /* Progress Bar Styles */
-        #importProgressWrapper {
+        .progress-wrapper {
             margin-top: 16px;
             animation: fadeIn 0.3s ease-in-out;
         }
@@ -334,7 +324,7 @@
             border: 1px solid var(--keycloak-border);
         }
 
-        #importProgressBar {
+        .progress-bar {
             height: 100%;
             background: linear-gradient(90deg, var(--keycloak-primary), var(--keycloak-success));
             width: 0%;
@@ -349,7 +339,7 @@
             font-size: 0.85rem;
         }
 
-        #importCompleteMessage {
+        .complete-message {
             color: var(--keycloak-success);
             margin-top: 16px;
             text-align: center;
@@ -379,8 +369,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Simple Salesman API</h1>
-            <p>OAuth2 Authentication Flow - Static Version</p>
+            <h1>Simple Salesman API - Extended</h1>
+            <p>OAuth2 Authentication Flow - With New Entities</p>
         </div>
 
         <div class="config-section">
@@ -438,22 +428,139 @@
                         Datei importieren
                     </button>
 
-                    <!-- Non-blocking Progress Bar -->
-                    <div id="importProgressWrapper" style="display:none;">
+                    <div id="importProgressWrapper" class="progress-wrapper" style="display:none;">
                         <div class="progress-container">
-                            <div id="importProgressBar"></div>
+                            <div id="importProgressBar" class="progress-bar"></div>
                         </div>
                         <div class="progress-text" id="importProgressText">Import läuft...</div>
                     </div>
 
-                    <!-- Completion Message -->
-                    <div id="importCompleteMessage" style="display:none;">
+                    <div id="importCompleteMessage" class="complete-message" style="display:none;">
                         ✅ Import abgeschlossen!
                     </div>
 
                     <div class="response-area" id="response-import" style="display: none;">
                         <h4>Import Response:</h4>
                         <div class="response-content" id="response-import-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export All Projects -->
+            <div class="api-card">
+                <div class="api-header export">📤 Export All Projects</div>
+                <div class="api-body">
+                    <p style="margin-bottom: 15px; color: var(--keycloak-text-secondary);">
+                        Export all projects to Excel file with timestamp
+                    </p>
+                    <button class="btn" onclick="exportAllProjects()">
+                        Download Excel Export
+                    </button>
+                    <div class="response-area" id="response-export-all" style="display: none;">
+                        <h4>Export Response:</h4>
+                        <div class="response-content" id="response-export-all-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Projects by Region -->
+            <div class="api-card">
+                <div class="api-header export">📤 Export by Region</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Region ID</label>
+                        <input type="number" id="exportRegionId" value="1" placeholder="Enter region ID">
+                    </div>
+                    <button class="btn" onclick="exportProjectsByRegion()">
+                        Download Region Export
+                    </button>
+                    <div class="response-area" id="response-export-region" style="display: none;">
+                        <h4>Export Response:</h4>
+                        <div class="response-content" id="response-export-region-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CRUD - Get All -->
+            <div class="api-card">
+                <div class="api-header get">GET /samples</div>
+                <div class="api-body">
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/samples', null, 'response-samples')">
+                        Get All Samples
+                    </button>
+                    <div class="response-area" id="response-samples" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-samples-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CRUD - Get by ID -->
+            <div class="api-card">
+                <div class="api-header get">GET /samples/:id</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Sample ID</label>
+                        <input type="number" id="sampleId" value="1">
+                    </div>
+                    <button class="btn" onclick="makeRequest('GET', '/api/v1/samples/' + document.getElementById('sampleId').value, null, 'response-sample')">
+                        Get Sample
+                    </button>
+                    <div class="response-area" id="response-sample" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-sample-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CRUD - Create -->
+            <div class="api-card">
+                <div class="api-header post">POST /samples</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Sample Name</label>
+                        <input type="text" id="sampleName" placeholder="Enter sample name">
+                    </div>
+                    <button class="btn" onclick="createSample()">Create Sample</button>
+                    <div class="response-area" id="response-create-sample" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-create-sample-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CRUD - Update -->
+            <div class="api-card">
+                <div class="api-header put">PUT /samples/:id</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Sample ID</label>
+                        <input type="number" id="updateSampleId" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>New Sample Name</label>
+                        <input type="text" id="updateSampleName" placeholder="Enter new sample name">
+                    </div>
+                    <button class="btn" onclick="updateSample()">Update Sample</button>
+                    <div class="response-area" id="response-update-sample" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-update-sample-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample CRUD - Delete -->
+            <div class="api-card">
+                <div class="api-header delete">DELETE /samples/:id</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label>Sample ID</label>
+                        <input type="number" id="deleteSampleId" value="1">
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteSample()">Delete Sample</button>
+                    <div class="response-area" id="response-delete-sample" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-delete-sample-content"></div>
                     </div>
                 </div>
             </div>
@@ -530,51 +637,21 @@
                 </div>
             </div>
 
-			<!-- Weather Endpoint -->
-			<div class="api-card">
-			    <div class="api-header get">GET /weather</div>
-			    <div class="api-body">
-			        <div class="form-group">
-			            <label for="weatherLocation">Location (City or Leave Empty for Current Location)</label>
-			            <input type="text" id="weatherLocation" placeholder="Enter city or leave empty for current location" />
-			        </div>
-			        <button class="btn" id="getWeatherBtn">
-			            Get Weather
-			        </button>
-			        <div class="response-area" id="response-weather" style="display: none;">
-			            <h4>Response:</h4>
-			            <div class="response-content" id="response-weather-content"></div>
-			        </div>
-			    </div>
-			</div>
-
-			<script>
-			    // Event listener for the Get Weather button
-			    document.getElementById('getWeatherBtn').addEventListener('click', function () {
-			        const location = document.getElementById('weatherLocation').value.trim();
-
-			        // If a location (city or town) is provided
-			        if (location) {
-			            const url = '/api/v1/weather?region=' + encodeURIComponent(location);
-			            makeRequest('GET', url, null, 'response-weather');
-			        } 
-			        // If no location is provided, fallback to geolocation
-			        else if (navigator.geolocation) {
-			            navigator.geolocation.getCurrentPosition(function (position) {
-			                const lat = position.coords.latitude.toFixed(4);
-			                const lon = position.coords.longitude.toFixed(4);
-			                const url = `/api/v1/weather?lat=${lat}&lon=${lon}`;
-			                makeRequest('GET', url, null, 'response-weather');
-			            }, function (error) {
-			                document.getElementById('response-weather').innerText = 'Standort konnte nicht ermittelt werden.';
-			                document.getElementById('response-weather').style.display = 'block';
-			            });
-			        } else {
-			            document.getElementById('response-weather').innerText = 'Geolocation wird von diesem Browser nicht unterstützt.';
-			            document.getElementById('response-weather').style.display = 'block';
-			        }
-			    });
-			</script>
+            <!-- Weather Endpoint -->
+            <div class="api-card">
+                <div class="api-header get">GET /weather</div>
+                <div class="api-body">
+                    <div class="form-group">
+                        <label for="weatherLocation">Leave Empty for Current Location)</label>
+                        <input type="text" id="weatherLocation" placeholder="Enter coordinates or leave empty for current location" />
+                    </div>
+                    <button class="btn" id="getWeatherBtn">Get Weather</button>
+                    <div class="response-area" id="response-weather" style="display: none;">
+                        <h4>Response:</h4>
+                        <div class="response-content" id="response-weather-content"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- Projects Endpoint -->
             <div class="api-card">
@@ -661,35 +738,19 @@
         });
 
         // Progress bar functions
-        function showImportProgressBar() {
-            document.getElementById('importProgressWrapper').style.display = 'block';
-            document.getElementById('importProgressBar').style.width = '0%';
-            document.getElementById('importProgressText').textContent = 'Import läuft...';
-            document.getElementById('importCompleteMessage').style.display = 'none';
-            document.getElementById('importBtn').disabled = true;
-            document.getElementById('importBtn').textContent = 'Import läuft...';
+        function showProgressBar(wrapperId, barId, textId) {
+            document.getElementById(wrapperId).style.display = 'block';
+            document.getElementById(barId).style.width = '0%';
+            document.getElementById(textId).textContent = 'Processing...';
         }
 
-        function updateImportProgressBar(percent, text) {
-            document.getElementById('importProgressBar').style.width = percent + '%';
-            document.getElementById('importProgressText').textContent = text || (percent + '% abgeschlossen');
+        function updateProgressBar(barId, textId, percent, text) {
+            document.getElementById(barId).style.width = percent + '%';
+            document.getElementById(textId).textContent = text || (percent + '% completed');
         }
 
-        function showImportComplete() {
-            document.getElementById('importProgressWrapper').style.display = 'none';
-            document.getElementById('importCompleteMessage').style.display = 'block';
-            document.getElementById('importBtn').disabled = false;
-            document.getElementById('importBtn').textContent = 'Datei importieren';
-            
-            setTimeout(() => {
-                document.getElementById('importCompleteMessage').style.display = 'none';
-            }, 3500);
-        }
-
-        function hideImportProgressBar() {
-            document.getElementById('importProgressWrapper').style.display = 'none';
-            document.getElementById('importBtn').disabled = false;
-            document.getElementById('importBtn').textContent = 'Datei importieren';
+        function hideProgressBar(wrapperId) {
+            document.getElementById(wrapperId).style.display = 'none';
         }
 
         // Excel import function
@@ -704,11 +765,10 @@
                 return;
             }
 
-            showImportProgressBar();
+            showProgressBar('importProgressWrapper', 'importProgressBar', 'importProgressText');
 
             try {
-                // Step 1: Upload file to backend
-                updateImportProgressBar(10, 'Datei wird hochgeladen...');
+                updateProgressBar('importProgressBar', 'importProgressText', 10, 'Uploading file...');
                 
                 const formData = new FormData();
                 formData.append('file', selectedFile);
@@ -726,86 +786,210 @@
                 }
 
                 const uploadResult = await uploadResponse.json();
-                const jobId = uploadResult.jobId || 'demo-job-' + Date.now();
+                updateProgressBar('importProgressBar', 'importProgressText', 100, 'Import completed!');
 
-                updateImportProgressBar(20, 'Upload erfolgreich, Import wird gestartet...');
-
-                // Step 2: Poll for progress (simulate with demo data if no real backend)
-                await pollImportProgress(jobId);
+                setTimeout(() => {
+                    hideProgressBar('importProgressWrapper');
+                    document.getElementById('importCompleteMessage').style.display = 'block';
+                    showResponse('response-import', uploadResult);
+                    
+                    setTimeout(() => {
+                        document.getElementById('importCompleteMessage').style.display = 'none';
+                    }, 3500);
+                }, 1000);
 
             } catch (error) {
                 console.error('Import error:', error);
-                updateImportProgressBar(0, 'Fehler: ' + error.message);
-                setTimeout(() => {
-                    hideImportProgressBar();
-                    showResponse('response-import', {
-                        error: error.message,
-                        timestamp: new Date().toISOString()
-                    });
-                }, 2000);
-            }
-        }
-
-        // Poll import progress
-        async function pollImportProgress(jobId) {
-            const stages = [
-                { percent: 30, text: 'Excel-Format wird analysiert...' },
-                { percent: 45, text: 'Daten werden extrahiert...' },
-                { percent: 60, text: 'Zeile 150 von 250 verarbeitet...' },
-                { percent: 75, text: 'Adressen werden validiert...' },
-                { percent: 90, text: 'Datenbank wird aktualisiert...' },
-                { percent: 100, text: 'Import abgeschlossen!' }
-            ];
-
-            for (let stage of stages) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                updateImportProgressBar(stage.percent, stage.text);
-                
-                // Try to get real progress if backend supports it
-                try {
-                    const statusResponse = await fetch(OAUTH_CONFIG.apiHost + '/api/v1/import/status/' + jobId, {
-                        headers: {
-                            'Authorization': 'Bearer ' + accessToken
-                        }
-                    });
-                    
-                    if (statusResponse.ok) {
-                        const status = await statusResponse.json();
-                        if (status.state === 'DONE') {
-                            showImportComplete();
-                            showResponse('response-import', {
-                                status: 'success',
-                                message: 'Import completed successfully',
-                                recordsProcessed: status.recordsProcessed || 247,
-                                timestamp: new Date().toISOString()
-                            });
-                            return;
-                        } else if (status.state === 'ERROR') {
-                            throw new Error(status.message || 'Import failed');
-                        }
-                        // Update with real progress if available
-                        if (status.percent !== undefined) {
-                            updateImportProgressBar(status.percent, status.message || stage.text);
-                        }
-                    }
-                } catch (statusError) {
-                    // Continue with simulation if status endpoint doesn't exist
-                    console.log('Status endpoint not available, using simulation');
-                }
-            }
-
-            // Simulation completion
-            setTimeout(() => {
-                showImportComplete();
+                hideProgressBar('importProgressWrapper');
                 showResponse('response-import', {
-                    status: 'success',
-                    message: 'Import completed successfully (simulated)',
-                    recordsProcessed: 247,
-                    jobId: jobId,
+                    error: error.message,
                     timestamp: new Date().toISOString()
                 });
-            }, 500);
+            }
         }
+
+        // Export functions
+        async function exportAllProjects() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            try {
+                const response = await fetch(OAUTH_CONFIG.apiHost + '/api/v1/export/excel', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+                }
+
+                // Handle file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                // Extract filename from Content-Disposition header
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'SimpleSalesman_Projects_Export.xlsx';
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    filename = disposition.split('filename=')[1].replace(/"/g, '');
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showResponse('response-export-all', {
+                    status: 'success',
+                    message: 'Export downloaded successfully',
+                    filename: filename,
+                    size: blob.size + ' bytes',
+                    timestamp: new Date().toISOString()
+                });
+
+            } catch (error) {
+                console.error('Export error:', error);
+                showResponse('response-export-all', {
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        async function exportProjectsByRegion() {
+            if (!accessToken) {
+                alert('Please login first');
+                return;
+            }
+
+            const regionId = document.getElementById('exportRegionId').value;
+            if (!regionId) {
+                alert('Please enter a region ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(OAUTH_CONFIG.apiHost + `/api/v1/export/excel/region/${regionId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+                }
+
+                // Handle file download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                // Extract filename from Content-Disposition header
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = `SimpleSalesman_Projects_Region_${regionId}_Export.xlsx`;
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    filename = disposition.split('filename=')[1].replace(/"/g, '');
+                }
+                
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showResponse('response-export-region', {
+                    status: 'success',
+                    message: 'Region export downloaded successfully',
+                    regionId: regionId,
+                    filename: filename,
+                    size: blob.size + ' bytes',
+                    timestamp: new Date().toISOString()
+                });
+
+            } catch (error) {
+                console.error('Export error:', error);
+                showResponse('response-export-region', {
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+
+        // Sample CRUD functions
+        async function createSample() {
+            const name = document.getElementById('sampleName').value;
+            if (!name) {
+                alert('Please enter a sample name');
+                return;
+            }
+
+            const body = { name: name };
+            await makeRequest('POST', '/api/v1/samples', body, 'response-create-sample');
+        }
+
+        async function updateSample() {
+            const id = document.getElementById('updateSampleId').value;
+            const name = document.getElementById('updateSampleName').value;
+            
+            if (!id || !name) {
+                alert('Please enter both ID and name');
+                return;
+            }
+
+            const body = { name: name };
+            await makeRequest('PUT', '/api/v1/samples/' + id, body, 'response-update-sample');
+        }
+
+        async function deleteSample() {
+            const id = document.getElementById('deleteSampleId').value;
+            if (!id) {
+                alert('Please enter a sample ID');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to delete sample ${id}?`)) {
+                return;
+            }
+
+            await makeRequest('DELETE', '/api/v1/samples/' + id, null, 'response-delete-sample');
+        }
+
+        // Weather button handler
+        document.getElementById('getWeatherBtn').addEventListener('click', function () {
+            const location = document.getElementById('weatherLocation').value.trim();
+
+            if (location) {
+                const url = '/api/v1/weather?region=' + encodeURIComponent(location);
+                makeRequest('GET', url, null, 'response-weather');
+            } else if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const lat = position.coords.latitude.toFixed(4);
+                    const lon = position.coords.longitude.toFixed(4);
+                    const url = `/api/v1/weather?lat=${lat}&lon=${lon}`;
+                    makeRequest('GET', url, null, 'response-weather');
+                }, function (error) {
+                    showResponse('response-weather', {
+                        error: 'Could not determine location',
+                        details: error.message
+                    });
+                });
+            } else {
+                showResponse('response-weather', {
+                    error: 'Geolocation is not supported by this browser'
+                });
+            }
+        });
 
         // PKCE helper functions
         function generateCodeVerifier() {
@@ -833,7 +1017,6 @@
             const codeChallenge = await generateCodeChallenge(codeVerifier);
             const state = generateCodeVerifier();
 
-            // Store PKCE values
             sessionStorage.setItem('code_verifier', codeVerifier);
             sessionStorage.setItem('oauth_state', state);
 
@@ -867,10 +1050,9 @@
             }
 
             if (!code || !state) {
-                return; // Not an OAuth callback
+                return;
             }
 
-            // Verify state
             const storedState = sessionStorage.getItem('oauth_state');
             if (state !== storedState) {
                 console.error('OAuth state mismatch');
@@ -888,7 +1070,6 @@
             try {
                 const keycloakTokenUrl = `${OAUTH_CONFIG.keycloakBaseUrl}/realms/${OAUTH_CONFIG.realm}/protocol/openid-connect/token`;
                 
-                // Exchange code for tokens
                 const tokenResponse = await fetch(keycloakTokenUrl, {
                     method: 'POST',
                     headers: {
@@ -911,7 +1092,6 @@
                 accessToken = tokens.access_token;
                 refreshToken = tokens.refresh_token;
 
-                // Decode JWT to get user info
                 const payload = JSON.parse(atob(accessToken.split('.')[1]));
                 userInfo = {
                     username: payload.preferred_username || payload.sub,
@@ -921,11 +1101,8 @@
                     exp: payload.exp
                 };
 
-                // Clean up
                 sessionStorage.removeItem('code_verifier');
                 sessionStorage.removeItem('oauth_state');
-
-                // Clear URL parameters
                 window.history.replaceState({}, document.title, window.location.pathname);
 
                 updateAuthStatus(true);
@@ -985,7 +1162,6 @@
                 return;
             }
 
-            // Check if token is expired
             if (userInfo.exp && Date.now() / 1000 > userInfo.exp) {
                 alert('Token expired. Please login again.');
                 logout();
@@ -1061,7 +1237,7 @@
 
         // Initialize application
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 SimpleSalesman API GUI Initialized (Static Version with Excel Import)');
+            console.log('🔧 SimpleSalesman API GUI Initialized (Extended Version with New Entities)');
             
             loadConfiguration();
             updateAuthStatus(false);

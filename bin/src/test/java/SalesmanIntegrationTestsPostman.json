@@ -1,0 +1,834 @@
+{
+	"info": {
+		"_postman_id": "86fb11d0-eb9e-4780-94bf-281fbbe140e2",
+		"name": "SimpleSalesman API",
+		"description": "Complete API collection for SimpleSalesman application with username/password authentication via Keycloak.\n\n## Quick Start:\n1. Import this collection into Postman\n2. Set your password in the 'password' environment variable\n3. Run 'Get Token (Username/Password)' to authenticate\n4. Token will be automatically saved and used for all subsequent API calls\n\n## Authentication Setup:\n1. Go to Environment Variables\n2. Replace 'YOUR_PASSWORD_HERE' with your actual password\n3. Username is already set to 'admin@admin.ad'\n4. Run the authentication request to get your JWT token\n\n## Configuration:\nBased on application.properties:\n- Keycloak: http://localhost:8080\n- Realm: simple-salesman-backend\n- Client ID: simple-salesman-backend\n- API Base URL: http://localhost:8081\n- Username: admin@admin.ad",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41633235",
+		"_collection_link": "https://developer-3943.postman.co/workspace/Simple-Salesman~27152be4-d28c-4fe5-afc2-8d972d0b9007/collection/41633235-86fb11d0-eb9e-4780-94bf-281fbbe140e2?action=share&source=collection_link&creator=41633235"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Get Token (Username/Password)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Extract access token from response and set as environment variable",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    const accessToken = responseJson.access_token;",
+									"    const refreshToken = responseJson.refresh_token;",
+									"    ",
+									"    if (accessToken) {",
+									"        pm.environment.set('jwt_token', accessToken);",
+									"        if (refreshToken) {",
+									"            pm.environment.set('refresh_token', refreshToken);",
+									"        }",
+									"        console.log('✅ JWT token saved to environment variable');",
+									"        console.log('Token expires in:', responseJson.expires_in, 'seconds');",
+									"        console.log('Username:', responseJson.username || 'N/A');",
+									"    } else {",
+									"        console.log('❌ No access_token found in response');",
+									"    }",
+									"} else {",
+									"    console.log('❌ Authentication failed with status:', pm.response.code);",
+									"    console.log('Response:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{keycloak_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_base_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+							"host": [
+								"{{keycloak_base_url}}"
+							],
+							"path": [
+								"realms",
+								"{{keycloak_realm}}",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Gets JWT token using username and password. Set your credentials in the environment variables."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Extract new access token from response",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    const accessToken = responseJson.access_token;",
+									"    const refreshToken = responseJson.refresh_token;",
+									"    ",
+									"    if (accessToken) {",
+									"        pm.environment.set('jwt_token', accessToken);",
+									"        if (refreshToken) {",
+									"            pm.environment.set('refresh_token', refreshToken);",
+									"        }",
+									"        console.log('✅ JWT token refreshed successfully');",
+									"        console.log('New token expires in:', responseJson.expires_in, 'seconds');",
+									"    }",
+									"} else {",
+									"    console.log('❌ Token refresh failed with status:', pm.response.code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{keycloak_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_base_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+							"host": [
+								"{{keycloak_base_url}}"
+							],
+							"path": [
+								"realms",
+								"{{keycloak_realm}}",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Refreshes the JWT token using the refresh token"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication using username and password"
+		},
+		{
+			"name": "Address Management",
+			"item": [
+				{
+					"name": "Get All Addresses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/addresses",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses"
+							]
+						},
+						"description": "Retrieves all addresses from the system"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Address by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/addresses/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"{{address_id}}"
+							]
+						},
+						"description": "Retrieves a specific address by its ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Create New Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"street\": \"Musterstraße 123\",\n  \"city\": \"Wien\",\n  \"postalCode\": \"1010\",\n  \"country\": \"Austria\",\n  \"region\": \"Vienna\",\n  \"latitude\": 48.2082,\n  \"longitude\": 16.3738\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/addresses",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses"
+							]
+						},
+						"description": "Creates a new address in the system"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Address",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": {{address_id}},\n  \"street\": \"Updated Musterstraße 456\",\n  \"city\": \"Wien\",\n  \"postalCode\": \"1020\",\n  \"country\": \"Austria\",\n  \"region\": \"Vienna\",\n  \"latitude\": 48.2082,\n  \"longitude\": 16.3738\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/addresses/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"{{address_id}}"
+							]
+						},
+						"description": "Updates an existing address with new data"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Address",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/addresses/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"addresses",
+								"{{address_id}}"
+							]
+						},
+						"description": "Deletes an address from the system"
+					},
+					"response": []
+				}
+			],
+			"description": "Complete CRUD operations for address management"
+		},
+		{
+			"name": "Notes Management",
+			"item": [
+				{
+					"name": "Get Notes for Address",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notes/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{address_id}}"
+							]
+						},
+						"description": "Returns a list of notes for the specified address"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Note to Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"Besucht, niemand angetroffen. Nachbar informiert über Besuchszeit.\",\n  \"createdBy\": \"sales.agent@company.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notes/{{address_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{address_id}}"
+							]
+						},
+						"description": "Adds a new note to the specified address"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Note",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"text\": \"Update: Besuch vereinbart für nächste Woche Donnerstag 14:00 Uhr\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/notes/{{note_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{note_id}}"
+							]
+						},
+						"description": "Updates the text of an existing note"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Note",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/notes/{{note_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"notes",
+								"{{note_id}}"
+							]
+						},
+						"description": "Deletes a note by its ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Notes management for tracking D2D visits and customer interactions"
+		},
+		{
+			"name": "Project Management",
+			"item": [
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"projects"
+							]
+						},
+						"description": "Retrieves all available projects from the system"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/{{project_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"projects",
+								"{{project_id}}"
+							]
+						},
+						"description": "Retrieves details of a specific project by its ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Project Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/{{project_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"projects",
+								"{{project_id}}",
+								"status"
+							]
+						},
+						"description": "Returns the current status of a specific project"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Project Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectId\": {{project_id}},\n  \"newStatus\": \"IN_PROGRESS\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/projects/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"projects",
+								"status"
+							]
+						},
+						"description": "Updates the status of a given project"
+					},
+					"response": []
+				}
+			],
+			"description": "Project tracking and status management for sales operations"
+		},
+		{
+			"name": "Data Import",
+			"item": [
+				{
+					"name": "Import Excel File",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "Excel file (.xlsx or .xls) to import",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/import",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"import"
+							]
+						},
+						"description": "Imports data from an uploaded Excel file (.xlsx, .xls). Maximum file size: 10MB"
+					},
+					"response": []
+				}
+			],
+			"description": "File import operations for bulk data loading"
+		},
+		{
+			"name": "Weather Service",
+			"item": [
+				{
+					"name": "Get Weather by Coordinates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/weather?lat={{latitude}}&lon={{longitude}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"weather"
+							],
+							"query": [
+								{
+									"key": "lat",
+									"value": "{{latitude}}",
+									"description": "Latitude coordinate (-90.0 to 90.0)"
+								},
+								{
+									"key": "lon",
+									"value": "{{longitude}}",
+									"description": "Longitude coordinate (-180.0 to 180.0)"
+								}
+							]
+						},
+						"description": "Retrieves weather information for specified GPS coordinates. Returns formatted string like 'Vienna: ☀️ +24°C'"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Weather for Vienna",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/weather?lat=48.2082&lon=16.3738",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"weather"
+							],
+							"query": [
+								{
+									"key": "lat",
+									"value": "48.2082",
+									"description": "Vienna latitude"
+								},
+								{
+									"key": "lon",
+									"value": "16.3738",
+									"description": "Vienna longitude"
+								}
+							]
+						},
+						"description": "Example request for Vienna weather using predefined coordinates"
+					},
+					"response": []
+				}
+			],
+			"description": "Weather information retrieval for field sales planning"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script to handle authentication and token validation",
+					"",
+					"// Skip authentication check for token acquisition requests",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"",
+					"if (!isTokenRequest) {",
+					"    const jwtToken = pm.environment.get('jwt_token');",
+					"    ",
+					"    if (!jwtToken) {",
+					"        console.log('⚠️  No JWT token found. Please run \"Get Token (Username/Password)\" first.');",
+					"        console.log('   Make sure to set your password in the environment variables.');",
+					"    } else {",
+					"        // Simple JWT expiration check (decode payload)",
+					"        try {",
+					"            const payload = JSON.parse(atob(jwtToken.split('.')[1]));",
+					"            const now = Math.floor(Date.now() / 1000);",
+					"            const expiresAt = payload.exp;",
+					"            ",
+					"            if (expiresAt && now >= expiresAt) {",
+					"                console.log('⚠️  JWT token has expired. Please run \"Get Token (Username/Password)\" again.');",
+					"            } else if (expiresAt) {",
+					"                const minutesLeft = Math.floor((expiresAt - now) / 60);",
+					"                console.log('✅ JWT token is valid. Expires in ' + minutesLeft + ' minutes.');",
+					"            }",
+					"        } catch (e) {",
+					"            console.log('⚠️  Could not parse JWT token. Token may be invalid.');",
+					"        }",
+					"    }",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script for all requests",
+					"",
+					"// Check response time",
+					"pm.test('Response time is less than 5000ms', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"// Check for successful status codes (skip for token requests which have their own handling)",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"if (!isTokenRequest) {",
+					"    pm.test('Status code is successful', function () {",
+					"        pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+					"    });",
+					"}",
+					"",
+					"// Handle common authentication errors",
+					"if (pm.response.code === 401) {",
+					"    console.log('❌ Unauthorized: JWT token may be missing, expired, or invalid');",
+					"    console.log('   → Run \"Get Token (Username/Password)\" to authenticate');",
+					"} else if (pm.response.code === 403) {",
+					"    console.log('❌ Forbidden: User may not have required permissions');",
+					"}",
+					"",
+					"// Log response for debugging",
+					"console.log('Response Status:', pm.response.code);",
+					"console.log('Response Time:', pm.response.responseTime + 'ms');"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081"
+		},
+		{
+			"key": "jwt_token",
+			"value": ""
+		},
+		{
+			"key": "refresh_token",
+			"value": ""
+		},
+		{
+			"key": "username",
+			"value": "admin@admin.ad"
+		},
+		{
+			"key": "password",
+			"value": "YOUR_PASSWORD_HERE"
+		},
+		{
+			"key": "address_id",
+			"value": "1"
+		},
+		{
+			"key": "project_id",
+			"value": "1"
+		},
+		{
+			"key": "note_id",
+			"value": "1"
+		},
+		{
+			"key": "latitude",
+			"value": "48.2082"
+		},
+		{
+			"key": "longitude",
+			"value": "16.3738"
+		},
+		{
+			"key": "keycloak_base_url",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "keycloak_realm",
+			"value": "simple-salesman-backend"
+		},
+		{
+			"key": "keycloak_client_id",
+			"value": "simple-salesman-backend"
+		}
+	]
+}

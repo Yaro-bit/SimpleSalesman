@@ -1,0 +1,308 @@
+{
+	"info": {
+		"_postman_id": "593fdfab-a421-4cba-8482-57acc7f974d7",
+		"name": "Sample CRUD - Single Package Template",
+		"description": "Generic Postman collection for single-package CRUD with authentication.\n\n## Single Package Structure:\n- All classes in one package: com.simplesalesman.sample\n- Easy to copy entire package for new tables\n\n## Quick Start:\n1. Set your password in the 'password' variable\n2. Run 'Get Token' to authenticate\n3. Test Sample CRUD operations\n\n## To Create New Table:\n1. Copy com.simplesalesman.sample package\n2. Rename to com.simplesalesman.yourTable\n3. Find/Replace 'Sample'→'YourTable', 'sample'→'yourTable'\n4. Update table name and fields\n5. Duplicate this collection and update URLs\n\n## Variables to Configure:\n- password: YOUR_ACTUAL_PASSWORD\n- sample_id: ID of record to test (default: 1)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32255878",
+		"_collection_link": "https://ass999-2334.postman.co/workspace/test~120e7578-9e18-40f9-ad34-ab485a986412/collection/32255878-593fdfab-a421-4cba-8482-57acc7f974d7?action=share&source=collection_link&creator=32255878"
+	},
+	"item": [
+		{
+			"name": "1. Get Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Extract and save JWT token",
+							"if (pm.response.code === 200) {",
+							"    try {",
+							"        const responseJson = pm.response.json();",
+							"        const accessToken = responseJson.access_token;",
+							"        ",
+							"        if (accessToken) {",
+							"            pm.environment.set('jwt_token', accessToken);",
+							"            console.log('✅ JWT token saved successfully');",
+							"            console.log('Token expires in:', responseJson.expires_in, 'seconds');",
+							"        } else {",
+							"            console.log('❌ No access_token found');",
+							"            console.log('Response:', JSON.stringify(responseJson, null, 2));",
+							"        }",
+							"    } catch (e) {",
+							"        console.log('❌ Error parsing response:', e.message);",
+							"        console.log('Raw response:', pm.response.text());",
+							"    }",
+							"} else {",
+							"    console.log('❌ Authentication failed:', pm.response.code);",
+							"    console.log('Response:', pm.response.text());",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{keycloak_client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "{{username}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{password}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{keycloak_base_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+					"host": [
+						"{{keycloak_base_url}}"
+					],
+					"path": [
+						"realms",
+						"{{keycloak_realm}}",
+						"protocol",
+						"openid-connect",
+						"token"
+					]
+				},
+				"description": "Get JWT token for authentication"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Get All Samples",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/samples",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"samples"
+					]
+				},
+				"description": "Retrieve all samples from t_sample table"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Sample",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Sample Item 1\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/samples",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"samples"
+					]
+				},
+				"description": "Create a new sample entry"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Sample by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/samples/{{sample_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"samples",
+						"{{sample_id}}"
+					]
+				},
+				"description": "Get a specific sample by ID"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Update Sample",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Updated Sample Item\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/samples/{{sample_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"samples",
+						"{{sample_id}}"
+					]
+				},
+				"description": "Update an existing sample"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Delete Sample",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{jwt_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/v1/samples/{{sample_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"samples",
+						"{{sample_id}}"
+					]
+				},
+				"description": "Delete a sample by ID"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Check if JWT token exists for authenticated requests",
+					"const isTokenRequest = pm.request.url.path.includes('token');",
+					"",
+					"if (!isTokenRequest) {",
+					"    const jwtToken = pm.environment.get('jwt_token');",
+					"    if (!jwtToken) {",
+					"        console.log('⚠️  No JWT token found. Run \"Get Token\" first.');",
+					"    } else {",
+					"        console.log('✅ Using saved JWT token');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_realm",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_client_id",
+			"value": "simple-salesman-backend",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "admin@admin.ad",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "YOUR_PASSWORD_HERE",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sample_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
