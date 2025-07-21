@@ -2,6 +2,9 @@ package com.simplesalesman.repository;
 
 import com.simplesalesman.entity.Address;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.util.List;
 /**
  * Repository interface for managing {@link Address} entities in the SimpleSalesman application.
  *
@@ -20,8 +23,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * - addressRepository.save(new Address(...));
  *
  * Author: SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.3
  */
+
+
 public interface AddressRepository extends JpaRepository<Address, Long> {
+
+    @Query("""
+        SELECT DISTINCT a FROM Address a
+        LEFT JOIN FETCH a.notes
+        LEFT JOIN FETCH a.projects
+        LEFT JOIN FETCH a.region
+    """)
+    List<Address> findAllWithNotesProjectsAndRegion();
 }

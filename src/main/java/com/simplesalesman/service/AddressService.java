@@ -15,32 +15,14 @@ import com.simplesalesman.repository.NoteRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Service class for managing address-related operations in the SimpleSalesman application.
  *
- * This service handles the core business logic for address entities, including:
- * - Retrieving all addresses
- * - Fetching a single address by ID
- * - Creating a new address with associated region, notes, and projects
- * - Updating an existing address and its relations
- * - Deleting an address by ID
- *
- * Dependencies:
- * - {@link AddressRepository} for persistence
- * - {@link AddressMapper} for DTO conversion
- * - {@link RegionRepository}, {@link ProjectRepository}, {@link NoteRepository} for linked data resolution
- *
- * Used by:
- * - {@code AddressController}
- *
- * Security Considerations:
- * - Input validation should occur at controller or DTO level
- * - Errors are propagated as RuntimeExceptions for centralized handling
- *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.3
  */
 @Service
@@ -70,7 +52,7 @@ public class AddressService {
      * @return list of all addresses as DTOs
      */
     public List<AddressDto> getAllAddresses() {
-        return addressRepository.findAll().stream()
+        return addressRepository.findAllWithNotesProjectsAndRegion().stream()
                 .map(addressMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -96,27 +78,9 @@ public class AddressService {
     public AddressDto createAddress(AddressDto dto) {
         Address address = addressMapper.toEntity(dto);
 
-        if (dto.getRegionName() != null) {
-            Region region = regionRepository.findByName(dto.getRegionName())
-                    .orElseThrow(() -> new RuntimeException("Region nicht gefunden: " + dto.getRegionName()));
-            address.setRegion(region);
-        }
-
-        if (dto.getProjects() != null && !dto.getProjects().isEmpty()) {
-            List<Project> projects = dto.getProjects().stream()
-                    .map(projectDto -> projectRepository.findById(projectDto.getId())
-                            .orElseThrow(() -> new RuntimeException("Projekt nicht gefunden: " + projectDto.getId())))
-                    .collect(Collectors.toList());
-            address.setProjects(projects);
-        }
-
-        if (dto.getNotes() != null && !dto.getNotes().isEmpty()) {
-            List<Note> notes = dto.getNotes().stream()
-                    .map(noteDto -> noteRepository.findById(noteDto.getId())
-                            .orElseThrow(() -> new RuntimeException("Notiz nicht gefunden: " + noteDto.getId())))
-                    .collect(Collectors.toList());
-            address.setNotes(notes);
-        }
+        setRegion(dto.getRegionName(), address);
+        setProjects(dto.getProjects(), address);
+        setNotes(dto.getNotes(), address);
 
         Address saved = addressRepository.save(address);
         return addressMapper.toDto(saved);
@@ -135,27 +99,9 @@ public class AddressService {
 
         existing.setAddressText(dto.getAddressText());
 
-        if (dto.getRegionName() != null) {
-            Region region = regionRepository.findByName(dto.getRegionName())
-                    .orElseThrow(() -> new RuntimeException("Region nicht gefunden: " + dto.getRegionName()));
-            existing.setRegion(region);
-        }
-
-        if (dto.getProjects() != null && !dto.getProjects().isEmpty()) {
-            List<Project> projects = dto.getProjects().stream()
-                    .map(projectDto -> projectRepository.findById(projectDto.getId())
-                            .orElseThrow(() -> new RuntimeException("Projekt nicht gefunden: " + projectDto.getId())))
-                    .collect(Collectors.toList());
-            existing.setProjects(projects);
-        }
-
-        if (dto.getNotes() != null && !dto.getNotes().isEmpty()) {
-            List<Note> notes = dto.getNotes().stream()
-                    .map(noteDto -> noteRepository.findById(noteDto.getId())
-                            .orElseThrow(() -> new RuntimeException("Notiz nicht gefunden: " + noteDto.getId())))
-                    .collect(Collectors.toList());
-            existing.setNotes(notes);
-        }
+        setRegion(dto.getRegionName(), existing);
+        setProjects(dto.getProjects(), existing);
+        setNotes(dto.getNotes(), existing);
 
         Address saved = addressRepository.save(existing);
         return addressMapper.toDto(saved);
@@ -173,5 +119,42 @@ public class AddressService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Helper method to set the region for an address.
+     */
+    private void setRegion(String regionName, Address address) {
+        if (regionName != null) {
+            Region region = regionRepository.findByName(regionName)
+                    .orElseThrow(() -> new RuntimeException("Region nicht gefunden: " + regionName));
+            address.setRegion(region);
+        }
+    }
+
+    /**
+     * Helper method to set the projects for an address.
+     */
+    private void setProjects(List<ProjectDto> projectsDto, Address address) {
+        if (projectsDto != null && !projectsDto.isEmpty()) {
+            Set<Project> projects = projectsDto.stream()
+                    .map(projectDto -> projectRepository.findById(projectDto.getId())
+                            .orElseThrow(() -> new RuntimeException("Projekt nicht gefunden: " + projectDto.getId())))
+                    .collect(Collectors.toSet());
+            address.setProjects(projects);
+        }
+    }
+
+    /**
+     * Helper method to set the notes for an address.
+     */
+    private void setNotes(List<NoteDto> notesDto, Address address) {
+        if (notesDto != null && !notesDto.isEmpty()) {
+            Set<Note> notes = notesDto.stream()
+                    .map(noteDto -> noteRepository.findById(noteDto.getId())
+                            .orElseThrow(() -> new RuntimeException("Notiz nicht gefunden: " + noteDto.getId())))
+                    .collect(Collectors.toSet());
+            address.setNotes(notes);
+        }
     }
 }

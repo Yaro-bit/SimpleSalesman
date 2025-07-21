@@ -1,7 +1,7 @@
 package com.simplesalesman.entity;
 
 import jakarta.persistence.*;
-import java.util.List;
+import java.util.Set;
 
 /**
  * JPA Entity representing an address in the SimpleSalesman application.
@@ -13,84 +13,84 @@ import java.util.List;
  * Relationships: - ManyToOne: Region - OneToMany: Project, Note
  *
  * @author: SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.1
  */
 @Entity
 public class Address {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String addressText;
+    private String addressText;
 
-	@ManyToOne
-	@JoinColumn(name = "region_id")
-	private Region region;
+    @ManyToOne
+    @JoinColumn(name = "region_id")
+    private Region region;
 
-	@OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Project> projects;
+    @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Project> projects;
 
-	@OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Note> notes;
+    @OneToMany(mappedBy = "address", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Note> notes;
 
-	// Getter und Setter
-	public Long getId() {
-		return id;
-	}
+    // Getter und Setter
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getAddressText() {
-		return addressText;
-	}
+    public String getAddressText() {
+        return addressText;
+    }
 
-	public void setAddressText(String addressText) {
-		this.addressText = addressText;
-	}
+    public void setAddressText(String addressText) {
+        this.addressText = addressText;
+    }
 
-	public Region getRegion() {
-		return region;
-	}
+    public Region getRegion() {
+        return region;
+    }
 
-	public void setRegion(Region region) {
-		this.region = region;
-	}
+    public void setRegion(Region region) {
+        this.region = region;
+    }
 
-	public List<Project> getProjects() {
-		return projects;
-	}
+    public Set<Project> getProjects() {
+        return projects;
+    }
 
-	public void setProjects(List<Project> projects) {
-		this.projects = projects;
-	}
+    public void setProjects(Set<Project> projects) {
+        this.projects = projects;
+    }
 
-	public List<Note> getNotes() {
-		return notes;
-	}
+    public Set<Note> getNotes() {
+        return notes;
+    }
 
-	public void setNotes(List<Note> notes) {
-		this.notes = notes;
-	}
+    public void setNotes(Set<Note> notes) {
+        this.notes = notes;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (!(o instanceof Address))
-			return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof Address))
+            return false;
 
-		Address other = (Address) o;
+        Address other = (Address) o;
 
-		// Nur vergleichen, wenn ID != null → sonst false
-		return id != null && id.equals(other.id);
-	}
+        // Nur vergleichen, wenn ID != null → sonst false
+        return id != null && id.equals(other.id);
+    }
 
-	@Override
-	public int hashCode() {
-		return id != null ? id.hashCode() : 0;
-	}
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
 }
