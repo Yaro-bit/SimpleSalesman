@@ -13,7 +13,7 @@
 
 	<groupId>com.simplesalesman</groupId>
 	<artifactId>simple-salesman</artifactId>
-	<version>0.0.911-Pre-Alpha</version>
+	<version>0.0.93-Pre-Alpha</version>
 	<name>SimpleSalesman</name>
 	<description>Simple Salesman – D2D Vertriebs-App</description>
 	<url>https://github.com/your-repo/simple-salesman</url>

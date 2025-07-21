@@ -1,6 +1,6 @@
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.9-blue)
+![version](https://img.shields.io/badge/version-0.0.93-blue)
 
 Backend prototype for a local web application designed for efficient management and documentation of address data, notes, and project status in door-to-door sales. The application is lightweight, fully local, privacy-compliant, and optimized for small teams.
 
@@ -8,23 +8,29 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current Version:** 0.0.92 
-**Last Update:** 2025-07-02
+**Current Version:** 0.0.93 
+**Last Update:** 2025-07-21
 
 ---
 
 ## Known Issues
 
-- **Severe Performance Issues on Large Imports:**
-    - Importing 70,000 address entries currently takes approximately 10,498,144 ms (≈ 2 hours, 54 minutes, 58 seconds).
-    - The same issue occurs when selecting all addresses: the browser attempts to load the entire address dataset at once, resulting in extremely poor performance and a nearly unusable frontend for large datasets.
-    - **Cause:** Both import and retrieval routines lack batching, streaming, or pagination, leading to excessive memory and processing requirements.
-    - **Workaround:** None at this time. Consider limiting import/export size or adding pagination.
-
+- **Severe Performance Issues on Search :**
 ---
 
 ## Changelog
 
+### Version 0.0.93
+- Performance changes - critical bug fixing
+- Address entity optimized for Hibernate performance: 
+ replaced List<Note> and List<Project> with Set to resolve 
+ MultipleBagFetchException and improve eager fetch efficiency.
+
+- AddressRepository.findAllWithNotesProjectsAndRegion() 
+ added with optimized JOIN FETCH strategy for loading associated 
+ entities in a single query.
+
+Mapping and DTO handling adjusted to accommodate Set semantics without duplicate overhead.
 ### Version 0.0.92
 - Document refactoring
 
