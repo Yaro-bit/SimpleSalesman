@@ -223,7 +223,7 @@
 	<script th:inline="javascript">
 		// Thymeleaf variables
 		const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
-		const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080';
+		const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'https://keycloak-production-6fbe.up.railway.app';
 		const REALM = /*[[${realm}]]*/ 'simple-salesman-backend';
 		const CLIENT_ID = /*[[${clientId}]]*/ 'frontend-app';
 		const REDIRECT_URI = /*[[${redirectUri}]]*/ window.location.origin + '/';
@@ -275,40 +275,40 @@
 		}
 
 		async function loginWithKeycloak() {
-			const loginButton = document.getElementById('loginButton');
-			
-			try {
-				// Show loading state
-				loginButton.disabled = true;
-				loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Anmeldung läuft...';
-				
-				const codeVerifier = generateCodeVerifier();
-				const codeChallenge = await generateCodeChallenge(codeVerifier);
-				const state = generateCodeVerifier();
+		    const loginButton = document.getElementById('loginButton');
+		    
+		    try {
+		        // Show loading state
+		        loginButton.disabled = true;
+		        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Anmeldung läuft...';
+		        
+		        const codeVerifier = generateCodeVerifier();
+		        const codeChallenge = await generateCodeChallenge(codeVerifier);
+		        const state = generateCodeVerifier();
 
-				sessionStorage.setItem('code_verifier', codeVerifier);
-				sessionStorage.setItem('oauth_state', state);
+		        sessionStorage.setItem('code_verifier', codeVerifier);
+		        sessionStorage.setItem('oauth_state', state);
 
-				const params = new URLSearchParams({
-					response_type: 'code',
-					client_id: CLIENT_ID,
-					redirect_uri: REDIRECT_URI,
-					scope: 'openid profile email',
-					state: state,
-					code_challenge: codeChallenge,
-					code_challenge_method: 'S256'
-				});
-				
-				const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
-				window.location.href = authUrl;
-			} catch (error) {
-				console.error('Fehler beim Keycloak-Login:', error);
-				showError('Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.');
-				
-				// Reset button state
-				loginButton.disabled = false;
-				loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
-			}
+		        const params = new URLSearchParams({
+		            response_type: 'code',
+		            client_id: CLIENT_ID,
+		            redirect_uri: REDIRECT_URI,
+		            scope: 'openid profile email',
+		            state: state,
+		            code_challenge: codeChallenge,
+		            code_challenge_method: 'S256'
+		        });
+		        
+		        const authUrl = `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth?${params.toString()}`;
+		        window.location.href = authUrl;
+		    } catch (error) {
+		        console.error('Fehler beim Keycloak-Login:', error);
+		        showError('Fehler bei der Anmeldung. Bitte versuchen Sie es erneut.');
+		        
+		        // Reset button state
+		        loginButton.disabled = false;
+		        loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+		    }
 		}
 
 		function showError(message) {
@@ -328,96 +328,96 @@
 
 		// --- Handle OAuth2 Callback: Token exchange and redirect to GUI ---
 		document.addEventListener("DOMContentLoaded", async function () {
-			const urlParams = new URLSearchParams(window.location.search);
-			const code = urlParams.get('code');
-			const state = urlParams.get('state');
-			const error = urlParams.get('error');
-			const errorDescription = urlParams.get('error_description');
-			
-			// Handle OAuth errors
-			if (error) {
-				console.error('OAuth Error:', error, errorDescription);
-				showError(errorDescription || 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
-				return;
-			}
-			
-			// Handle authorization code
-			if (code && state) {
-				const codeVerifier = sessionStorage.getItem('code_verifier');
-				const storedState = sessionStorage.getItem('oauth_state');
-				
-				// Validate state parameter
-				if (state !== storedState) {
-					showError('Ungültiger State-Parameter! Bitte erneut anmelden.');
-					return;
-				}
-				
-				// Show loading state
-				const loginButton = document.getElementById('loginButton');
-				loginButton.disabled = true;
-				loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Token wird abgerufen...';
-				
-				try {
-					const tokenResponse = await fetch(
-						`${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/token`,
-						{
-							method: "POST",
-							headers: { "Content-Type": "application/x-www-form-urlencoded" },
-							body: new URLSearchParams({
-								grant_type: "authorization_code",
-								code: code,
-								redirect_uri: REDIRECT_URI,
-								client_id: CLIENT_ID,
-								code_verifier: codeVerifier
-							}),
-						}
-					);
-					
-					if (tokenResponse.ok) {
-						const tokens = await tokenResponse.json();
-						
-						// Store tokens in session storage
-						sessionStorage.setItem('access_token', tokens.access_token);
-						if (tokens.refresh_token) {
-							sessionStorage.setItem('refresh_token', tokens.refresh_token);
-						}
-						
-						// Extract user information from JWT
-						try {
-							const payload = JSON.parse(atob(tokens.access_token.split('.')[1]));
-							sessionStorage.setItem('username', payload.preferred_username || payload.email || 'User');
-							sessionStorage.setItem('user_id', payload.sub || '');
-						} catch (e) {
-							console.error('Error parsing JWT:', e);
-						}
-						
-						// Clean up OAuth state
-						sessionStorage.removeItem('code_verifier');
-						sessionStorage.removeItem('oauth_state');
-						
-						// Clear URL parameters
-						window.history.replaceState({}, document.title, window.location.pathname);
-						
-						// Redirect to GUI
-						window.location.href = "gui.html";
-					} else {
-						const errorData = await tokenResponse.text();
-						console.error('Token exchange failed:', tokenResponse.status, errorData);
-						showError('Fehler beim Abrufen des Tokens. Bitte erneut anmelden.');
-						
-						// Reset button
-						loginButton.disabled = false;
-						loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
-					}
-				} catch (error) {
-					console.error('Token exchange error:', error);
-					showError('Netzwerkfehler beim Token-Austausch. Bitte versuchen Sie es erneut.');
-					
-					// Reset button
-					loginButton.disabled = false;
-					loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
-				}
-			}
+		    const urlParams = new URLSearchParams(window.location.search);
+		    const code = urlParams.get('code');
+		    const state = urlParams.get('state');
+		    const error = urlParams.get('error');
+		    const errorDescription = urlParams.get('error_description');
+		    
+		    // Handle OAuth errors
+		    if (error) {
+		        console.error('OAuth Error:', error, errorDescription);
+		        showError(errorDescription || 'Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.');
+		        return;
+		    }
+		    
+		    // Handle authorization code
+		    if (code && state) {
+		        const codeVerifier = sessionStorage.getItem('code_verifier');
+		        const storedState = sessionStorage.getItem('oauth_state');
+		        
+		        // Validate state parameter
+		        if (state !== storedState) {
+		            showError('Ungültiger State-Parameter! Bitte erneut anmelden.');
+		            return;
+		        }
+		        
+		        // Show loading state
+		        const loginButton = document.getElementById('loginButton');
+		        loginButton.disabled = true;
+		        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Token wird abgerufen...';
+		        
+		        try {
+		            const tokenResponse = await fetch(
+		                `${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/token`,
+		                {
+		                    method: "POST",
+		                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		                    body: new URLSearchParams({
+		                        grant_type: "authorization_code",
+		                        code: code,
+		                        redirect_uri: REDIRECT_URI,
+		                        client_id: CLIENT_ID,
+		                        code_verifier: codeVerifier
+		                    }),
+		                }
+		            );
+		            
+		            if (tokenResponse.ok) {
+		                const tokens = await tokenResponse.json();
+		                
+		                // Store tokens in session storage
+		                sessionStorage.setItem('access_token', tokens.access_token);
+		                if (tokens.refresh_token) {
+		                    sessionStorage.setItem('refresh_token', tokens.refresh_token);
+		                }
+		                
+		                // Extract user information from JWT
+		                try {
+		                    const payload = JSON.parse(atob(tokens.access_token.split('.')[1]));
+		                    sessionStorage.setItem('username', payload.preferred_username || payload.email || 'User');
+		                    sessionStorage.setItem('user_id', payload.sub || '');
+		                } catch (e) {
+		                    console.error('Error parsing JWT:', e);
+		                }
+		                
+		                // Clean up OAuth state
+		                sessionStorage.removeItem('code_verifier');
+		                sessionStorage.removeItem('oauth_state');
+		                
+		                // Clear URL parameters
+		                window.history.replaceState({}, document.title, window.location.pathname);
+		                
+		                // Redirect to GUI
+		                window.location.href = "gui.html";
+		            } else {
+		                const errorData = await tokenResponse.text();
+		                console.error('Token exchange failed:', tokenResponse.status, errorData);
+		                showError('Fehler beim Abrufen des Tokens. Bitte erneut anmelden.');
+		                
+		                // Reset button
+		                loginButton.disabled = false;
+		                loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+		            }
+		        } catch (error) {
+		            console.error('Token exchange error:', error);
+		            showError('Netzwerkfehler beim Token-Austausch. Bitte versuchen Sie es erneut.');
+		            
+		            // Reset button
+		            loginButton.disabled = false;
+		            loginButton.innerHTML = '<i class="bi bi-key-fill me-2"></i>Mit Keycloak anmelden';
+		        }
+		    }
 		});
 	</script>
 </body>
