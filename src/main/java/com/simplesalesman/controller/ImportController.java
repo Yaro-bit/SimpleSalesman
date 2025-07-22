@@ -2,6 +2,9 @@ package com.simplesalesman.controller;
 
 import com.simplesalesman.dto.ImportResultDto;
 import com.simplesalesman.service.ExcelImportService;
+
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -34,7 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
  * potentially harmful data
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.4
  */
 @RestController
@@ -43,10 +46,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImportController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ImportController.class);
-	private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB limit
+	private static final long MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB limit - updated to match frontend expectations
 	private static final String[] ALLOWED_CONTENT_TYPES = {
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-			"application/vnd.ms-excel" // .xls
+			"application/vnd.ms-excel", // .xls
+			"application/octet-stream" // Some browsers send this for Excel files
 	};
 
 	private final ExcelImportService excelImportService;
@@ -71,7 +75,7 @@ public class ImportController {
 	 * feedback about successful imports, failed records, and any errors
 	 * encountered.
 	 *
-	 * File requirements: - Maximum file size: 10MB - Supported formats: Excel
+	 * File requirements: - Maximum file size: 100MB - Supported formats: Excel
 	 * (.xlsx, .xls) - Must contain valid data structure as expected by the system
 	 *
 	 * @param file The Excel file to be imported (multipart form data)
@@ -85,48 +89,61 @@ public class ImportController {
 	 */
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ImportResultDto> importExcel(@RequestParam("file") MultipartFile file) {
-		logger.info("POST request received for Excel import. File: '{}', Size: {} bytes", file.getOriginalFilename(),
-				file.getSize());
+		logger.info("POST request received for Excel import. File: '{}', Size: {} MB", 
+			file.getOriginalFilename(), file.getSize() / (1024.0 * 1024.0));
 
 		try {
 			// Validate file is not empty
 			if (file.isEmpty()) {
 				logger.warn("Import failed: Empty file uploaded");
-				return ResponseEntity.badRequest().build();
+				ImportResultDto result = new ImportResultDto();
+				result.setSuccess(false);
+				result.setErrors(List.of("Empty file uploaded"));
+				return ResponseEntity.badRequest().body(result);
 			}
 
 			// Validate file size
 			if (file.getSize() > MAX_FILE_SIZE) {
-				logger.warn("Import failed: File size ({} bytes) exceeds maximum allowed size ({} bytes)",
-						file.getSize(), MAX_FILE_SIZE);
-				return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
+				logger.warn("Import failed: File size ({} MB) exceeds maximum allowed size ({} MB)",
+						file.getSize() / (1024.0 * 1024.0), MAX_FILE_SIZE / (1024.0 * 1024.0));
+				ImportResultDto result = new ImportResultDto();
+				result.setSuccess(false);
+				result.setErrors(List.of("File size exceeds maximum allowed size of " + (MAX_FILE_SIZE / (1024 * 1024)) + " MB"));
+				return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(result);
 			}
 
-			// Validate file type
+			// Validate file type - more lenient checking
 			String contentType = file.getContentType();
+			String filename = file.getOriginalFilename();
+			
 			boolean isValidType = false;
-			for (String allowedType : ALLOWED_CONTENT_TYPES) {
-				if (allowedType.equals(contentType)) {
-					isValidType = true;
-					break;
+			
+			// Check by content type
+			if (contentType != null) {
+				for (String allowedType : ALLOWED_CONTENT_TYPES) {
+					if (allowedType.equals(contentType)) {
+						isValidType = true;
+						break;
+					}
 				}
+			}
+			
+			// Also check by file extension as fallback
+			if (!isValidType && filename != null) {
+				String lowerFilename = filename.toLowerCase();
+				isValidType = lowerFilename.endsWith(".xlsx") || lowerFilename.endsWith(".xls");
 			}
 
 			if (!isValidType) {
-				logger.warn("Import failed: Unsupported file type '{}'. Allowed types: {}", contentType,
-						String.join(", ", ALLOWED_CONTENT_TYPES));
-				return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
+				logger.warn("Import failed: Unsupported file type '{}' for file '{}'", contentType, filename);
+				ImportResultDto result = new ImportResultDto();
+				result.setSuccess(false);
+				result.setErrors(List.of("Unsupported file type. Please upload an Excel file (.xlsx or .xls)"));
+				return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(result);
 			}
 
-			// Validate filename
-			String filename = file.getOriginalFilename();
-			if (filename == null
-					|| (!filename.toLowerCase().endsWith(".xlsx") && !filename.toLowerCase().endsWith(".xls"))) {
-				logger.warn("Import failed: Invalid file extension for file '{}'", filename);
-				return ResponseEntity.badRequest().build();
-			}
-
-			logger.info("File validation passed. Starting import process for file: '{}'", filename);
+			logger.info("File validation passed. Starting import process for file: '{}' ({} MB)", 
+				filename, file.getSize() / (1024.0 * 1024.0));
 
 			// Process the import
 			long startTime = System.currentTimeMillis();
@@ -134,7 +151,13 @@ public class ImportController {
 			long processingTime = System.currentTimeMillis() - startTime;
 
 			// Log import results
-			logger.info("Import completed successfully. File: '{}', Processing time: {} ms", filename, processingTime);
+			if (result.isSuccess()) {
+				logger.info("Import completed successfully. File: '{}', Records: {}, Processing time: {} seconds", 
+					filename, result.getRecordsProcessed(), processingTime / 1000.0);
+			} else {
+				logger.warn("Import completed with errors. File: '{}', Records: {}, Errors: {}, Processing time: {} seconds", 
+					filename, result.getRecordsProcessed(), result.getErrors().size(), processingTime / 1000.0);
+			}
 
 			// Log additional details if available in the result object
 			logger.debug("Import result details: {}", result.toString());
@@ -143,10 +166,16 @@ public class ImportController {
 
 		} catch (IllegalArgumentException e) {
 			logger.error("Import failed due to invalid arguments: {}", e.getMessage());
-			return ResponseEntity.badRequest().build();
+			ImportResultDto result = new ImportResultDto();
+			result.setSuccess(false);
+			result.setErrors(List.of("Invalid file format: " + e.getMessage()));
+			return ResponseEntity.badRequest().body(result);
 		} catch (Exception e) {
 			logger.error("Unexpected error during Excel import for file: '{}'", file.getOriginalFilename(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			ImportResultDto result = new ImportResultDto();
+			result.setSuccess(false);
+			result.setErrors(List.of("Internal server error: " + e.getMessage()));
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
 		}
 	}
 }

@@ -14,6 +14,7 @@ import java.util.Map;
  * REST Controller for managing notes associated with addresses in the SimpleSalesman application.
  *
  * This controller provides endpoints to:
+ * - Retrieve all notes in the system
  * - Retrieve all notes linked to a specific address
  * - Add a new note to an address
  * - Update an existing note
@@ -28,13 +29,14 @@ import java.util.Map;
  * - Input is validated on all endpoints
  *
  * API Endpoints:
- * - GET /api/v1/notes/{addressId}
- * - POST /api/v1/notes/{addressId}
- * - PUT /api/v1/notes/{noteId}
- * - DELETE /api/v1/notes/{noteId}
+ * - GET /api/v1/notes - Get all notes
+ * - GET /api/v1/notes/{addressId} - Get notes for specific address
+ * - POST /api/v1/notes/{addressId} - Add note to address
+ * - PUT /api/v1/notes/{noteId} - Update note
+ * - DELETE /api/v1/notes/{noteId} - Delete note
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.4
  */
 @RestController
@@ -53,6 +55,19 @@ public class NoteController {
     public NoteController(NoteService noteService) {
         this.noteService = noteService;
         logger.info("NoteController initialized");
+    }
+
+    /**
+     * Returns all notes in the system.
+     * 
+     * @return List of all NoteDto objects with address information
+     */
+    @GetMapping
+    public ResponseEntity<List<NoteDto>> getAllNotes() {
+        logger.info("GET request received for all notes");
+        List<NoteDto> notes = noteService.getAllNotes();
+        logger.debug("Found {} total notes", notes.size());
+        return ResponseEntity.ok(notes);
     }
 
     /**

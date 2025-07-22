@@ -3,390 +3,887 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Simple Salesman GUI</title>
+	<title>SimpleSalesman</title>
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 	<style>
 		:root {
-			--bs-primary: #0066cc;
-			--header-height: 80px;
-			--footer-height: 60px;
-			--sidebar-width: 260px;
+			--primary-color: #6366f1;
+			--primary-hover: #5b5df1;
+			--surface: #1a1b23;
+			--surface-light: #242530;
+			--surface-lighter: #2d2f3c;
+			--text-primary: #f8fafc;
+			--text-secondary: #94a3b8;
+			--text-muted: #64748b;
+			--border: #334155;
+			--border-light: #475569;
+			--success: #10b981;
+			--warning: #f59e0b;
+			--danger: #ef4444;
+			--header-height: 70px;
+			--sidebar-width: 280px;
+			--radius: 12px;
+			--shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+		}
+
+		/* Reset & Base */
+		* { box-sizing: border-box; }
+		body { 
+			margin: 0; 
+			padding: 0; 
+			background: var(--surface); 
+			color: var(--text-primary); 
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			overflow-x: hidden;
 		}
 
 		/* Layout */
-		body { margin: 0; padding: 0; overflow-x: hidden; }
-		
+		.app-container {
+			display: grid;
+			grid-template-columns: var(--sidebar-width) 1fr;
+			grid-template-rows: var(--header-height) 1fr;
+			height: 100vh;
+		}
+
 		.app-header {
-			position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
-			background: #1a1a1a; border-bottom: 2px solid var(--bs-primary); z-index: 1000;
-			display: flex; align-items: center; padding: 0 1rem;
+			grid-column: 1 / -1;
+			background: var(--surface-light);
+			border-bottom: 1px solid var(--border);
+			display: flex;
+			align-items: center;
+			padding: 0 2rem;
+			z-index: 1000;
 		}
-		
+
 		.app-sidebar {
-			position: fixed; top: var(--header-height); left: 0; width: var(--sidebar-width);
-			height: calc(100vh - var(--header-height) - var(--footer-height));
-			background: #2a2a2a; border-right: 2px solid var(--bs-primary); z-index: 900;
-			overflow-y: auto; padding: 1rem;
+			background: var(--surface-light);
+			border-right: 1px solid var(--border);
+			padding: 1.5rem;
+			overflow-y: auto;
+			z-index: 900;
 		}
-		
-		.app-footer {
-			position: fixed; bottom: 0; left: 0; right: 0; height: var(--footer-height);
-			background: #1a1a1a; border-top: 2px solid var(--bs-primary); z-index: 800;
-			display: flex; align-items: center; padding: 0 1rem;
-		}
-		
+
 		.app-main {
-			margin-top: var(--header-height); margin-left: var(--sidebar-width);
-			margin-bottom: var(--footer-height); padding: 1rem;
-			min-height: calc(100vh - var(--header-height) - var(--footer-height));
-			background: #1e1e1e;
+			background: var(--surface);
+			padding: 2rem;
+			overflow-y: auto;
 		}
-		
-		/* Components */
-		.content-card {
-			background: #262626; border: 1px solid #404040; border-radius: 8px; margin-bottom: 1rem;
+
+		/* Header Components */
+		.header-brand {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			font-size: 1.125rem;
+			font-weight: 600;
+			color: var(--text-primary);
 		}
-		.content-card-header {
-			padding: 0.75rem 1rem; background: #2d2d2d; border-bottom: 1px solid #404040;
-			border-radius: 7px 7px 0 0;
+
+		.header-actions {
+			margin-left: auto;
+			display: flex;
+			align-items: center;
+			gap: 1rem;
 		}
-		.content-card-body { padding: 1rem; }
-		
-		.nav-link {
-			color: #a0a0a0; padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.25rem;
-			display: flex; align-items: center; transition: all 0.2s ease; text-decoration: none;
+
+		.user-info {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			color: var(--text-secondary);
+			font-size: 0.875rem;
 		}
-		.nav-link:hover { background: rgba(0, 102, 204, 0.1); color: #ffffff; }
-		.nav-link.active { background: var(--bs-primary); color: #ffffff; }
-		
-		.table th { border-bottom: 2px solid #404040; cursor: pointer; user-select: none; }
-		.table th.sorted-asc::after { content: " ↑"; }
-		.table th.sorted-desc::after { content: " ↓"; }
-		.table td { border-bottom: 1px solid #404040; }
-		
-		.app-section { display: none; }
-		.app-section.active { display: block; }
-		
-		.project-tag {
-			display: inline-block; background: rgba(0, 102, 204, 0.2); color: var(--bs-primary);
-			padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin: 2px;
-			border: 1px solid var(--bs-primary);
+
+		.weather-info {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			color: var(--text-secondary);
+			font-size: 0.875rem;
+			padding: 0.5rem 0.75rem;
+			background: var(--surface-lighter);
+			border-radius: 6px;
 		}
-		
+
+		/* Sidebar Navigation */
+		.nav-section {
+			margin-bottom: 2rem;
+		}
+
+		.nav-title {
+			font-size: 0.75rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			color: var(--text-muted);
+			margin-bottom: 0.75rem;
+		}
+
+		.nav-item {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.75rem;
+			border-radius: 8px;
+			color: var(--text-secondary);
+			text-decoration: none;
+			transition: all 0.15s ease;
+			margin-bottom: 0.25rem;
+			font-size: 0.875rem;
+		}
+
+		.nav-item:hover {
+			background: var(--surface-lighter);
+			color: var(--text-primary);
+		}
+
+		.nav-item.active {
+			background: var(--primary-color);
+			color: white;
+		}
+
+		.nav-item i {
+			width: 16px;
+			text-align: center;
+		}
+
+		/* Cards */
+		.card {
+			background: var(--surface-light);
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+			box-shadow: var(--shadow);
+			overflow: hidden;
+		}
+
+		.card-header {
+			padding: 1.5rem;
+			border-bottom: 1px solid var(--border);
+			background: var(--surface-lighter);
+		}
+
+		.card-title {
+			font-size: 1.125rem;
+			font-weight: 600;
+			margin: 0;
+			color: var(--text-primary);
+		}
+
+		.card-body {
+			padding: 1.5rem;
+		}
+
+		/* Buttons */
+		.btn {
+			padding: 0.5rem 1rem;
+			border-radius: 8px;
+			font-weight: 500;
+			font-size: 0.875rem;
+			border: none;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			text-decoration: none;
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.btn-primary {
+			background: var(--primary-color);
+			color: white;
+		}
+
+		.btn-primary:hover {
+			background: var(--primary-hover);
+			color: white;
+		}
+
+		.btn-secondary {
+			background: var(--surface-lighter);
+			color: var(--text-secondary);
+			border: 1px solid var(--border);
+		}
+
+		.btn-secondary:hover {
+			background: var(--border);
+			color: var(--text-primary);
+		}
+
+		.btn-danger {
+			background: var(--danger);
+			color: white;
+		}
+
+		.btn-danger:hover {
+			background: #dc2626;
+			color: white;
+		}
+
+		.btn-sm {
+			padding: 0.375rem 0.75rem;
+			font-size: 0.8125rem;
+		}
+
+		.btn-group {
+			display: flex;
+			border-radius: 8px;
+			overflow: hidden;
+		}
+
+		.btn-group .btn {
+			border-radius: 0;
+			border-right: 1px solid var(--border);
+		}
+
+		.btn-group .btn:first-child {
+			border-radius: 8px 0 0 8px;
+		}
+
+		.btn-group .btn:last-child {
+			border-radius: 0 8px 8px 0;
+			border-right: none;
+		}
+
+		/* Forms */
+		.form-control, .form-select {
+			background: var(--surface-lighter);
+			border: 1px solid var(--border);
+			color: var(--text-primary);
+			border-radius: 8px;
+			padding: 0.5rem 0.75rem;
+			font-size: 0.875rem;
+			transition: all 0.15s ease;
+		}
+
+		.form-control:focus, .form-select:focus {
+			outline: none;
+			border-color: var(--primary-color);
+			box-shadow: 0 0 0 3px rgb(99 102 241 / 0.1);
+		}
+
+		/* Tables */
+		.table {
+			background: transparent;
+			color: var(--text-primary);
+			font-size: 0.875rem;
+		}
+
+		.table th {
+			background: var(--surface-lighter);
+			border-bottom: 1px solid var(--border);
+			color: var(--text-primary);
+			font-weight: 600;
+			padding: 0.75rem;
+			cursor: pointer;
+			user-select: none;
+			white-space: nowrap;
+		}
+
+		.table th:hover {
+			background: var(--border);
+		}
+
+		.table th.sorted-asc::after { content: " ↑"; color: var(--primary-color); }
+		.table th.sorted-desc::after { content: " ↓"; color: var(--primary-color); }
+
+		.table td {
+			padding: 0.75rem;
+			border-bottom: 1px solid var(--border);
+			vertical-align: middle;
+		}
+
+		.table tbody tr:hover {
+			background: var(--surface-lighter);
+		}
+
+		/* Tree Navigation */
+		.tree-container {
+			background: var(--surface-lighter);
+			border-radius: var(--radius);
+			padding: 1.5rem;
+		}
+
+		.breadcrumb {
+			background: var(--surface);
+			padding: 0.75rem 1rem;
+			border-radius: 8px;
+			margin-bottom: 1.5rem;
+			border: 1px solid var(--border);
+		}
+
+		.breadcrumb-item {
+			color: var(--text-secondary);
+		}
+
+		.breadcrumb-item.active {
+			color: var(--primary-color);
+		}
+
+		.breadcrumb-item + .breadcrumb-item::before {
+			color: var(--text-muted);
+			content: "›";
+		}
+
+		.tree-level {
+			margin-bottom: 2rem;
+		}
+
+		.tree-title {
+			font-size: 0.875rem;
+			font-weight: 600;
+			color: var(--text-secondary);
+			margin-bottom: 1rem;
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
+
+		.tree-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+			gap: 0.75rem;
+		}
+
+		.tree-item {
+			background: var(--surface);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 0.75rem;
+			text-align: center;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			font-size: 0.875rem;
+			font-weight: 500;
+		}
+
+		.tree-item:hover {
+			background: var(--primary-color);
+			border-color: var(--primary-color);
+			color: white;
+		}
+
+		/* Notes */
 		.note-item {
-			padding: 8px 0; border-bottom: 1px solid #404040; font-size: 0.9rem; color: #f0f0f0;
+			background: var(--surface-lighter);
+			border-radius: 8px;
+			padding: 1rem;
+			margin-bottom: 0.75rem;
+			border-left: 3px solid var(--primary-color);
 		}
-		.note-item:last-child { border-bottom: none; }
-		.note-meta { font-size: 0.8rem; color: #a0a0a0; margin-top: 4px; }
-		
+
+		.note-content {
+			color: var(--text-primary);
+			line-height: 1.5;
+			margin-bottom: 0.5rem;
+		}
+
+		.note-meta {
+			display: flex;
+			justify-content: between;
+			align-items: center;
+			font-size: 0.75rem;
+			color: var(--text-muted);
+		}
+
+		.note-actions {
+			margin-left: auto;
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		/* Project Tags */
+		.project-tag {
+			display: inline-block;
+			background: var(--primary-color);
+			color: white;
+			padding: 0.25rem 0.5rem;
+			border-radius: 4px;
+			font-size: 0.75rem;
+			font-weight: 500;
+			margin: 0.125rem;
+		}
+
+		.project-tag.status-completed { background: var(--success); }
+		.project-tag.status-pending { background: var(--warning); }
+		.project-tag.status-cancelled { background: var(--danger); }
+
+		/* Pagination */
+		.pagination {
+			display: flex;
+			justify-content: center;
+			gap: 0.5rem;
+			margin-top: 2rem;
+		}
+
+		.page-link {
+			background: var(--surface-lighter);
+			border: 1px solid var(--border);
+			color: var(--text-secondary);
+			padding: 0.5rem 0.75rem;
+			border-radius: 6px;
+			text-decoration: none;
+			font-size: 0.875rem;
+			transition: all 0.15s ease;
+		}
+
+		.page-link:hover {
+			background: var(--border);
+			color: var(--text-primary);
+		}
+
+		.page-item.active .page-link {
+			background: var(--primary-color);
+			border-color: var(--primary-color);
+			color: white;
+		}
+
+		/* Import Zone */
+		.import-zone {
+			border: 2px dashed var(--border);
+			border-radius: var(--radius);
+			background: var(--surface-lighter);
+			padding: 3rem 2rem;
+			text-align: center;
+			cursor: pointer;
+			transition: all 0.15s ease;
+		}
+
+		.import-zone:hover, .import-zone.dragover {
+			border-color: var(--primary-color);
+			background: var(--surface);
+		}
+
+		.import-zone.file-selected {
+			border-color: var(--success);
+			background: rgba(16, 185, 129, 0.1);
+		}
+
+		/* Alerts */
+		.alert {
+			border-radius: var(--radius);
+			padding: 1rem;
+			margin-bottom: 1rem;
+			border: none;
+		}
+
+		.alert-success {
+			background: rgba(16, 185, 129, 0.1);
+			color: var(--success);
+			border-left: 3px solid var(--success);
+		}
+
+		.alert-warning {
+			background: rgba(245, 158, 11, 0.1);
+			color: var(--warning);
+			border-left: 3px solid var(--warning);
+		}
+
+		.alert-danger {
+			background: rgba(239, 68, 68, 0.1);
+			color: var(--danger);
+			border-left: 3px solid var(--danger);
+		}
+
+		/* Modal */
+		.modal-content {
+			background: var(--surface-light);
+			border: 1px solid var(--border);
+			border-radius: var(--radius);
+		}
+
+		.modal-header {
+			border-bottom: 1px solid var(--border);
+			background: var(--surface-lighter);
+		}
+
+		.btn-close {
+			filter: invert(1);
+		}
+
 		/* Mobile */
 		@media (max-width: 768px) {
-			.app-sidebar {
-				transform: translateX(-100%); transition: transform 0.3s ease; z-index: 1100;
-				top: 0; height: 100vh; padding-top: calc(var(--header-height) + 1rem);
+			.app-container {
+				grid-template-columns: 1fr;
+				grid-template-rows: var(--header-height) 1fr;
 			}
-			.app-sidebar.show { transform: translateX(0); }
-			.app-main { margin-left: 0; padding: 0.75rem; }
-			.content-card-body { padding: 0.75rem; }
+
+			.app-sidebar {
+				position: fixed;
+				top: var(--header-height);
+				left: 0;
+				width: var(--sidebar-width);
+				height: calc(100vh - var(--header-height));
+				transform: translateX(-100%);
+				transition: transform 0.3s ease;
+				z-index: 1100;
+			}
+
+			.app-sidebar.show {
+				transform: translateX(0);
+			}
+
+			.app-main {
+				padding: 1rem;
+			}
+
+			.tree-grid {
+				grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+			}
+
+			.header-brand img {
+				height: 40px;
+			}
+
+			.weather-info {
+				display: none;
+			}
 		}
-		
-		.sidebar-overlay {
-			display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-			background: rgba(0, 0, 0, 0.5); z-index: 1050;
-		}
-		.sidebar-overlay.show { display: block; }
-		
+
 		/* Utilities */
+		.section { display: none; }
+		.section.active { display: block; }
+
+		.spinner {
+			display: inline-block;
+			width: 1rem;
+			height: 1rem;
+			border: 2px solid var(--border);
+			border-top: 2px solid var(--primary-color);
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+		}
+
+		@keyframes spin {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+
+		.fade-in {
+			animation: fadeIn 0.3s ease;
+		}
+
+		@keyframes fadeIn {
+			from { opacity: 0; transform: translateY(10px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+
 		::-webkit-scrollbar { width: 6px; }
-		::-webkit-scrollbar-track { background: #1a1a1a; }
-		::-webkit-scrollbar-thumb { background: var(--bs-primary); border-radius: 3px; }
+		::-webkit-scrollbar-track { background: var(--surface); }
+		::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+		::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 	</style>
 </head>
 <body>
-	<!-- HEADER -->
-	<header class="app-header">
-		<div class="d-flex align-items-center w-100">
-			<button class="btn btn-outline-light btn-sm d-md-none me-3" onclick="toggleSidebar()">
+	<div class="app-container">
+		<!-- Header -->
+		<header class="app-header">
+			<button class="btn btn-secondary d-md-none" onclick="toggleSidebar()">
 				<i class="bi bi-list"></i>
 			</button>
-			<img src="/logo_saleman_original.png" alt="SimpleSalesman" class="me-3 d-block" loading="lazy" style="height:120px;width:auto;max-width:100%;">
-			<div class="ms-auto d-flex align-items-center gap-3">
-				<span class="text-light">
-					<i class="bi bi-person-circle me-1"></i>
-					<span id="username" class="d-none d-sm-inline">User</span>
-				</span>
-				<span class="text-light d-none d-lg-inline d-flex align-items-center">
-					<i class="bi bi-cloud-sun-fill me-2 fs-6"></i>
-					<span id="weather" class="d-inline-block fw-semibold fs-6">Wetter wird geladen…</span>
-				</span>
-				<button onclick="logout()" class="btn btn-outline-danger btn-sm">
+			
+			<div class="header-brand">
+				<img src="/logo_saleman_original.png" alt="SimpleSalesman" style="height: 50px; width: auto;">
+			</div>
+
+			<div class="header-actions">
+				<div class="user-info d-none d-sm-flex">
+					<i class="bi bi-person-circle"></i>
+					<span id="username">User</span>
+				</div>
+				
+				<div class="weather-info d-none d-lg-flex">
+					<i class="bi bi-cloud-sun"></i>
+					<span id="weather">Wetter wird geladen…</span>
+				</div>
+				
+				<button class="btn btn-danger btn-sm" onclick="logout()">
 					<i class="bi bi-box-arrow-right"></i>
-					<span class="d-none d-sm-inline ms-1">Abmelden</span>
+					<span class="d-none d-sm-inline">Abmelden</span>
 				</button>
 			</div>
-		</div>
-	</header>
+		</header>
 
-	<!-- SIDEBAR -->
-	<nav class="app-sidebar" id="sidebar">
-		<div class="mb-3">
-			<h6 class="text-light mb-3">Navigation</h6>
-			<a href="#" class="nav-link active" onclick="showSection('addresses')" id="nav-addresses">
-				<i class="bi bi-geo-alt me-2"></i>Adressen
-			</a>
-			<a href="#" class="nav-link" onclick="showSection('notes')" id="nav-notes">
-				<i class="bi bi-journal-text me-2"></i>Notizen
-			</a>
-			<a href="#" class="nav-link" onclick="showSection('import')" id="nav-import">
-				<i class="bi bi-upload me-2"></i>Import
-			</a>
-		</div>
-	</nav>
-
-	<!-- OVERLAY -->
-	<div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-	<!-- MAIN CONTENT -->
-	<main class="app-main">
-		<!-- ADDRESSES SECTION -->
-		<div class="app-section active" id="addressesSection">
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h2 class="text-light mb-0">Adressen</h2>
-				<div class="btn-group btn-group-sm">
-					<button class="btn btn-primary active" onclick="showAddressView('table')" id="view-table">
-						<i class="bi bi-table me-1"></i>Tabellenansicht
-					</button>
-					<button class="btn btn-outline-primary" onclick="showAddressView('navigation')" id="view-navigation">
-						<i class="bi bi-map me-1"></i>Navigation
-					</button>
-				</div>
+		<!-- Sidebar -->
+		<nav class="app-sidebar" id="sidebar">
+			<div class="nav-section">
+				<div class="nav-title">Navigation</div>
+				<a href="#" class="nav-item active" onclick="showSection('addresses')" id="nav-addresses">
+					<i class="bi bi-geo-alt"></i>
+					<span>Adressen</span>
+				</a>
+				<a href="#" class="nav-item" onclick="showSection('notes')" id="nav-notes">
+					<i class="bi bi-journal-text"></i>
+					<span>Notizen</span>
+				</a>
+				<a href="#" class="nav-item" onclick="showSection('import')" id="nav-import">
+					<i class="bi bi-upload"></i>
+					<span>Import</span>
+				</a>
 			</div>
+		</nav>
 
-			<!-- TABLE VIEW -->
-			<div class="content-card" id="addressesTableBox">
-				<div class="content-card-header">
-					<h5 class="mb-0 text-light">Alle Adressen</h5>
-				</div>
-				<div class="content-card-body">
-					<div class="row g-2 mb-3">
-						<div class="col-md-8">
-							<input type="text" class="form-control form-control-sm" id="addressSearchInput"
-								placeholder="Suche nach Adresse..." onkeyup="filterTable('addresses')">
-						</div>
-						<div class="col-md-4">
-							<select class="form-select form-select-sm" id="addressPageSize" onchange="changePageSize('addresses')">
-								<option value="10">10 pro Seite</option>
-								<option value="20" selected>20 pro Seite</option>
-								<option value="50">50 pro Seite</option>
-							</select>
-						</div>
+		<!-- Main Content -->
+		<main class="app-main">
+			<!-- Addresses Section -->
+			<div class="section active" id="addressesSection">
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h1 class="h3 mb-0">Adressen</h1>
+					<div class="btn-group">
+						<button class="btn btn-primary active" onclick="showAddressView('table')" id="view-table">
+							<i class="bi bi-table"></i>
+							Tabelle
+						</button>
+						<button class="btn btn-secondary" onclick="showAddressView('tree')" id="view-tree">
+							<i class="bi bi-diagram-3"></i>
+							Navigation
+						</button>
 					</div>
-					<div class="table-responsive">
-						<table class="table table-dark table-sm" id="addressesTable">
-							<thead>
-								<tr>
-									<th onclick="sortTable('addresses', 'plz')">PLZ <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('addresses', 'street')">Straße <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('addresses', 'number')">Hausnummer <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('addresses', 'region')">Region <i class="bi bi-arrow-down-up"></i></th>
-									<th>Projekte</th>
-									<th>Aktionen</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td colspan="6" class="text-center text-muted">
-										<div class="spinner-border spinner-border-sm me-2"></div>Adressen werden geladen...
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<nav id="addressesPagination" class="d-flex justify-content-center mt-3"></nav>
 				</div>
-			</div>
 
-			<!-- NAVIGATION VIEW -->
-			<div class="content-card" id="addressesNavigationBox" style="display:none;">
-				<div class="content-card-header">
-					<h5 class="mb-0 text-light">Adresse auswählen</h5>
-				</div>
-				<div class="content-card-body">
-					<nav class="mb-3">
-						<ol class="breadcrumb bg-dark" id="breadcrumb">
-							<li class="breadcrumb-item active">PLZ auswählen</li>
-						</ol>
-					</nav>
-					<button class="btn btn-secondary btn-sm mb-3" id="backButton" onclick="goBack()" style="display:none;">
-						<i class="bi bi-arrow-left me-1"></i>Zurück
-					</button>
-					<div id="plzSelection">
-						<h6 class="text-light mb-2">Verfügbare Postleitzahlen:</h6>
-						<div id="plzList" class="d-flex flex-wrap gap-2">
-							<span class="text-muted">PLZs werden geladen...</span>
-						</div>
-					</div>
-					<div id="streetSelection" style="display:none;">
-						<h6 class="text-light mb-2">Straßen:</h6>
-						<div id="streetList" class="d-flex flex-wrap gap-2"></div>
-					</div>
-					<div id="numberSelection" style="display:none;">
-						<h6 class="text-light mb-2">Hausnummern:</h6>
-						<div id="numberList" class="d-flex flex-wrap gap-2"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- NOTES SECTION -->
-		<div class="app-section" id="notesSection">
-			<h2 class="text-light mb-3">Notizen</h2>
-			<div class="content-card">
-				<div class="content-card-header">
-					<h5 class="mb-0 text-light">Alle Notizen</h5>
-				</div>
-				<div class="content-card-body">
-					<div class="row g-2 mb-3">
-						<div class="col-md-8">
-							<input type="text" class="form-control form-control-sm" id="notesSearchInput"
-								placeholder="Suche in Notizen..." onkeyup="filterTable('notes')">
-						</div>
-						<div class="col-md-4">
-							<select class="form-select form-select-sm" id="notesPageSize" onchange="changePageSize('notes')">
-								<option value="10">10 pro Seite</option>
-								<option value="20" selected>20 pro Seite</option>
-								<option value="50">50 pro Seite</option>
-							</select>
-						</div>
-					</div>
-					<div class="table-responsive">
-						<table class="table table-dark table-sm" id="notesTable">
-							<thead>
-								<tr>
-									<th onclick="sortTable('notes', 'id')">ID <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('notes', 'address')">Adresse <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('notes', 'text')">Notiztext <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('notes', 'createdBy')">Erstellt von <i class="bi bi-arrow-down-up"></i></th>
-									<th onclick="sortTable('notes', 'createdAt')">Datum <i class="bi bi-arrow-down-up"></i></th>
-									<th>Aktionen</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td colspan="6" class="text-center text-muted">
-										<div class="spinner-border spinner-border-sm me-2"></div>Notizen werden geladen...
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<nav id="notesPagination" class="d-flex justify-content-center mt-3"></nav>
-				</div>
-			</div>
-		</div>
-
-		<!-- IMPORT SECTION -->
-		<div class="app-section" id="importSection">
-			<h2 class="text-light mb-3">Import</h2>
-			<div class="content-card">
-				<div class="content-card-header">
-					<h5 class="mb-0 text-light">Excel Import</h5>
-				</div>
-				<div class="content-card-body">
-					<div class="alert alert-warning mb-3">
-						<h6 class="alert-heading">
-							<i class="bi bi-exclamation-triangle me-2"></i>Wichtige Hinweise für große Dateien
-						</h6>
-						<ul class="mb-2">
-							<li><strong>Große Dateien (>50MB):</strong> Import kann bis zu 3 Stunden dauern</li>
-							<li><strong>Mittlere Dateien (20-50MB):</strong> Import dauert 1-2 Stunden</li>
-							<li><strong>Kleine Dateien (<20MB):</strong> Import dauert 5-60 Minuten</li>
-						</ul>
-						<hr>
-						<strong>Während des Imports unbedingt beachten:</strong>
-						<ul class="mb-0 mt-2">
-							<li>✅ Browser-Tab geöffnet lassen</li>
-							<li>✅ Computer nicht in Standby versetzen</li>
-							<li>✅ Seite nicht neu laden</li>
-							<li>❌ Browser nicht schließen</li>
-						</ul>
-					</div>
-					
-					<form class="import-form" id="importForm">
-						<div class="border border-2 border-dashed border-primary rounded p-4 text-center mb-3 file-input"
-							onclick="document.getElementById('fileInput').click()"
-							style="cursor:pointer;background:#2a2a2a;transition:all 0.3s ease;">
-							<input type="file" id="fileInput" accept=".xlsx,.xls" class="d-none">
-							<i class="bi bi-cloud-upload display-6 text-primary mb-2"></i>
-							<p class="mb-1 text-light">Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher</p>
-							<small class="text-muted">Unterstützte Formate: .xlsx, .xls | Empfohlen: <20MB für schnelleren Import</small>
-						</div>
-						
-						<div class="d-flex gap-2 align-items-center flex-wrap">
-							<button type="submit" class="btn btn-primary">
-								<i class="bi bi-upload me-1"></i>Datei importieren
-							</button>
-							<button type="button" class="btn btn-outline-secondary clear-file-btn" 
-									onclick="clearSelectedFile()" style="display:none;">
-								<i class="bi bi-x-circle me-1"></i>Datei entfernen
-							</button>
-							<button type="button" class="btn btn-outline-info btn-sm" onclick="requestNotificationPermission()">
-								<i class="bi bi-bell me-1"></i>Browser-Benachrichtigungen aktivieren
-							</button>
-						</div>
-						
-						<small class="text-muted mt-2 d-block">
-							<i class="bi bi-info-circle me-1"></i>
-							Tipp: Aktivieren Sie Browser-Benachrichtigungen, um informiert zu werden, wenn der Import abgeschlossen ist.
-						</small>
-					</form>
-					<div id="importResult" class="mt-3"></div>
-				</div>
-			</div>
-		</div>
-	</main>
-
-	<!-- FOOTER -->
-	<footer class="app-footer">
-		<div class="d-flex align-items-center w-100">
-			<span class="text-light me-3">SimpleSalesman v0.0.9</span>
-			<div class="ms-auto">
-				<small class="text-muted">
-					<i class="bi bi-check-circle-fill text-success me-1"></i>System Online
-				</small>
-			</div>
-		</div>
-	</footer>
-
-	<!-- NOTES MODAL -->
-	<div class="modal fade" id="notesModal" tabindex="-1">
-		<div class="modal-dialog">
-			<div class="modal-content bg-dark">
-				<div class="modal-header border-bottom border-secondary">
-					<h5 class="modal-title text-light" id="modalTitle">Notizen für Adresse</h5>
-					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-				</div>
-				<div class="modal-body">
-					<div class="mb-3">
-						<h6 class="text-light">Bestehende Notizen:</h6>
-						<div id="modalNoteList" class="bg-secondary rounded p-3 mb-3" style="max-height:200px;overflow-y:auto;">
-							<p class="text-muted mb-0 loading">Notizen werden geladen...</p>
-						</div>
-						<div class="mb-3">
-							<h6 class="text-light">Zugeordnete Projekte:</h6>
-							<div id="modalProjectList" class="bg-secondary rounded p-3 mb-3" style="max-height:150px;overflow-y:auto;">
-								<p class="text-muted mb-0 loading">Projekte werden geladen…</p>
+				<!-- Table View -->
+				<div class="card" id="addressesTableView">
+					<div class="card-header">
+						<div class="row g-3 align-items-center">
+							<div class="col-md-8">
+								<input type="text" class="form-control" id="addressSearchInput"
+									placeholder="Adressen durchsuchen..." onkeyup="filterTable('addresses')">
+							</div>
+							<div class="col-md-4">
+								<select class="form-select" id="addressPageSize" onchange="changePageSize('addresses')">
+									<option value="10">10 pro Seite</option>
+									<option value="20" selected>20 pro Seite</option>
+									<option value="50">50 pro Seite</option>
+								</select>
 							</div>
 						</div>
 					</div>
-					<form class="note-form" id="modalNoteForm">
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0" id="addressesTable">
+								<thead>
+									<tr>
+										<th onclick="sortTable('addresses', 'plz')">PLZ <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('addresses', 'street')">Straße <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('addresses', 'number')">Nr. <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('addresses', 'region')">Region <i class="bi bi-arrow-down-up"></i></th>
+										<th>Projekte</th>
+										<th width="120">Aktionen</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td colspan="6" class="text-center p-4">
+											<div class="spinner me-2"></div>
+											Adressen werden geladen...
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<nav id="addressesPagination"></nav>
+					</div>
+				</div>
+
+				<!-- Tree View -->
+				<div class="card" id="addressesTreeView" style="display: none;">
+					<div class="card-body">
+						<nav class="breadcrumb" id="breadcrumb">
+							<span class="breadcrumb-item active">PLZ auswählen</span>
+						</nav>
+						
+						<button class="btn btn-secondary btn-sm mb-3" id="backButton" onclick="goBack()" style="display: none;">
+							<i class="bi bi-arrow-left"></i>
+							Zurück
+						</button>
+
+						<div class="tree-container">
+							<div id="plzSelection" class="tree-level">
+								<div class="tree-title">
+									<i class="bi bi-hash"></i>
+									Verfügbare Postleitzahlen
+								</div>
+								<div id="plzGrid" class="tree-grid">
+									<div class="tree-item">
+										<div class="spinner"></div>
+									</div>
+								</div>
+							</div>
+
+							<div id="streetSelection" class="tree-level" style="display: none;">
+								<div class="tree-title">
+									<i class="bi bi-signpost"></i>
+									Straßen auswählen
+								</div>
+								<div id="streetGrid" class="tree-grid"></div>
+							</div>
+
+							<div id="numberSelection" class="tree-level" style="display: none;">
+								<div class="tree-title">
+									<i class="bi bi-house-door"></i>
+									Hausnummern auswählen
+								</div>
+								<div id="numberGrid" class="tree-grid"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Notes Section -->
+			<div class="section" id="notesSection">
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h1 class="h3 mb-0">Notizen</h1>
+				</div>
+
+				<div class="card">
+					<div class="card-header">
+						<div class="row g-3 align-items-center">
+							<div class="col-md-8">
+								<input type="text" class="form-control" id="notesSearchInput"
+									placeholder="Notizen durchsuchen..." onkeyup="filterTable('notes')">
+							</div>
+							<div class="col-md-4">
+								<select class="form-select" id="notesPageSize" onchange="changePageSize('notes')">
+									<option value="10">10 pro Seite</option>
+									<option value="20" selected>20 pro Seite</option>
+									<option value="50">50 pro Seite</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0" id="notesTable">
+								<thead>
+									<tr>
+										<th onclick="sortTable('notes', 'id')">ID <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('notes', 'address')">Adresse <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('notes', 'text')">Inhalt <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('notes', 'createdBy')">Erstellt von <i class="bi bi-arrow-down-up"></i></th>
+										<th onclick="sortTable('notes', 'createdAt')">Datum <i class="bi bi-arrow-down-up"></i></th>
+										<th width="150">Aktionen</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td colspan="6" class="text-center p-4">
+											<div class="spinner me-2"></div>
+											Notizen werden geladen...
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<nav id="notesPagination"></nav>
+					</div>
+				</div>
+			</div>
+
+			<!-- Import Section -->
+			<div class="section" id="importSection">
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h1 class="h3 mb-0">Import</h1>
+				</div>
+
+				<div class="card">
+					<div class="card-header">
+						<h5 class="card-title">Excel Datei importieren</h5>
+					</div>
+					<div class="card-body">
+						<div class="alert alert-warning">
+							<div class="d-flex">
+								<i class="bi bi-exclamation-triangle me-2 mt-1"></i>
+								<div>
+									<strong>Wichtige Hinweise:</strong>
+									<ul class="mb-2 mt-2">
+										<li>Große Dateien (>50MB): bis zu 3 Stunden</li>
+										<li>Mittlere Dateien (20-50MB): 1-2 Stunden</li>
+										<li>Kleine Dateien (<20MB): 5-60 Minuten</li>
+									</ul>
+									<strong>Während des Imports:</strong> Browser-Tab geöffnet lassen, Computer nicht in Standby versetzen
+								</div>
+							</div>
+						</div>
+
+						<form id="importForm">
+							<div class="import-zone" onclick="document.getElementById('fileInput').click()">
+								<input type="file" id="fileInput" accept=".xlsx,.xls" class="d-none">
+								<i class="bi bi-cloud-upload" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+								<h6 class="mb-2">Excel-Datei auswählen</h6>
+								<p class="text-muted mb-1">Klicken oder Datei hierher ziehen</p>
+								<small class="text-muted">Unterstützte Formate: .xlsx, .xls</small>
+							</div>
+
+							<div class="d-flex gap-2 mt-3">
+								<button type="submit" class="btn btn-primary">
+									<i class="bi bi-upload"></i>
+									Import starten
+								</button>
+								<button type="button" class="btn btn-secondary" onclick="clearSelectedFile()" id="clearFileBtn" style="display: none;">
+									<i class="bi bi-x-circle"></i>
+									Datei entfernen
+								</button>
+								<button type="button" class="btn btn-secondary" onclick="requestNotificationPermission()">
+									<i class="bi bi-bell"></i>
+									Benachrichtigungen aktivieren
+								</button>
+							</div>
+						</form>
+
+						<div id="importResult" class="mt-3"></div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+
+	<!-- Notes Modal -->
+	<div class="modal fade" id="notesModal" tabindex="-1">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="modalTitle">Notizen</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<!-- Address Info -->
+					<div class="mb-4">
+						<h6>Adresse</h6>
+						<div class="bg-dark p-3 rounded" id="modalAddressInfo">
+							<span class="text-muted">Lädt...</span>
+						</div>
+					</div>
+
+					<!-- Projects -->
+					<div class="mb-4">
+						<h6>Zugeordnete Projekte</h6>
+						<div id="modalProjectList" class="bg-dark p-3 rounded" style="max-height: 150px; overflow-y: auto;">
+							<span class="text-muted">Projekte werden geladen...</span>
+						</div>
+					</div>
+
+					<!-- Existing Notes -->
+					<div class="mb-4">
+						<h6>Vorhandene Notizen</h6>
+						<div id="modalNotesList" style="max-height: 300px; overflow-y: auto;">
+							<div class="text-center p-3">
+								<div class="spinner me-2"></div>
+								Notizen werden geladen...
+							</div>
+						</div>
+					</div>
+
+					<!-- Add New Note -->
+					<form id="modalNoteForm">
 						<div class="mb-3">
-							<label for="modalNewNote" class="form-label text-light">Neue Notiz hinzufügen:</label>
-							<textarea class="form-control" id="modalNewNote" rows="3" placeholder="Neue Notiz schreiben..."></textarea>
+							<label for="modalNewNote" class="form-label">Neue Notiz hinzufügen</label>
+							<textarea class="form-control" id="modalNewNote" rows="3" 
+								placeholder="Notiz eingeben..."></textarea>
 						</div>
 						<button type="submit" class="btn btn-primary">
-							<i class="bi bi-save me-1"></i>Notiz speichern
+							<i class="bi bi-save"></i>
+							Notiz speichern
 						</button>
 					</form>
 				</div>
@@ -394,10 +891,15 @@
 		</div>
 	</div>
 
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- Sidebar Overlay -->
+	<div class="position-fixed top-0 start-0 w-100 h-100 d-md-none" 
+		 id="sidebarOverlay" 
+		 style="background: rgba(0,0,0,0.5); z-index: 1050; display: none;"
+		 onclick="toggleSidebar()"></div>
 
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 	<script>
-		// Global State
+		// Global State Management
 		const AppState = {
 			addresses: [],
 			notes: [],
@@ -440,6 +942,14 @@
 				const street = Utils.extractStreet(addr);
 				const number = Utils.extractNumber(addr);
 				return `${plz} ${street} ${number}`.trim();
+			},
+			showNotification: (title, body, type = 'info') => {
+				if ('Notification' in window && Notification.permission === 'granted') {
+					new Notification(title, {
+						body,
+						icon: '/logo_saleman_original.png'
+					});
+				}
 			}
 		};
 
@@ -455,11 +965,24 @@
 				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 				return res.json();
 			},
+			async fetchAllNotes() {
+				const res = await fetch('/api/v1/notes', { headers: Utils.getHeaders() });
+				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+				return res.json();
+			},
 			async createNote(addressId, text, createdBy) {
 				const res = await fetch(`/api/v1/notes/${addressId}`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json', ...Utils.getHeaders() },
 					body: JSON.stringify({ text, createdBy })
+				});
+				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+				return res.json();
+			},
+			async deleteNote(noteId) {
+				const res = await fetch(`/api/v1/notes/note/${noteId}`, {
+					method: 'DELETE',
+					headers: Utils.getHeaders()
 				});
 				if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 				return res.json();
@@ -500,15 +1023,21 @@
 					return {
 						columns: ['plz', 'street', 'number', 'region', 'projects', 'actions'],
 						renderRow: (addr) => {
-							const projects = (addr.projects || []).map(p => `<span class="project-tag">${p.status || 'Unbekannt'}</span>`).join('');
+							const projects = (addr.projects || []).map(p => {
+								const status = p.status || 'unknown';
+								const statusClass = status === 'completed' ? 'status-completed' : 
+													status === 'pending' ? 'status-pending' : 
+													status === 'cancelled' ? 'status-cancelled' : '';
+								return `<span class="project-tag ${statusClass}">${status}</span>`;
+							}).join('');
 							return [
 								Utils.extractPlz(addr) || '-',
 								Utils.extractStreet(addr) || '-',
 								Utils.extractNumber(addr) || '-',
 								addr.regionName || '-',
 								projects || '-',
-								`<button onclick="openNotesModal(${addr.id})" class="btn btn-sm btn-primary">
-									<i class="bi bi-journal-text me-1"></i>Notizen
+								`<button onclick="openNotesModal(${addr.id})" class="btn btn-primary btn-sm">
+									<i class="bi bi-journal-text"></i>
 								</button>`
 							];
 						}
@@ -519,16 +1048,21 @@
 						renderRow: (note) => {
 							const addressStr = Utils.getAddressString(note.address);
 							const dateStr = note.createdAt ? new Date(note.createdAt).toLocaleString('de-DE') : '-';
-							const textPreview = (note.text || '').length > 100 ? (note.text || '').substring(0, 100) + '...' : (note.text || '');
+							const textPreview = (note.text || '').length > 80 ? (note.text || '').substring(0, 80) + '...' : (note.text || '');
 							return [
 								note.id || '-',
 								addressStr,
 								`<span title="${note.text || ''}">${textPreview}</span>`,
 								note.createdBy || '-',
 								dateStr,
-								`<button onclick="openNotesModal(${note.address?.id})" class="btn btn-sm btn-primary">
-									<i class="bi bi-eye me-1"></i>Anzeigen
-								</button>`
+								`<div class="d-flex gap-1">
+									<button onclick="openNotesModal(${note.address?.id})" class="btn btn-primary btn-sm">
+										<i class="bi bi-eye"></i>
+									</button>
+									<button onclick="deleteNote(${note.id})" class="btn btn-danger btn-sm">
+										<i class="bi bi-trash"></i>
+									</button>
+								</div>`
 							];
 						}
 					};
@@ -539,7 +1073,6 @@
 				const state = AppState.tables[type];
 				const data = type === 'addresses' ? AppState.addresses : AppState.notes;
 				
-				// Filter
 				let filtered = data.filter(item => {
 					if (!state.search) return true;
 					const searchString = type === 'addresses' 
@@ -548,7 +1081,6 @@
 					return searchString.includes(state.search.toLowerCase());
 				});
 
-				// Sort
 				filtered.sort((a, b) => {
 					let aVal, bVal;
 					if (type === 'addresses') {
@@ -592,11 +1124,14 @@
 				tbody.innerHTML = '';
 
 				if (data.length === 0) {
-					tbody.innerHTML = `<tr><td colspan="${config.columns.length}" class="text-center text-muted">Keine ${type === 'addresses' ? 'Adressen' : 'Notizen'} gefunden</td></tr>`;
+					tbody.innerHTML = `<tr><td colspan="${config.columns.length}" class="text-center p-4 text-muted">Keine ${type === 'addresses' ? 'Adressen' : 'Notizen'} gefunden</td></tr>`;
 				} else {
 					data.forEach(item => {
-						const row = config.renderRow(item);
-						tbody.innerHTML += `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+						const row = document.createElement('tr');
+						row.className = 'fade-in';
+						const cells = config.renderRow(item);
+						row.innerHTML = cells.map(cell => `<td>${cell}</td>`).join('');
+						tbody.appendChild(row);
 					});
 				}
 			},
@@ -607,12 +1142,12 @@
 				if (totalPages <= 1) return;
 
 				const state = AppState.tables[type];
-				pagination.className = 'pagination pagination-sm justify-content-center mt-3';
+				pagination.className = 'pagination';
 
 				// Previous
 				const prevLi = document.createElement('li');
 				prevLi.className = `page-item ${state.page === 1 ? 'disabled' : ''}`;
-				prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${state.page > 1 ? `changePage('${type}', ${state.page - 1})` : ''}">‹ Zurück</a>`;
+				prevLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${state.page > 1 ? `changePage('${type}', ${state.page - 1})` : ''}">‹</a>`;
 				pagination.appendChild(prevLi);
 
 				// Pages
@@ -630,7 +1165,7 @@
 				// Next
 				const nextLi = document.createElement('li');
 				nextLi.className = `page-item ${state.page === totalPages ? 'disabled' : ''}`;
-				nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${state.page < totalPages ? `changePage('${type}', ${state.page + 1})` : ''}">Weiter ›</a>`;
+				nextLi.innerHTML = `<a class="page-link" href="#" onclick="event.preventDefault(); ${state.page < totalPages ? `changePage('${type}', ${state.page + 1})` : ''}">›</a>`;
 				pagination.appendChild(nextLi);
 			},
 
@@ -644,7 +1179,7 @@
 			}
 		};
 
-		// Data Loading
+		// Data Loading Functions
 		async function loadData() {
 			try {
 				AppState.addresses = await API.fetchAddresses();
@@ -655,27 +1190,26 @@
 			} catch (error) {
 				console.error('Error loading addresses:', error);
 				document.querySelector('#addressesTable tbody').innerHTML = 
-					`<tr><td colspan="6" class="text-center text-danger">Fehler: ${error.message}</td></tr>`;
+					`<tr><td colspan="6" class="text-center text-danger p-4">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
 		async function loadAllNotes() {
-			if (AppState.addresses.length === 0) return;
 			try {
-				AppState.notes = [];
-				for (const address of AppState.addresses) {
-					try {
-						const notes = await API.fetchNotes(address.id);
-						notes.forEach(note => { note.address = address; });
-						AppState.notes.push(...notes);
-					} catch (error) {
-						console.warn(`Error loading notes for address ${address.id}:`, error);
-					}
-				}
+				const notes = await API.fetchAllNotes();
+				AppState.notes = notes.map(note => {
+					const address = AppState.addresses.find(a => a.id === note.addressId);
+					return {
+						...note,
+						address: address || { id: note.addressId, addressText: note.addressText }
+					};
+				});
 				console.log('Loaded notes:', AppState.notes.length);
 				TableManager.render('notes');
 			} catch (error) {
 				console.error('Error loading notes:', error);
+				document.querySelector('#notesTable tbody').innerHTML = 
+					`<tr><td colspan="6" class="text-center text-danger p-4">Fehler: ${error.message}</td></tr>`;
 			}
 		}
 
@@ -712,18 +1246,18 @@
 		}
 
 		function showSection(sectionName) {
-			document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+			document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+			document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
 			
 			document.getElementById(sectionName + 'Section').classList.add('active');
 			document.getElementById('nav-' + sectionName).classList.add('active');
 			
+			// Close mobile sidebar
 			const sidebar = document.getElementById('sidebar');
-			const overlay = document.getElementById('overlay');
+			const overlay = document.getElementById('sidebarOverlay');
 			if (sidebar.classList.contains('show')) {
 				sidebar.classList.remove('show');
-				overlay.classList.remove('show');
-				document.body.style.overflow = '';
+				overlay.style.display = 'none';
 			}
 
 			if (sectionName === 'notes' && AppState.notes.length === 0 && AppState.addresses.length > 0) {
@@ -733,53 +1267,53 @@
 
 		function showAddressView(view) {
 			AppState.currentView = view;
-			document.querySelectorAll('#view-table, #view-navigation').forEach(btn => {
-				btn.classList.remove('active', 'btn-primary');
-				btn.classList.add('btn-outline-primary');
-			});
-			document.getElementById(`view-${view}`).classList.add('active', 'btn-primary');
-			document.getElementById(`view-${view}`).classList.remove('btn-outline-primary');
+			
+			// Update button states
+			document.getElementById('view-table').className = view === 'table' ? 'btn btn-primary active' : 'btn btn-secondary';
+			document.getElementById('view-tree').className = view === 'tree' ? 'btn btn-primary active' : 'btn btn-secondary';
 
-			document.getElementById('addressesTableBox').style.display = view === 'table' ? 'block' : 'none';
-			document.getElementById('addressesNavigationBox').style.display = view === 'navigation' ? 'block' : 'none';
+			// Toggle views
+			document.getElementById('addressesTableView').style.display = view === 'table' ? 'block' : 'none';
+			document.getElementById('addressesTreeView').style.display = view === 'tree' ? 'block' : 'none';
 		}
 
 		function toggleSidebar() {
 			const sidebar = document.getElementById('sidebar');
-			const overlay = document.getElementById('overlay');
+			const overlay = document.getElementById('sidebarOverlay');
 			const isShown = sidebar.classList.contains('show');
 			
 			sidebar.classList.toggle('show', !isShown);
-			overlay.classList.toggle('show', !isShown);
-			document.body.style.overflow = isShown ? '' : 'hidden';
+			overlay.style.display = isShown ? 'none' : 'block';
 		}
 
-		// Navigation Functions
+		// Tree Navigation Functions
 		function showAllPlzs() {
 			const plzs = [...new Set(AppState.addresses.map(a => Utils.extractPlz(a)).filter(p => p))].sort();
-			const el = document.getElementById('plzList');
-			el.innerHTML = '';
+			const grid = document.getElementById('plzGrid');
+			grid.innerHTML = '';
 
 			if (plzs.length === 0) {
-				el.innerHTML = '<p class="text-muted">Keine PLZs verfügbar.</p>';
+				grid.innerHTML = '<div class="tree-item">Keine PLZs verfügbar</div>';
 				return;
 			}
 
 			plzs.forEach(plz => {
-				const btn = document.createElement('button');
-				btn.className = 'btn btn-sm btn-outline-primary';
-				btn.textContent = plz;
-				btn.onclick = () => selectPlz(plz);
-				el.appendChild(btn);
+				const item = document.createElement('div');
+				item.className = 'tree-item';
+				item.textContent = plz;
+				item.onclick = () => selectPlz(plz);
+				grid.appendChild(item);
 			});
 		}
 
 		function selectPlz(plz) {
 			AppState.navigation = { step: 'street', plz, street: null, number: null };
+			
 			document.getElementById('breadcrumb').innerHTML = `
-				<li class="breadcrumb-item">PLZ: ${plz}</li>
-				<li class="breadcrumb-item active">Straße auswählen</li>
+				<span class="breadcrumb-item">PLZ: ${plz}</span>
+				<span class="breadcrumb-item active">Straße auswählen</span>
 			`;
+			
 			document.getElementById('backButton').style.display = 'block';
 			document.getElementById('plzSelection').style.display = 'none';
 			document.getElementById('streetSelection').style.display = 'block';
@@ -791,25 +1325,27 @@
 				.filter(s => s)
 			)].sort();
 
-			const el = document.getElementById('streetList');
-			el.innerHTML = '';
+			const grid = document.getElementById('streetGrid');
+			grid.innerHTML = '';
 			streets.forEach(street => {
-				const btn = document.createElement('button');
-				btn.className = 'btn btn-sm btn-outline-primary';
-				btn.textContent = street;
-				btn.onclick = () => selectStreet(street);
-				el.appendChild(btn);
+				const item = document.createElement('div');
+				item.className = 'tree-item';
+				item.textContent = street;
+				item.onclick = () => selectStreet(street);
+				grid.appendChild(item);
 			});
 		}
 
 		function selectStreet(street) {
 			AppState.navigation.step = 'number';
 			AppState.navigation.street = street;
+			
 			document.getElementById('breadcrumb').innerHTML = `
-				<li class="breadcrumb-item">PLZ: ${AppState.navigation.plz}</li>
-				<li class="breadcrumb-item">Straße: ${street}</li>
-				<li class="breadcrumb-item active">Hausnummer auswählen</li>
+				<span class="breadcrumb-item">PLZ: ${AppState.navigation.plz}</span>
+				<span class="breadcrumb-item">Straße: ${street}</span>
+				<span class="breadcrumb-item active">Hausnummer auswählen</span>
 			`;
+			
 			document.getElementById('streetSelection').style.display = 'none';
 			document.getElementById('numberSelection').style.display = 'block';
 
@@ -822,14 +1358,14 @@
 					return !isNaN(numA) && !isNaN(numB) ? numA - numB : a.localeCompare(b);
 				});
 
-			const el = document.getElementById('numberList');
-			el.innerHTML = '';
+			const grid = document.getElementById('numberGrid');
+			grid.innerHTML = '';
 			numbers.forEach(number => {
-				const btn = document.createElement('button');
-				btn.className = 'btn btn-sm btn-outline-primary';
-				btn.textContent = number;
-				btn.onclick = () => selectNumber(number);
-				el.appendChild(btn);
+				const item = document.createElement('div');
+				item.className = 'tree-item';
+				item.textContent = number;
+				item.onclick = () => selectNumber(number);
+				grid.appendChild(item);
 			});
 		}
 
@@ -847,7 +1383,7 @@
 			if (nav.step === 'street') {
 				nav.step = 'plz';
 				nav.plz = null;
-				document.getElementById('breadcrumb').innerHTML = '<li class="breadcrumb-item active">PLZ auswählen</li>';
+				document.getElementById('breadcrumb').innerHTML = '<span class="breadcrumb-item active">PLZ auswählen</span>';
 				document.getElementById('backButton').style.display = 'none';
 				document.getElementById('plzSelection').style.display = 'block';
 				document.getElementById('streetSelection').style.display = 'none';
@@ -856,8 +1392,8 @@
 				nav.step = 'street';
 				nav.street = null;
 				document.getElementById('breadcrumb').innerHTML = `
-					<li class="breadcrumb-item">PLZ: ${nav.plz}</li>
-					<li class="breadcrumb-item active">Straße auswählen</li>
+					<span class="breadcrumb-item">PLZ: ${nav.plz}</span>
+					<span class="breadcrumb-item active">Straße auswählen</span>
 				`;
 				document.getElementById('streetSelection').style.display = 'block';
 				document.getElementById('numberSelection').style.display = 'none';
@@ -869,25 +1405,32 @@
 			AppState.selectedAddressId = addressId;
 			const address = AppState.addresses.find(a => a.id === addressId);
 			if (address) {
-				document.getElementById('modalTitle').textContent = `Notizen für ${Utils.getAddressString(address)}`;
+				document.getElementById('modalTitle').textContent = `Notizen - ${Utils.getAddressString(address)}`;
+				document.getElementById('modalAddressInfo').innerHTML = `
+					<div class="d-flex justify-content-between align-items-center">
+						<span>${Utils.getAddressString(address)}</span>
+						<small class="text-muted">ID: ${address.id}</small>
+					</div>
+				`;
 				new bootstrap.Modal(document.getElementById('notesModal')).show();
 				loadNotesInModal();
 				loadProjectsInModal(address);
 			}
 		}
+
 		function loadProjectsInModal(address) {
 			const el = document.getElementById('modalProjectList');
-			el.innerHTML = '<p class="text-muted text-center"><div class="spinner-border spinner-border-sm me-2"></div>Projekte werden geladen…</p>';
+			el.innerHTML = '<div class="text-center"><div class="spinner me-2"></div>Projekte werden geladen…</div>';
 
 			try {
 				const projects = address.projects || [];
 				if (projects.length === 0) {
-					el.innerHTML = '<p class="text-muted text-center"><i class="bi bi-folder-x me-2"></i>Keine Projekte vorhanden.</p>';
+					el.innerHTML = '<div class="text-center text-muted"><i class="bi bi-folder-x me-2"></i>Keine Projekte vorhanden.</div>';
 					return;
 				}
 
 				el.innerHTML = '';
-				projects.forEach(project => {
+				projects.forEach((project, index) => {
 					const id = project.id || '-';
 					const status = project.status || '-';
 					const operator = project.operator || '-';
@@ -896,48 +1439,90 @@
 					const end = project.salesEnd ? new Date(project.salesEnd).toLocaleDateString('de-DE') : '-';
 					const homes = project.numberOfHomes || '-';
 
+					const statusClass = status === 'completed' ? 'status-completed' : 
+										status === 'pending' ? 'status-pending' : 
+										status === 'cancelled' ? 'status-cancelled' : '';
+
 					const div = document.createElement('div');
-					div.className = 'note-item'; // oder eigene CSS-Klasse z.B. 'project-item'
+					div.className = 'note-item fade-in';
 					div.innerHTML = `
-						<div class="text-light fw-semibold">Projekt-ID: ${id} | Status: ${status}</div>
-						<div class="note-meta">
-							Anbieter: ${operator} | Preis: ${price} | Einheiten: ${homes}<br>
-							Verkauf: ${start} bis ${end}
+						<div class="d-flex justify-content-between align-items-start">
+							<div>
+								<div class="d-flex align-items-center gap-2 mb-1">
+									<strong>Projekt ${id}</strong>
+									<span class="project-tag ${statusClass}">${status}</span>
+								</div>
+								<div class="text-muted small">
+									<div>Anbieter: ${operator} | Preis: ${price}</div>
+									<div>Einheiten: ${homes} | Laufzeit: ${start} - ${end}</div>
+								</div>
+							</div>
 						</div>
 					`;
 					el.appendChild(div);
 				});
 			} catch (error) {
 				console.error('Error loading projects:', error);
-				el.innerHTML = `<p class="text-danger text-center"><i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message}</p>`;
+				el.innerHTML = `<div class="text-center text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message}</div>`;
 			}
 		}
+
 		async function loadNotesInModal() {
-			const el = document.getElementById('modalNoteList');
-			el.innerHTML = '<p class="text-muted text-center"><div class="spinner-border spinner-border-sm me-2"></div>Notizen werden geladen...</p>';
+			const el = document.getElementById('modalNotesList');
+			el.innerHTML = '<div class="text-center p-3"><div class="spinner me-2"></div>Notizen werden geladen...</div>';
 			
 			try {
 				const notes = await API.fetchNotes(AppState.selectedAddressId);
 				el.innerHTML = '';
 
 				if (!notes || notes.length === 0) {
-					el.innerHTML = '<p class="text-muted text-center"><i class="bi bi-journal-x me-2"></i>Keine Notizen vorhanden.</p>';
+					el.innerHTML = '<div class="text-center text-muted p-3"><i class="bi bi-journal-x me-2"></i>Keine Notizen vorhanden.</div>';
 					return;
 				}
 
 				notes.forEach(note => {
 					const div = document.createElement('div');
-					div.className = 'note-item';
-					const timeString = note.createdAt ? ' | ' + new Date(note.createdAt).toLocaleString('de-DE') : '';
+					div.className = 'note-item fade-in';
+					const timeString = note.createdAt ? new Date(note.createdAt).toLocaleString('de-DE') : 'Unbekannt';
 					div.innerHTML = `
-						<div class="text-light">${note.text || 'Notiz ohne Text'}</div>
-						<div class="note-meta">Von: ${note.createdBy || 'Unbekannt'}${timeString}</div>
+						<div class="note-content">${note.text || 'Notiz ohne Text'}</div>
+						<div class="note-meta">
+							<span>Von: ${note.createdBy || 'Unbekannt'} | ${timeString}</span>
+							<div class="note-actions">
+								<button onclick="deleteNote(${note.id})" class="btn btn-danger btn-sm">
+									<i class="bi bi-trash"></i>
+								</button>
+							</div>
+						</div>
 					`;
 					el.appendChild(div);
 				});
 			} catch (error) {
 				console.error('Error loading notes:', error);
-				el.innerHTML = `<p class="text-danger text-center"><i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message}</p>`;
+				el.innerHTML = `<div class="text-center text-danger p-3"><i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message}</div>`;
+			}
+		}
+
+		// Note Management
+		async function deleteNote(noteId) {
+			if (!confirm('Möchten Sie diese Notiz wirklich löschen?')) return;
+
+			try {
+				await API.deleteNote(noteId);
+				
+				// Remove from local state
+				AppState.notes = AppState.notes.filter(n => n.id !== noteId);
+				
+				// Refresh displays
+				TableManager.render('notes');
+				if (AppState.selectedAddressId) {
+					loadNotesInModal();
+				}
+
+				Utils.showNotification('SimpleSalesman', 'Notiz erfolgreich gelöscht');
+			} catch (error) {
+				console.error('Error deleting note:', error);
+				alert(`Fehler beim Löschen der Notiz: ${error.message}`);
 			}
 		}
 
@@ -965,28 +1550,27 @@
 
 		// Import Functions
 		function updateFileInputDisplay(file = null) {
-			const area = document.querySelector('.file-input');
-			const icon = area.querySelector('i');
-			const text = area.querySelector('p');
-			const subtext = area.querySelector('small');
-			const clearBtn = document.querySelector('.clear-file-btn');
+			const zone = document.querySelector('.import-zone');
+			const clearBtn = document.getElementById('clearFileBtn');
 
 			if (file) {
 				const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
-				area.style.borderColor = '#28a745';
-				area.style.backgroundColor = 'rgba(40, 167, 69, 0.1)';
-				icon.className = 'bi bi-file-earmark-check display-6 text-success mb-2';
-				text.innerHTML = `<strong>Datei ausgewählt:</strong><br>${file.name}`;
-				subtext.textContent = `Größe: ${sizeInMB} MB | Klicken zum Ändern`;
-				subtext.className = 'text-success';
-				clearBtn.style.display = 'inline-block';
+				zone.classList.add('file-selected');
+				zone.innerHTML = `
+					<i class="bi bi-file-earmark-check" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
+					<h6 class="mb-2 text-success">Datei ausgewählt</h6>
+					<p class="mb-1"><strong>${file.name}</strong></p>
+					<small class="text-muted">Größe: ${sizeInMB} MB | Klicken zum Ändern</small>
+				`;
+				clearBtn.style.display = 'inline-flex';
 			} else {
-				area.style.borderColor = '';
-				area.style.backgroundColor = '#2a2a2a';
-				icon.className = 'bi bi-cloud-upload display-6 text-primary mb-2';
-				text.innerHTML = 'Klicken Sie hier oder ziehen Sie eine Excel-Datei hierher';
-				subtext.innerHTML = 'Unterstützte Formate: .xlsx, .xls | Empfohlen: <20MB für schnelleren Import';
-				subtext.className = 'text-muted';
+				zone.classList.remove('file-selected');
+				zone.innerHTML = `
+					<i class="bi bi-cloud-upload" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+					<h6 class="mb-2">Excel-Datei auswählen</h6>
+					<p class="text-muted mb-1">Klicken oder Datei hierher ziehen</p>
+					<small class="text-muted">Unterstützte Formate: .xlsx, .xls</small>
+				`;
 				clearBtn.style.display = 'none';
 			}
 		}
@@ -1003,20 +1587,14 @@
 			}
 
 			if (Notification.permission === 'granted') {
-				new Notification('SimpleSalesman', {
-					body: 'Benachrichtigungen sind bereits aktiviert!',
-					icon: '/logo_saleman_original.png'
-				});
+				Utils.showNotification('SimpleSalesman', 'Benachrichtigungen sind bereits aktiviert!');
 				return;
 			}
 
 			if (Notification.permission !== 'denied') {
 				Notification.requestPermission().then(permission => {
 					if (permission === 'granted') {
-						new Notification('SimpleSalesman', {
-							body: 'Benachrichtigungen wurden aktiviert!',
-							icon: '/logo_saleman_original.png'
-						});
+						Utils.showNotification('SimpleSalesman', 'Benachrichtigungen wurden aktiviert!');
 					}
 				});
 			}
@@ -1060,6 +1638,29 @@
 			updateFileInputDisplay(this.files[0]);
 		});
 
+		// Drag and drop for file input
+		const importZone = document.querySelector('.import-zone');
+		
+		importZone.addEventListener('dragover', (e) => {
+			e.preventDefault();
+			importZone.classList.add('dragover');
+		});
+
+		importZone.addEventListener('dragleave', (e) => {
+			e.preventDefault();
+			importZone.classList.remove('dragover');
+		});
+
+		importZone.addEventListener('drop', (e) => {
+			e.preventDefault();
+			importZone.classList.remove('dragover');
+			const files = e.dataTransfer.files;
+			if (files.length > 0 && (files[0].name.endsWith('.xlsx') || files[0].name.endsWith('.xls'))) {
+				document.getElementById('fileInput').files = files;
+				updateFileInputDisplay(files[0]);
+			}
+		});
+
 		document.getElementById('importForm').addEventListener('submit', async function(e) {
 			e.preventDefault();
 			const file = document.getElementById('fileInput').files[0];
@@ -1080,18 +1681,20 @@
 			await acquireWakeLock();
 			
 			submitButton.disabled = true;
-			submitButton.innerHTML = '<div class="spinner-border spinner-border-sm me-2"></div>Import läuft...';
+			submitButton.innerHTML = '<div class="spinner me-2"></div>Import läuft...';
 			
 			const startTime = Date.now();
 			importResult.innerHTML = `
 				<div class="alert alert-warning">
 					<div class="d-flex align-items-start">
-						<div class="spinner-border spinner-border-sm me-3 mt-1"></div>
-						<div>
+						<div class="spinner me-3 mt-1"></div>
+						<div class="flex-grow-1">
 							<h6><i class="bi bi-hourglass-split me-2"></i>Import läuft</h6>
-							<p><strong>Datei:</strong> ${file.name} (${sizeInMB.toFixed(1)} MB)<br>
-							<strong>Geschätzte Dauer:</strong> ${estimatedTime}</p>
-							<div id="importTimer" class="small text-muted">Laufzeit: <span id="timerDisplay">00:00:00</span></div>
+							<div class="mb-2">
+								<strong>Datei:</strong> ${file.name} (${sizeInMB.toFixed(1)} MB)<br>
+								<strong>Geschätzte Dauer:</strong> ${estimatedTime}
+							</div>
+							<div class="small">Laufzeit: <span id="timerDisplay">00:00:00</span></div>
 						</div>
 					</div>
 				</div>
@@ -1119,17 +1722,14 @@
 					importResult.innerHTML = `
 						<div class="alert alert-success">
 							<h6><i class="bi bi-check-circle me-2"></i>Import erfolgreich!</h6>
-							<p><strong>Verarbeitete Datensätze:</strong> ${result.recordsProcessed || 'Unbekannt'}<br>
-							<strong>Dauer:</strong> ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')} Minuten</p>
+							<div>
+								<strong>Verarbeitete Datensätze:</strong> ${result.recordsProcessed || 'Unbekannt'}<br>
+								<strong>Dauer:</strong> ${totalMinutes}:${totalSeconds.toString().padStart(2, '0')} Minuten
+							</div>
 						</div>
 					`;
 					await loadData();
-					if ('Notification' in window && Notification.permission === 'granted') {
-						new Notification('SimpleSalesman Import', {
-							body: `Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.`,
-							icon: '/logo_saleman_original.png'
-						});
-					}
+					Utils.showNotification('SimpleSalesman Import', `Import erfolgreich! ${result.recordsProcessed} Datensätze verarbeitet.`);
 					setTimeout(() => updateFileInputDisplay(null), 5000);
 				} else {
 					throw new Error(result.error || 'Import fehlgeschlagen');
@@ -1140,7 +1740,7 @@
 				importResult.innerHTML = `
 					<div class="alert alert-danger">
 						<h6><i class="bi bi-exclamation-triangle me-2"></i>Import-Fehler</h6>
-						<p><strong>Fehler:</strong> ${error.message}</p>
+						<div><strong>Fehler:</strong> ${error.message}</div>
 					</div>
 				`;
 			} finally {
@@ -1148,7 +1748,7 @@
 				AppState.importInProgress = false;
 				releaseWakeLock();
 				submitButton.disabled = false;
-				submitButton.innerHTML = '<i class="bi bi-upload me-1"></i>Datei importieren';
+				submitButton.innerHTML = '<i class="bi bi-upload"></i>Import starten';
 			}
 		});
 
@@ -1167,21 +1767,21 @@
 				await loadAllNotes();
 				
 				const alertDiv = document.createElement('div');
-				alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
-				alertDiv.innerHTML = '<i class="bi bi-check-circle me-2"></i>Notiz erfolgreich gespeichert! <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+				alertDiv.className = 'alert alert-success mt-3';
+				alertDiv.innerHTML = '<i class="bi bi-check-circle me-2"></i>Notiz erfolgreich gespeichert!';
+				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('#modalNoteForm'));
 				setTimeout(() => alertDiv.remove(), 3000);
 			} catch (error) {
 				console.error('Error saving note:', error);
 				const alertDiv = document.createElement('div');
-				alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
-				alertDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('.note-form'));
+				alertDiv.className = 'alert alert-danger mt-3';
+				alertDiv.innerHTML = `<i class="bi bi-exclamation-triangle me-2"></i>Fehler: ${error.message}`;
+				document.querySelector('.modal-body').insertBefore(alertDiv, document.querySelector('#modalNoteForm'));
 				setTimeout(() => alertDiv.remove(), 5000);
 			}
 		});
 
-		// Initialize
+		// Initialize Application
 		window.addEventListener('load', function() {
 			document.getElementById('username').textContent = sessionStorage.getItem('username') || 'User';
 			const token = sessionStorage.getItem('access_token');

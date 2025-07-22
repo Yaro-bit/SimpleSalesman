@@ -18,7 +18,7 @@ import java.util.Objects;
  * This object is used for transferring note data between frontend and backend layers.
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.4
  */
 @Schema(description = "Note attached to an address")
@@ -39,6 +39,12 @@ public class NoteDto {
 
     @Schema(description = "Username of the creator", example = "john.doe")
     private String createdBy;
+
+    @Schema(description = "ID of the associated address", example = "42")
+    private Long addressId;
+
+    @Schema(description = "Address information for display purposes", example = "1234 Main Street 5")
+    private String addressText;
 
 
 
@@ -78,12 +84,30 @@ public class NoteDto {
         this.createdBy = createdBy;
     }
 
+    public Long getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(Long addressId) {
+        logger.debug("NoteDto addressId set to {}", addressId);
+        this.addressId = addressId;
+    }
+
+    public String getAddressText() {
+        return addressText;
+    }
+
+    public void setAddressText(String addressText) {
+        logger.debug("NoteDto addressText set to '{}'", addressText != null ? addressText : "<null>");
+        this.addressText = addressText;
+    }
+
 
 
     @Override
     public String toString() {
-        return String.format("NoteDto{id=%d, createdBy='%s', createdAt=%s, text='%s'}",
-                id, createdBy, createdAt, text != null ? text : "<null>");
+        return String.format("NoteDto{id=%d, createdBy='%s', createdAt=%s, addressId=%d, addressText='%s', text='%s'}",
+                id, createdBy, createdAt, addressId, addressText, text != null ? text : "<null>");
     }
 
     @Override
@@ -94,11 +118,13 @@ public class NoteDto {
         return Objects.equals(id, noteDto.id) &&
                 Objects.equals(text, noteDto.text) &&
                 Objects.equals(createdAt, noteDto.createdAt) &&
-                Objects.equals(createdBy, noteDto.createdBy);
+                Objects.equals(createdBy, noteDto.createdBy) &&
+                Objects.equals(addressId, noteDto.addressId) &&
+                Objects.equals(addressText, noteDto.addressText);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, text, createdAt, createdBy);
+        return Objects.hash(id, text, createdAt, createdBy, addressId, addressText);
     }
 }

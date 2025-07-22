@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+
 /**
  * Repository interface for managing {@link Address} entities in the SimpleSalesman application.
  *
@@ -26,8 +27,6 @@ import java.util.List;
  * @version 0.1.0
  * @since 0.0.3
  */
-
-
 public interface AddressRepository extends JpaRepository<Address, Long> {
 
     @Query("""
@@ -37,4 +36,13 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
         LEFT JOIN FETCH a.region
     """)
     List<Address> findAllWithNotesProjectsAndRegion();
+    
+    /**
+     * Retrieves all address texts for duplicate checking during import.
+     * Uses projection for better performance - only loads addressText field.
+     * 
+     * @return List of all address text strings in the database
+     */
+    @Query("SELECT a.addressText FROM Address a")
+    List<String> findAllAddressTexts();
 }

@@ -5,6 +5,8 @@ import com.simplesalesman.entity.Project;
 import com.simplesalesman.entity.Region;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -34,15 +36,19 @@ import java.util.List;
  * - [5–15] Project fields
  *
  * Error Handling:
- * - Faulty rows are skipped individually with logging to stderr
+ * - Faulty rows are skipped individually with logging
  * - Fields with invalid formats are defaulted (e.g., 0, false, null)
+ * - Too many errors trigger an exception to prevent bad imports
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.5
  */
 @Component
 public class ExcelUtil {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExcelUtil.class);
+    private static final int MAX_ERRORS = 1000; // Stop processing if too many errors
 
     /**
      * Parses the given Excel input stream and converts rows to a list of {@link Project} objects.
@@ -53,50 +59,107 @@ public class ExcelUtil {
      */
     public List<Project> parse(InputStream inputStream) throws Exception {
         List<Project> projects = new ArrayList<>();
+        int rowNum = 0;
+        int successCount = 0;
+        int errorCount = 0;
 
         try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
+            
+            if (sheet == null) {
+                throw new IllegalArgumentException("Excel file must contain at least one worksheet");
+            }
+            
             Iterator<Row> rows = sheet.iterator();
 
-            if (rows.hasNext()) rows.next(); // Skip header row
+            // Skip header row
+            if (rows.hasNext()) {
+                rows.next();
+            } else {
+                throw new IllegalArgumentException("Excel file appears to be empty");
+            }
 
             while (rows.hasNext()) {
                 Row row = rows.next();
+                rowNum = row.getRowNum();
 
                 try {
-                    Project project = new Project();
-                    Address address = new Address();
-                    Region region = new Region();
-
-                    // Set basic region and address
-                    region.setName(getCellValue(row.getCell(1)));
-                    address.setAddressText(getCellValue(row.getCell(4)));
-                    address.setRegion(region);
-                    project.setAddress(address);
-
-                    // Set project fields
-                    project.setPlannedConstructionEnd(parseDate(row.getCell(2)));
-                    project.setConstructionCompleted(parseBoolean(getCellValue(row.getCell(3))));
-                    project.setOperator(getCellValue(row.getCell(5)));
-                    project.setStatus(getCellValue(row.getCell(6)));
-                    project.setNumberOfHomes(parseInt(getCellValue(row.getCell(7))));
-                    project.setContractPresent(parseContractPresent(getCellValue(row.getCell(8))));
-                    project.setCommissionCategory(getCellValue(row.getCell(9)));
-                    project.setKgNumber(getCellValue(row.getCell(10)));
-                    project.setConstructionCompany(getCellValue(row.getCell(11)));
-                    project.setSalesStart(parseDate(row.getCell(12)));
-                    project.setSalesEnd(parseDate(row.getCell(13)));
-                    project.setProductPrice(parseDecimal(row.getCell(14)));
-                    project.setOutdoorFeePresent(parseBoolean(getCellValue(row.getCell(15))));
-
-                    projects.add(project);
+                    Project project = parseRow(row);
+                    if (project != null) {
+                        projects.add(project);
+                        successCount++;
+                    }
                 } catch (Exception e) {
-                    System.err.println("⚠️ Fehler beim Verarbeiten von Zeile " + row.getRowNum() + ": " + e.getMessage());
+                    errorCount++;
+                    logger.warn("Error parsing row {}: {}", rowNum, e.getMessage());
+                    
+                    if (errorCount > MAX_ERRORS) {
+                        throw new RuntimeException(
+                            String.format("Too many errors in Excel file (>%d). Last error at row %d: %s", 
+                                MAX_ERRORS, rowNum, e.getMessage())
+                        );
+                    }
+                }
+                
+                // Log progress every 1000 rows
+                if ((rowNum % 1000) == 0 && rowNum > 0) {
+                    logger.info("Progress: Processed {} rows, {} successful, {} errors", 
+                        rowNum, successCount, errorCount);
                 }
             }
+        } catch (Exception e) {
+            logger.error("Failed to parse Excel file at row {}: {}", rowNum, e.getMessage());
+            throw e;
+        }
+        
+        logger.info("Excel parsing complete. Total rows: {}, Success: {}, Errors: {}", 
+            rowNum, successCount, errorCount);
+        
+        if (projects.isEmpty() && errorCount > 0) {
+            throw new IllegalArgumentException("No valid data could be parsed from the Excel file");
+        }
+        
+        return projects;
+    }
+
+    private Project parseRow(Row row) throws IllegalArgumentException {
+        Project project = new Project();
+        Address address = new Address();
+        Region region = new Region();
+
+        // Validate required fields
+        String regionName = getCellValue(row.getCell(1));
+        String addressText = getCellValue(row.getCell(4));
+        
+        if (regionName.isEmpty()) {
+            throw new IllegalArgumentException("Region name is required (column B)");
+        }
+        if (addressText.isEmpty()) {
+            throw new IllegalArgumentException("Address text is required (column E)");
         }
 
-        return projects;
+        // Set basic region and address
+        region.setName(regionName);
+        address.setAddressText(addressText);
+        address.setRegion(region);
+        project.setAddress(address);
+
+        // Set project fields with safe parsing
+        project.setPlannedConstructionEnd(parseDate(row.getCell(2)));
+        project.setConstructionCompleted(parseBoolean(getCellValue(row.getCell(3))));
+        project.setOperator(getCellValue(row.getCell(5)));
+        project.setStatus(getCellValue(row.getCell(6)));
+        project.setNumberOfHomes(parseInt(getCellValue(row.getCell(7))));
+        project.setContractPresent(parseContractPresent(getCellValue(row.getCell(8))));
+        project.setCommissionCategory(getCellValue(row.getCell(9)));
+        project.setKgNumber(getCellValue(row.getCell(10)));
+        project.setConstructionCompany(getCellValue(row.getCell(11)));
+        project.setSalesStart(parseDate(row.getCell(12)));
+        project.setSalesEnd(parseDate(row.getCell(13)));
+        project.setProductPrice(parseDecimal(row.getCell(14)));
+        project.setOutdoorFeePresent(parseBoolean(getCellValue(row.getCell(15))));
+
+        return project;
     }
 
     /**
@@ -107,22 +170,34 @@ public class ExcelUtil {
      */
     private String getCellValue(Cell cell) {
         if (cell == null) return "";
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue().trim();
-            case NUMERIC:
-                if (DateUtil.isCellDateFormatted(cell)) {
-                    return cell.getLocalDateTimeCellValue().toLocalDate().toString();
-                } else {
-                    return String.valueOf(cell.getNumericCellValue()).trim();
-                }
-            case BOOLEAN:
-                return Boolean.toString(cell.getBooleanCellValue());
-            case FORMULA:
-                FormulaEvaluator evaluator = cell.getSheet().getWorkbook().getCreationHelper().createFormulaEvaluator();
-                return getCellValue(evaluator.evaluateInCell(cell));
-            default:
-                return "";
+        
+        try {
+            switch (cell.getCellType()) {
+                case STRING:
+                    return cell.getStringCellValue().trim();
+                case NUMERIC:
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        return cell.getLocalDateTimeCellValue().toLocalDate().toString();
+                    } else {
+                        // Handle integers without decimal point
+                        double numValue = cell.getNumericCellValue();
+                        if (numValue == Math.floor(numValue)) {
+                            return String.valueOf((long) numValue);
+                        }
+                        return String.valueOf(numValue).trim();
+                    }
+                case BOOLEAN:
+                    return Boolean.toString(cell.getBooleanCellValue());
+                case FORMULA:
+                    FormulaEvaluator evaluator = cell.getSheet().getWorkbook().getCreationHelper().createFormulaEvaluator();
+                    return getCellValue(evaluator.evaluateInCell(cell));
+                default:
+                    return "";
+            }
+        } catch (Exception e) {
+            logger.debug("Error reading cell value at row {} column {}: {}", 
+                cell.getRowIndex(), cell.getColumnIndex(), e.getMessage());
+            return "";
         }
     }
 
@@ -135,7 +210,8 @@ public class ExcelUtil {
     private LocalDate parseDate(Cell cell) {
         try {
             if (cell == null) return null;
-            if (DateUtil.isCellDateFormatted(cell)) {
+            
+            if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
                 return cell.getLocalDateTimeCellValue().toLocalDate();
             } else if (cell.getCellType() == CellType.STRING) {
                 String value = cell.getStringCellValue().trim();
@@ -144,7 +220,7 @@ public class ExcelUtil {
                 }
             }
         } catch (Exception e) {
-            System.err.println("⚠️ Ungültiges Datum: " + e.getMessage());
+            logger.debug("Invalid date value in cell: {}", e.getMessage());
         }
         return null;
     }
@@ -156,10 +232,17 @@ public class ExcelUtil {
      * @return integer or 0
      */
     private int parseInt(String s) {
+        if (s == null || s.isEmpty()) return 0;
+        
         try {
-            String cleaned = s.replaceAll("[^\\d]", "");
+            // Handle decimal values by truncating
+            if (s.contains(".")) {
+                return (int) Double.parseDouble(s);
+            }
+            String cleaned = s.replaceAll("[^\\d-]", "");
             return cleaned.isEmpty() ? 0 : Integer.parseInt(cleaned);
         } catch (Exception e) {
+            logger.debug("Failed to parse integer from '{}': {}", s, e.getMessage());
             return 0;
         }
     }
@@ -171,8 +254,9 @@ public class ExcelUtil {
      * @return true or false
      */
     private boolean parseBoolean(String value) {
+        if (value == null) return false;
         String v = value.trim().toLowerCase();
-        return v.equals("true") || v.equals("1") || v.equals("ja") || v.equals("wahr");
+        return v.equals("true") || v.equals("1") || v.equals("ja") || v.equals("wahr") || v.equals("yes");
     }
 
     /**
@@ -182,8 +266,7 @@ public class ExcelUtil {
      * @return true if contract is present
      */
     private boolean parseContractPresent(String value) {
-        String v = value.trim().toLowerCase();
-        return v.equals("1") || v.equals("ja") || v.equals("true") || v.equals("wahr");
+        return parseBoolean(value);
     }
 
     /**
@@ -198,14 +281,16 @@ public class ExcelUtil {
                 if (cell.getCellType() == CellType.NUMERIC) {
                     return BigDecimal.valueOf(cell.getNumericCellValue());
                 } else if (cell.getCellType() == CellType.STRING) {
-                    String s = cell.getStringCellValue().replace(",", ".").replaceAll("[^\\d.]", "");
+                    String s = cell.getStringCellValue()
+                        .replace(",", ".")
+                        .replaceAll("[^\\d.-]", "");
                     if (!s.isEmpty()) {
                         return new BigDecimal(s);
                     }
                 }
             }
         } catch (Exception e) {
-            System.err.println("⚠️ Fehler bei Dezimalwert: " + e.getMessage());
+            logger.debug("Error parsing decimal value: {}", e.getMessage());
         }
         return BigDecimal.ZERO;
     }

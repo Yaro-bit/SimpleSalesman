@@ -1,6 +1,6 @@
 # Simple Salesman
 
-![version](https://img.shields.io/badge/version-0.0.93-blue)
+![version](https://img.shields.io/badge/version-0.0.94-blue)
 
 Backend prototype for a local web application designed for efficient management and documentation of address data, notes, and project status in door-to-door sales. The application is lightweight, fully local, privacy-compliant, and optimized for small teams.
 
@@ -8,17 +8,20 @@ Backend prototype for a local web application designed for efficient management 
 
 ## Version
 
-**Current Version:** 0.0.93 
-**Last Update:** 2025-07-21
+**Current Version:** 0.0.94 
+**Last Update:** 2025-07-22
 
 ---
 
 ## Known Issues
 
-- **Severe Performance Issues on Search :**
+- **Performance Issues on GET/all projects**
 ---
 
 ## Changelog
+
+### Version 0.0.94
+- Performance improvements on Note and Import
 
 ### Version 0.0.93
 - Performance changes - critical bug fixing

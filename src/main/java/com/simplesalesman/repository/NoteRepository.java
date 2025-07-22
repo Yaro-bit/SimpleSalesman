@@ -1,6 +1,9 @@
 package com.simplesalesman.repository;
 
 import com.simplesalesman.entity.Note;
+
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -20,8 +23,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * Note(...));
  *
  * @author SimpleSalesman Team
- * @version 0.0.6
+ * @version 0.1.0
  * @since 0.0.3
  */
 public interface NoteRepository extends JpaRepository<Note, Long> {
+    List<Note> findByAddressId(Long addressId);
 }

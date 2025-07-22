@@ -12,34 +12,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Service class for managing notes linked to addresses in the SimpleSalesman application.
- *
- * This service handles creation, update, retrieval, and deletion of {@link Note} entities
- * that are associated with an {@link Address}.
- *
- * Use Cases:
- * - Sales reps add notes to addresses during or after D2D visits
- * - Admins or users update existing note texts
- * - Notes can be retrieved per address for display in UI
- *
- * Dependencies:
- * - {@link NoteRepository} for persistence
- * - {@link AddressRepository} to ensure valid address relations
- * - {@link NoteMapper} for entity-DTO conversion
- *
- * Error Handling:
- * - Uses {@link RuntimeException} with meaningful messages
- * - Assumes validation is handled at controller or DTO level
- *
- * Security Considerations:
- * - Only valid and existing address/note IDs should be passed
- * - User identity (`createdBy`) should be verified upstream (e.g. via JWT)
- *
- * @author SimpleSalesman Team
- * @version 0.0.6
- * @since 0.0.3
- */
 @Service
 public class NoteService {
 
@@ -54,17 +26,28 @@ public class NoteService {
     }
 
     /**
+     * Retrieves all notes in the system with their associated address information.
+     * 
+     * @return list of all NoteDto objects
+     */
+    public List<NoteDto> getAllNotes() {
+        List<Note> allNotes = noteRepository.findAll();
+        return allNotes.stream()
+                .map(noteMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Retrieves all notes linked to a specific address.
      *
      * @param addressId the ID of the address
      * @return list of NoteDto objects for frontend display
-     * @throws RuntimeException if address is not found
      */
     public List<NoteDto> getNotesForAddress(Long addressId) {
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new RuntimeException("Adresse nicht gefunden"));
-
-        return address.getNotes().stream()
+        // Direct query - only 1 database hit instead of N+1
+        List<Note> notes = noteRepository.findByAddressId(addressId);
+        
+        return notes.stream()
                 .map(noteMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -116,5 +99,4 @@ public class NoteService {
         }
         noteRepository.deleteById(noteId);
     }
-
 }
