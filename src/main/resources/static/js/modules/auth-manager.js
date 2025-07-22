@@ -289,7 +289,9 @@ export class AuthManager {
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
-  async initiateLogin(keycloakConfig) {
+  // In auth-manager.js, update the initiateLogin method:
+
+async initiateLogin(keycloakConfig) {
     const codeVerifier = this.generateCodeVerifier();
     const codeChallenge = await this.generateCodeChallenge(codeVerifier);
     const state = this.generateState();
@@ -297,21 +299,26 @@ export class AuthManager {
     sessionStorage.setItem('code_verifier', codeVerifier);
     sessionStorage.setItem('oauth_state', state);
 
+    // Ensure redirect URI matches exactly what's configured in Keycloak
+    const redirectUri = keycloakConfig.redirectUri || window.location.origin + '/login.html';
+    
     const params = new URLSearchParams({
-      response_type: 'code',
-      client_id: keycloakConfig.clientId,
-      redirect_uri: keycloakConfig.redirectUri,
-      scope: 'openid profile email',
-      state: state,
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256'
+        response_type: 'code',
+        client_id: keycloakConfig.clientId,
+        redirect_uri: redirectUri,
+        scope: 'openid profile email',
+        state: state,
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256'
     });
 
     const authUrl = `${keycloakConfig.baseUrl}/realms/${keycloakConfig.realm}/protocol/openid-connect/auth?${params.toString()}`;
     
+    console.log('Redirecting to Keycloak:', authUrl);
+    console.log('Redirect URI:', redirectUri);
+    
     return authUrl;
-  }
-
+}
   async handleAuthCallback(code, state, keycloakConfig) {
     const storedState = sessionStorage.getItem('oauth_state');
     if (state !== storedState) {
