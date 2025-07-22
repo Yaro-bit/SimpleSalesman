@@ -221,41 +221,51 @@
 	
 	<!-- Authentication Script -->
 	<script th:inline="javascript">
-		// Thymeleaf variables
-		const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
-		const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080';
-		const REALM = /*[[${realm}]]*/ 'simple-salesman-backend';
-		const CLIENT_ID = /*[[${clientId}]]*/ 'frontend-app';
-		const REDIRECT_URI = /*[[${redirectUri}]]*/ window.location.origin + '/';
+	    // Thymeleaf variables
+	    const IS_AUTHENTICATED = /*[[${isAuthenticated}]]*/ false;
+	    const KEYCLOAK_BASE = /*[[${keycloakBaseUrl}]]*/ 'http://localhost:8080';
+	    const REALM = /*[[${realm}]]*/ 'simple-salesman-backend';
+	    const CLIENT_ID = /*[[${clientId}]]*/ 'frontend-app';
+	    const REDIRECT_URI = /*[[${redirectUri}]]*/ window.location.origin + '/';
 
-		// Check if user was redirected after logout
-		window.addEventListener('load', function() {
-			// Check if already authenticated
-			if (IS_AUTHENTICATED) {
-				window.location.replace("gui.html");
-				return;
-			}
+	    // Check if user is authenticated and handle redirect
+	    function handleAuthentication() {
+	        if (IS_AUTHENTICATED) {
+	            window.location.replace("gui.html");
+	        }
+	    }
 
-			// Check URL parameters or storage for logout indication
-			const urlParams = new URLSearchParams(window.location.search);
-			const wasLoggedOut = urlParams.get('logout') === 'true' || 
-							   sessionStorage.getItem('just_logged_out') === 'true';
-			
-			if (wasLoggedOut) {
-				const logoutAlert = document.getElementById('logoutSuccess');
-				logoutAlert.classList.remove('d-none');
-				logoutAlert.classList.add('show');
-				
-				// Clear the logout indication
-				sessionStorage.removeItem('just_logged_out');
-				
-				// Remove logout parameter from URL without page reload
-				if (urlParams.has('logout')) {
-					const newUrl = window.location.pathname;
-					window.history.replaceState({}, '', newUrl);
-				}
-			}
-		});
+	    // Check if the user has logged out and show appropriate message
+	    function handleLogout() {
+	        const urlParams = new URLSearchParams(window.location.search);
+	        const wasLoggedOut = urlParams.get('logout') === 'true' || sessionStorage.getItem('just_logged_out') === 'true';
+
+	        if (wasLoggedOut) {
+	            const logoutAlert = document.getElementById('logoutSuccess');
+	            logoutAlert.classList.remove('d-none');
+	            logoutAlert.classList.add('show');
+
+	            // Clean up session data and URL
+	            sessionStorage.removeItem('just_logged_out');
+	            removeLogoutParamFromUrl(urlParams);
+	        }
+	    }
+
+	    // Remove the logout parameter from URL without reloading the page
+	    function removeLogoutParamFromUrl(urlParams) {
+	        if (urlParams.has('logout')) {
+	            const newUrl = window.location.pathname;
+	            window.history.replaceState({}, '', newUrl);
+	        }
+	    }
+
+	    // Initialize authentication and logout handling
+	    window.addEventListener('load', function() {
+	        handleAuthentication();
+	        handleLogout();
+	    });
+	</script>
+
 
 		// --- PKCE Flow Implementation ---
 		function generateCodeVerifier() {
