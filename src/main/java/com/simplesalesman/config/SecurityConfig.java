@@ -2,8 +2,10 @@ package com.simplesalesman.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,6 +14,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,12 +30,13 @@ import java.util.stream.Collectors;
  * - JWT to Spring Security authority conversion  
  * - Method-level access control via annotations
  * - Public access to web GUI endpoints (Thymeleaf templates)
+ * - CORS support for local development
  *
  * Security considerations:
  * - Stateless security using Bearer tokens for API endpoints
  * - CSRF disabled for APIs (not needed for same-origin Thymeleaf)
  * - Supports granular role-based access via Keycloak realm roles
- * - No CORS needed since frontend and backend are same-origin
+ * - CORS configured for local development (localhost:8080, localhost:8081)
  *
  * @author SimpleSalesman Team
  * @version 0.0.6
@@ -43,6 +49,9 @@ public class SecurityConfig {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
+    @Value("${simplesalesman.debug:false}")
+    private boolean debugMode;
+
     /**
      * Configures HTTP security including authorization rules and JWT resource server.
      *
@@ -52,7 +61,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("Initializing Security Filter Chain for SimpleSalesman");
+        log.info("Initializing Security Filter Chain for SimpleSalesman (debug={})", debugMode);
 
         http
             // Disable CSRF for stateless REST APIs using JWT
@@ -61,17 +70,24 @@ public class SecurityConfig {
                 log.debug("CSRF protection disabled for REST API");
             })
 
+            // Enable CORS for local development
+            .cors(cors -> {
+                cors.configurationSource(corsConfigurationSource());
+                log.debug("CORS configuration applied");
+            })
+
             // Define access rules for endpoints
             .authorizeHttpRequests(auth -> {
                 auth
                     // Public endpoints - Web GUI (Thymeleaf templates)
-                    .requestMatchers("/", "/gui", "/api-gui", "/index", "/health").permitAll()
+                    .requestMatchers("/", "/gui/**", "/api-gui/**", "/index", "/health").permitAll()
                     
                     // Static resources (CSS, JS, images, favicon)
-                    .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/static/**", "/webjars/**").permitAll()
                     .requestMatchers("/favicon.ico", "/robots.txt", "/sitemap.xml").permitAll()
                     
-                    // Spring Boot actuator health endpoint (public for monitoring)
+                    // Spring Boot actuator endpoints (public for monitoring)
+                    .requestMatchers("/actuator/health/**", "/actuator/info/**").permitAll()
                     .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                     
                     // Spring Boot error page
@@ -79,6 +95,15 @@ public class SecurityConfig {
                     
                     // Public API endpoints
                     .requestMatchers("/api/v1/import").permitAll()
+                    
+                    // Development endpoints (only in debug mode)
+                    .requestMatchers("/api/v1/test/**").access((authentication, context) -> {
+                        if (debugMode) {
+                            log.debug("Debug mode: allowing access to test endpoints");
+                            return new org.springframework.security.authorization.AuthorizationDecision(true);
+                        }
+                        return new org.springframework.security.authorization.AuthorizationDecision(false);
+                    })
                     
                     // Protected API endpoints - require authentication
                     .requestMatchers("/api/**").authenticated()
@@ -99,10 +124,76 @@ public class SecurityConfig {
                     log.debug("JWT Authentication Converter registered");
                 });
                 log.info("OAuth2 Resource Server with JWT enabled");
+            })
+
+            // Enhanced error handling for development
+            .exceptionHandling(exceptions -> {
+                exceptions.authenticationEntryPoint((request, response, authException) -> {
+                    log.debug("Authentication failed for request: {} - {}", 
+                             request.getRequestURI(), authException.getMessage());
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"Authentication required\",\"message\":\"" + 
+                                             authException.getMessage() + "\"}");
+                });
             });
 
-        log.info("Security Filter Chain successfully configured - No CORS needed (same-origin)");
+        log.info("Security Filter Chain successfully configured with CORS support");
         return http.build();
+    }
+
+    /**
+     * CORS configuration for local development.
+     * Allows requests from localhost:8080 (Keycloak) and localhost:8081 (application).
+     */
+    @Bean
+    @Profile({"dev", "local", "default"})
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow specific origins for local development
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+            "http://localhost:*",
+            "http://127.0.0.1:*"
+        ));
+        
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+        ));
+        
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        
+        log.info("CORS configured for local development - allowing localhost origins");
+        return source;
+    }
+
+    /**
+     * Production CORS configuration - more restrictive.
+     */
+    @Bean
+    @Profile("prod")
+    public CorsConfigurationSource prodCorsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Configure specific allowed origins for production
+        // configuration.setAllowedOrigins(Arrays.asList("https://yourdomain.com"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", "Content-Type", "X-Requested-With"
+        ));
+        configuration.setAllowCredentials(false);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        
+        log.info("Production CORS configured - restrictive settings");
+        return source;
     }
 
     /**
@@ -139,8 +230,12 @@ public class SecurityConfig {
         String email = jwt.getClaimAsString("email");
         String name = jwt.getClaimAsString("name");
 
-        log.debug("Processing JWT for user: username='{}', sub='{}', email='{}', name='{}'",
-                username, subject, email, name);
+        if (debugMode) {
+            log.info("Processing JWT for user: username='{}', sub='{}', email='{}', name='{}'",
+                    username, subject, email, name);
+        } else {
+            log.debug("Processing JWT for user: username='{}', sub='{}'", username, subject);
+        }
 
         // Attempt to extract realm roles
         Map<String, Object> realmAccess = jwt.getClaimAsMap("realm_access");
@@ -153,7 +248,9 @@ public class SecurityConfig {
                 .filter(role -> role != null && !role.trim().isEmpty())
                 .map(role -> {
                     String authority = "ROLE_" + role.toUpperCase();
-                    log.trace("Mapping Keycloak role '{}' to authority '{}'", role, authority);
+                    if (debugMode) {
+                        log.debug("Mapping Keycloak role '{}' to authority '{}'", role, authority);
+                    }
                     return new SimpleGrantedAuthority(authority);
                 })
                 .collect(Collectors.toList());
@@ -163,12 +260,13 @@ public class SecurityConfig {
                 .map(String::toUpperCase)
                 .toList();
 
-            log.info("User '{}' (sub={}) authenticated with {} roles: {}",
-                    username, subject, roleNames.size(), roleNames);
+            log.info("User '{}' authenticated with {} roles: {}",
+                    username, roleNames.size(), roleNames);
 
-            if (log.isDebugEnabled()) {
+            if (debugMode && log.isDebugEnabled()) {
                 log.debug("JWT Exp: {}, Issued At: {}, Issuer: {}",
                         jwt.getExpiresAt(), jwt.getIssuedAt(), jwt.getIssuer());
+                log.debug("Full JWT claims: {}", jwt.getClaims().keySet());
             }
 
             return authorities;
@@ -178,7 +276,7 @@ public class SecurityConfig {
         log.warn("User '{}' (sub={}) has no realm_access.roles in JWT – access may be restricted",
                 username, subject);
 
-        if (log.isDebugEnabled()) {
+        if (debugMode && log.isDebugEnabled()) {
             log.debug("Available JWT claims: {}", jwt.getClaims().keySet());
             Map<String, Object> resourceAccess = jwt.getClaimAsMap("resource_access");
             if (resourceAccess != null) {
