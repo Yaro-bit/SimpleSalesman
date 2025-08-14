@@ -13,7 +13,7 @@ For small sales teams, this resulted in ongoing **hosting and operational costs*
 ---
 
 ## Transformation into Address Manager Pro
-Due to these limitations, the project was **fully rebuilt** into **[Address Manager Pro](../AddressManagerPro)**:
+Due to these limitations, the project was **fully rebuilt** into **[Address Manager Pro]([../AddressManagerPro](https://github.com/Yaro-bit/address-manager-pro.git)**:
 
 - **Lighter, more flexible, and easier to deploy** (Next.js + React + TypeScript instead of a complex Spring Boot setup)  
 - **No mandatory hosting** – can run locally or optionally online  
